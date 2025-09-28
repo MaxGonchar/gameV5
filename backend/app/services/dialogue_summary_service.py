@@ -1,0 +1,163 @@
+"""
+Dialogue summarization service for managing character memory and chat history compression.
+
+This service handles the summarization of chat history to maintain character memory
+while keeping chat history manageable by removing summarized portions.
+"""
+
+import asyncio
+import os
+import logging
+from typing import List, Optional, Dict, Any
+from dotenv import load_dotenv
+
+from app.dao.character_dao import CharacterDAO
+from app.dao.chat_history_dao import ChatHistoryDAO
+
+from app.chat_types import ChatItem
+from app.llm.venice_ai import VeniceAIChatModel
+from langchain_core.messages import SystemMessage, HumanMessage
+
+logger = logging.getLogger(__name__)
+
+
+class DialogueSummaryService:
+    """
+    Service responsible for summarizing dialogue history and updating character memory.
+    
+    This service:
+    1. Takes a chat item ID and collects history up to that point
+    2. Concatenates the chat slice into dialogue format
+    3. Checks for existing character summaries
+    4. Calls LLM to create/update the summary
+    5. Updates character with new summary
+    6. Removes summarized portion from chat history
+    7. Saves updated character and chat history
+    """
+    
+    def __init__(self, character_name: str = "nira"):
+        """
+        Initialize the dialogue summary service.
+        
+        Args:
+            character_name: Name of the character to work with
+        """
+        load_dotenv()
+        
+        self.character_name = character_name
+        
+        # Initialize DAOs
+        self.character_dao = CharacterDAO()
+        self.chat_history_dao = ChatHistoryDAO()
+        
+        # Initialize LLM
+        venice_api_key = os.getenv("VENICE_API_KEY")
+        if not venice_api_key:
+            raise ValueError(
+                "VENICE_API_KEY environment variable is required. "
+                "Please set it in your .env file or environment."
+            )
+        
+        self.venice_model = VeniceAIChatModel(
+            api_key=venice_api_key,
+            model="mistral-31-24b",
+            temperature=0.3  # Lower temperature for more consistent summaries
+        )
+    
+    async def summarize_chat_up_to_item(self, chat_item_id: str) -> None:
+        """
+        Summarize chat history up to and including the specified chat item.
+        
+        Args:
+            chat_item_id: ID of the chat item to summarize up to (inclusive)
+            
+        Returns:
+            Dict containing success status and error information
+        """
+        character, chat_history = await asyncio.gather(
+            self.character_dao.get_character(self.character_name),
+            self.chat_history_dao.load_chat_history()
+        )
+        
+        chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
+        dialogue_text = self._format_chat_as_dialogue(chat_slice)
+
+        existing_memory = character.get_memory()
+        existing_summary = "\n".join(existing_memory) if existing_memory else None
+        
+        new_summary = await self._generate_summary(dialogue_text, existing_summary)
+        
+        character.add_item_to_memory(new_summary)
+        
+        chat_history.trim_messages_up_to_id(chat_item_id)
+        
+        await asyncio.gather(
+            self.character_dao.store_character(character),
+            self.chat_history_dao.save(chat_history)
+        )
+    
+    def _format_chat_as_dialogue(self, chat_slice: List[ChatItem]) -> str:
+        """
+        Convert chat items to dialogue format.
+        
+        Args:
+            chat_slice: List of chat items to format
+            
+        Returns:
+            Formatted dialogue string
+        """
+        dialogue_lines = []
+        for item in chat_slice:
+            author_name = item.get("author_name", "Unknown")
+            content = item.get("content", "")
+            dialogue_lines.append(f"{author_name}: {content}")
+        
+        return "\n".join(dialogue_lines)
+    
+    async def _generate_summary(self, dialogue_text: str, existing_summary: Optional[str]) -> str:
+        """
+        Generate a new summary using the LLM.
+        
+        Args:
+            dialogue_text: Current dialogue to summarize
+            existing_summary: Previous summary if any
+            
+        Returns:
+            New summary text
+        """
+        # Build the prompt
+        system_prompt = """You are an expert at summarizing dialogue between characters. Your task is to create a concise summary that captures:
+
+1. Key events that happened
+2. Important information revealed or learned
+3. Character development or relationship changes
+4. Critical decisions made
+
+Guidelines:
+- Keep the summary SHORT and focused on essential information only
+- Avoid redundancy with existing summary information
+- Extract only NEW and SIGNIFICANT information
+- Use clear, concise language
+- Focus on facts and events, not interpretations"""
+
+        messages = []
+        messages.append(SystemMessage(content=system_prompt))
+        
+        if existing_summary:
+            human_content = f"""Here is the existing summary of previous dialogue:
+{existing_summary}
+
+Now summarize this new dialogue, focusing only on NEW information and events that are NOT already covered in the existing summary:
+
+{dialogue_text}
+
+Provide a complete updated summary that includes both the previous information and the new developments."""
+        else:
+            human_content = f"""Summarize the following dialogue, focusing on key events, important information, and character developments:
+
+{dialogue_text}"""
+        
+        messages.append(HumanMessage(content=human_content))
+        
+        response = await self.venice_model.ainvoke(messages)
+        return str(response.content).strip()
