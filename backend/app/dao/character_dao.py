@@ -42,7 +42,7 @@ class CharacterDAO:
         Load and render character configuration from YAML file.
 
         Args:
-            character_name: Name of the character (without .yaml extension)
+            character_name: Name of the character
 
         Returns:
             Character object containing configuration with variables substituted
@@ -51,7 +51,7 @@ class CharacterDAO:
             FileNotFoundError: If character file doesn't exist
             yaml.YAMLError: If YAML parsing fails
         """
-        character_file = self.characters_dir / f"{character_name}.yaml"
+        character_file = self.characters_dir / character_name / "character.yaml"
         return Character(await self._read_and_render_yaml(character_file))
 
     async def _read_and_render_yaml(self, file_path: Path) -> Dict[str, Any]:
@@ -100,10 +100,11 @@ class CharacterDAO:
         Raises:
             Exception: If an error occurs while writing the file
         """
-        character_file = self.characters_dir / f"{character.name.lower()}.yaml"
+        character_dir = self.characters_dir / character.name.lower()
+        character_file = character_dir / "character.yaml"
 
         # Ensure the directory exists
-        character_file.parent.mkdir(parents=True, exist_ok=True)
+        character_dir.mkdir(parents=True, exist_ok=True)
 
         yaml_string = yaml.dump(character.to_dict(), default_flow_style=False)
 

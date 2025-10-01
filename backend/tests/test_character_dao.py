@@ -111,7 +111,7 @@ character:
     async def test_get_character_success(self, character_dao, sample_character_data):
         """Test successful character retrieval."""
         character_name = "testchar"
-        expected_file_path = Path("test_characters") / f"{character_name}.yaml"
+        expected_file_path = Path("test_characters") / character_name / "character.yaml"
         
         # Mock the _read_and_render_yaml method
         with patch.object(character_dao, '_read_and_render_yaml', new_callable=AsyncMock) as mock_read:
@@ -207,9 +207,14 @@ character:
     async def test_store_character_success(self, character_dao_with_real_dir, sample_character_data, temp_characters_dir):
         """Test successful character storage."""
         character = Character(sample_character_data)
-        expected_file_path = temp_characters_dir / f"{character.name.lower()}.yaml"
+        expected_character_dir = temp_characters_dir / character.name.lower()
+        expected_file_path = expected_character_dir / "character.yaml"
         
         await character_dao_with_real_dir.store_character(character)
+        
+        # Verify directory was created
+        assert expected_character_dir.exists()
+        assert expected_character_dir.is_dir()
         
         # Verify file was created
         assert expected_file_path.exists()
@@ -261,7 +266,10 @@ character:
         # This should create the directory if it doesn't exist
         await dao.store_character(character)
         
-        expected_file = new_characters_dir / "testchar.yaml"
+        expected_character_dir = new_characters_dir / "testchar"
+        expected_file = expected_character_dir / "character.yaml"
+        assert expected_character_dir.exists()
+        assert expected_character_dir.is_dir()
         assert expected_file.exists()
 
     @pytest.mark.integration
@@ -288,7 +296,7 @@ character:
     async def test_get_character_case_sensitivity(self, character_dao, sample_character_data):
         """Test that character names are handled consistently."""
         character_name_mixed_case = "TestCharacter"
-        expected_file_path = Path("test_characters") / f"{character_name_mixed_case}.yaml"
+        expected_file_path = Path("test_characters") / character_name_mixed_case / "character.yaml"
         
         with patch.object(character_dao, '_read_and_render_yaml', new_callable=AsyncMock) as mock_read:
             mock_read.return_value = sample_character_data
@@ -313,8 +321,8 @@ character:
         with patch('aiofiles.open', return_value=mock_file) as mock_open:
             await character_dao.store_character(character)
             
-            # Verify the file path uses lowercase
-            expected_path = Path("test_characters") / "mixedcasecharacter.yaml"
+            # Verify the file path uses lowercase directory and character.yaml filename
+            expected_path = Path("test_characters") / "mixedcasecharacter" / "character.yaml"
             mock_open.assert_called_once_with(expected_path, "w", encoding="utf-8")
 
     @pytest.mark.unit
