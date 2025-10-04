@@ -18,8 +18,10 @@ from app.llm.venice_client import VeniceClient
 from app.models.assistant_response import AssistantResponse
 from app.dao.character_dao import CharacterDAO
 from app.dao.chat_history_dao import ChatHistoryDAO
+from app.dao.location_dao import LocationDAO
 from app.builders import CharacterMoveSystemPromptBuilder
 from app.objects import Character, ChatHistory
+from app.objects.location import Location
 
 
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +62,7 @@ class ChatService:
         # Initialize DAOs
         self.character_dao = CharacterDAO()
         self.chat_history_dao = ChatHistoryDAO()
+        self.location_dao = LocationDAO()
         
         # Initialize character prompt builder with default template
         self.system_prompt_builder = CharacterMoveSystemPromptBuilder()
@@ -86,9 +89,15 @@ class ChatService:
         except Exception as e:
             raise ValueError(f"Failed to initialize VeniceAI model: {e}")
 
-    def _generate_chat_messages(self, chat_history: ChatHistory, character_config: dict[str, Any]) -> list[BaseMessage]:
+    def _generate_chat_messages(self, chat_history: ChatHistory, character_config: dict[str, Any], location: Location) -> list[BaseMessage]:
         messages = []
-        system_prompt = self.system_prompt_builder.build(character_config=character_config)
+
+        system_prompt = self.system_prompt_builder\
+            .with_assistant_configs(character_config["assistant"])\
+            .with_character_config(character_config["character"])\
+            .with_location_config(location.description)\
+            .build()
+
         messages.append(SystemMessage(content=system_prompt))
 
         for item in chat_history:
@@ -100,18 +109,19 @@ class ChatService:
         return messages
 
 
-    async def _generate_bot_response(self, chat_history: ChatHistory, character_config: dict[str, Any]) -> str:
-        messages = self._generate_chat_messages(chat_history, character_config)
+    async def _generate_bot_response(self, chat_history: ChatHistory, character_config: dict[str, Any], location: Location) -> str:
+        messages = self._generate_chat_messages(chat_history, character_config, location)
         response = await self.venice_model.ainvoke(messages)
 
         return str(response.content)
 
-    async def _get_data(self) -> tuple[Character, ChatHistory]:
-        character, chat_history = await asyncio.gather(
+    async def _get_data(self) -> tuple[Character, ChatHistory, Location]:
+        character, chat_history, location = await asyncio.gather(
             self.character_dao.get_character(self.character_name),
-            self.chat_history_dao.load_chat_history()
+            self.chat_history_dao.load_chat_history(),
+            self.location_dao.get_location()
         )
-        return character, chat_history
+        return character, chat_history, location
 
     async def _store_data(self, character: Character, chat_history: ChatHistory) -> None:
         await asyncio.gather(
@@ -129,7 +139,7 @@ class ChatService:
         return embeddings[0]
     
     async def process_user_message(self, message: str) -> None:
-        character, chat_history = await self._get_data()
+        character, chat_history, location = await self._get_data()
         chat_history.add_message(
             author_id=USER_ID,
             author_type=AuthorType.USER.value,
@@ -138,7 +148,7 @@ class ChatService:
         )
 
         character = await self._update_character(character, message)
-        bot_response = await self._generate_bot_response(chat_history, character.to_prompt_dict())
+        bot_response = await self._generate_bot_response(chat_history, character.to_prompt_dict(), location)
 
         chat_history.add_message(
             author_id=CHARACTER_ID,

@@ -8,27 +8,44 @@ class CharacterMoveSystemPromptBuilder:
     TEMPLATE = (
         "Assistant is a character in the role play game.\n"
         "Assistant strictly has to follow the character description and general instructions.\n"
-        "\n"
-        "<Character description>\n"
-        "{character_description}"
-        "</Character description>\n"
-        "\n"
-        "<General assistant instructions>\n"
-        "{general_instructions}"
-        "</General assistant instructions>\n"
     )
 
     def __init__(self, template: str | None = None) -> None:
         self.template = template or self.TEMPLATE
-
-    def build(
-        self,
-        character_config: Dict[str, Any],
-    ) -> str:
-        return self.template.format(
-            character_description=self._build_configs(character_config["character"]),
-            general_instructions=self._build_configs(character_config["assistant"]),
+        self.configs = []
+    
+    def with_assistant_configs(self, configs: List[Dict[str, Any]]) -> "CharacterMoveSystemPromptBuilder":
+        self.configs.append(
+            {
+                "template": "\n<General assistant instructions>\n{}\n</General assistant instructions>\n",
+                "configs": configs,
+            }
         )
+        return self
+
+    def with_character_config(self, character_config: Dict[str, Any]) -> "CharacterMoveSystemPromptBuilder":
+        self.configs.append(
+            {
+                "template": "\n<Character description>\n{}\n</Character description>\n",
+                "configs": [character_config],
+            }
+        )
+        return self
+    
+    def with_location_config(self, location_config: Dict[str, Any]) -> "CharacterMoveSystemPromptBuilder":
+        self.configs.append(
+            {
+                "template": "\n<Location description>\n{}\n</Location description>\n",
+                "configs": [location_config],
+            }
+        )
+        return self
+
+    def build(self) -> str:
+        built_prompt = self.template
+        for item in self.configs:
+            built_prompt += item["template"].format(self._build_configs(item["configs"]))
+        return built_prompt
 
     def _build_configs(self, configs: List[Dict[str, Any]]) -> str:
         if not isinstance(configs, list):
