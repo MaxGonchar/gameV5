@@ -1,5 +1,6 @@
 import yaml
 import aiofiles
+import asyncio
 from typing import Dict, Any, Optional
 from pathlib import Path
 from jinja2 import Template
@@ -41,7 +42,7 @@ class CharacterDAO:
         Load and render character configuration from YAML file.
 
         Args:
-            character_name: Name of the character (without .yaml extension)
+            character_name: Name of the character
 
         Returns:
             Character object containing configuration with variables substituted
@@ -50,11 +51,7 @@ class CharacterDAO:
             FileNotFoundError: If character file doesn't exist
             yaml.YAMLError: If YAML parsing fails
         """
-        character_file = self.characters_dir / f"{character_name}.yaml"
-
-        if not character_file.exists():
-            raise FileNotFoundError(f"Character file not found: {character_file}")
-
+        character_file = self.characters_dir / character_name / "character.yaml"
         return Character(await self._read_and_render_yaml(character_file))
 
     async def _read_and_render_yaml(self, file_path: Path) -> Dict[str, Any]:
@@ -74,33 +71,24 @@ class CharacterDAO:
             Exception: For other unexpected errors
         """
         try:
-            # Step 1: Read the entire file content as a string
-            async with aiofiles.open(file_path, "r", encoding="utf-8") as file:
-                yaml_string = await file.read()
-
-            # Step 2: Extract variables by temporarily loading the YAML using shared handler
-            temp_data = await self.yaml_handler.read_yaml_file(file_path)
-            variables = (
-                temp_data.get("variables", {}) if isinstance(temp_data, dict) else {}
+            yaml_string, yaml_dict = await asyncio.gather(
+                self.yaml_handler.read_raw_string(file_path),
+                self.yaml_handler.read_yaml_file(file_path),
             )
 
-            # Step 3: Create a Jinja2 Template object from the string and render it
+            variables = (
+                yaml_dict.get("variables", {}) if isinstance(yaml_dict, dict) else {}
+            )
+
             template = Template(yaml_string)
             rendered_yaml_string = template.render(**variables)
 
-            # Step 4: Safely load the rendered string as the final YAML data
             data = yaml.safe_load(rendered_yaml_string)
 
             return data
 
-        except FileNotFoundError:
-            raise FileNotFoundError(f"The file {file_path} does not exist.")
         except yaml.YAMLError as exc:
             raise yaml.YAMLError(f"Error parsing rendered YAML: {exc}")
-        except Exception as exc:
-            raise Exception(
-                f"An unexpected error occurred while processing {file_path}: {exc}"
-            )
 
     async def store_character(self, character: Character) -> None:
         """
@@ -112,12 +100,14 @@ class CharacterDAO:
         Raises:
             Exception: If an error occurs while writing the file
         """
-        character_file = self.characters_dir / f"{character.name.lower()}.yaml"
+        character_dir = self.characters_dir / character.name.lower()
+        character_file = character_dir / "character.yaml"
 
-        # Step 1: Render the character data as YAML
+        # Ensure the directory exists
+        character_dir.mkdir(parents=True, exist_ok=True)
+
         yaml_string = yaml.dump(character.to_dict(), default_flow_style=False)
 
-        # Step 2: Write the rendered YAML to the file
         async with aiofiles.open(character_file, "w", encoding="utf-8") as file:
             await file.write(yaml_string)
 

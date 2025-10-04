@@ -79,4 +79,27 @@ class YamlFileHandler:
             raise yaml.YAMLError(f"Error writing YAML to file {file_path}: {exc}")
         except OSError as exc:
             raise OSError(f"Error writing file {file_path}: {exc}")
+    
+    async def read_raw_string(self, file_path: Path) -> str:
+        """
+        Read the raw string content of a YAML file without parsing.
+        
+        Args:
+            file_path: Path to the YAML file
+            
+        Returns:
+            Raw string content of the file
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            Exception: For other unexpected errors
+        """
+        try:
+            async with aiofiles.open(file_path, 'r', encoding='utf-8') as file:
+                content = await file.read()
+                return content
+        except FileNotFoundError:
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        except Exception as exc:
+            raise Exception(f"An unexpected error occurred while reading {file_path}: {exc}")
 

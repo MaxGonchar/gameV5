@@ -1,0 +1,1 @@
+# Test package for Character class and related functionality
