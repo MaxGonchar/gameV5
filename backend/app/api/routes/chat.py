@@ -20,14 +20,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-chat_service = ChatService()
+# Chat service will be initialized lazily on first use
+chat_service = None
 dialogue_summary_service = DialogueSummaryService()
+
+async def get_chat_service():
+    """Get or create the chat service instance."""
+    global chat_service
+    if chat_service is None:
+        chat_service = await ChatService()
+    return chat_service
 
 @router.post("/chat/message", response_model=BotResponse)
 async def process_user_message(request: SendMessageRequest):
     try:
         logger.info(f"Processing message: {request.message[:50]}...")
         
+        chat_service = await get_chat_service()
         await chat_service.process_user_message(request.message)
         
         chat_history = await chat_service.get_chat_history()
@@ -39,7 +48,7 @@ async def process_user_message(request: SendMessageRequest):
             author_name=last_message["author_name"]
             )
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}")
+        logger.exception(f"Error processing message: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
@@ -49,6 +58,7 @@ async def process_user_message(request: SendMessageRequest):
 async def get_chat_history():
     logger.info("Fetching chat history")
     try:
+        chat_service = await get_chat_service()
         chat_history = await chat_service.get_chat_history()
         
         messages = [
