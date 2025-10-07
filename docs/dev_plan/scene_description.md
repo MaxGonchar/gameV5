@@ -69,8 +69,9 @@ I need to deal with first message when there is no scene description yet.
 
 ### GlobalState class
 - ~~implement GlobalState class as composition (facade) of Character, Location, ChatHistory~~
-  - get data from db during init
-- add SessionMeta class to store meta info. For now it will store only initial scene description
-  - create file and dao for it.
+  - ~~get data from db during init~~
+- ~~add SessionMeta class to store meta info. For now it will store only initial scene description~~
+  - ~~create file and dao for it.~~
+- Create service to generate scene description
 - Update ChatHistory to store scene description in each item
 - Update process_user_message according to new generation flow.
