@@ -25,6 +25,8 @@ class AuthorType(Enum):
 
 
 class GlobalState:
+    # TODO: Using async __new__ is an anti-pattern and can cause issues with object initialization.
+    # Consider using a factory method or async context manager instead.
     async def __new__(cls, *a, **kw):
         instance = super().__new__(cls)
         await instance.__init__(*a, **kw)
