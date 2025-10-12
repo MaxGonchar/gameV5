@@ -1,16 +1,5 @@
 # Features
 
-## Scene description
-I want to have a scene description. I hope it will serve to more adequately generate responses.
-Also I will help with understanding what is happening.
-The description should point on:
-- surroundings
-- positions and poses of characters
-- description of characters interactions
-
-The description should be changed after each action and affect the next response generation.
-
-
 ## Time measurement
 I want somehow to measure time during the scene.
 
@@ -30,3 +19,11 @@ I want to find a form of instructions for coding AI assistant to store general i
 
 ## Keep chat history when create summary
 I want to keep chat history when creating summary. To decrease the history passed to the model I can mark the messages as summarized and filter them out when passing the history to the model.
+
+## prompts improvements
+I want to improve prompts for:
+- scene description (make description shorter, not dialogues in it, concentrate on positions, actions, emotions)
+- chat summary (concentrate on important events)
+
+## logging
+I want have proper logging to see the execution flow and errors.
