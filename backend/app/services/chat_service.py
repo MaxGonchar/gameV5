@@ -154,7 +154,7 @@ class ChatService:
 
         await self._update_chat_history(bot_response, author_user=False)
 
-        logger.info("Update global state...")
+        logger.info("Updating global state...")
         await self.global_state.save_state()
     
     async def get_chat_history(self) -> List[ChatItem]:
