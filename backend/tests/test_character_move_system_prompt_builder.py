@@ -133,12 +133,34 @@ class TestCharacterMoveSystemPromptBuilder:
         assert len(builder.configs) == 1
         assert builder.configs[0] == expected_config
 
+    def test_with_current_scene_description_returns_self(self, builder):
+        """Test that with_current_scene_description returns self for method chaining."""
+        scene_description = "A bustling marketplace filled with merchants and travelers."
+        result = builder.with_current_scene_description(scene_description)
+        
+        assert result is builder
+
+    def test_with_current_scene_description_adds_config(self, builder):
+        """Test that scene description is properly added."""
+        scene_description = "A bustling marketplace filled with merchants and travelers."
+        builder.with_current_scene_description(scene_description)
+        
+        expected_config = {
+            "template": "\n<Current scene description>\n{}\n</Current scene description>\n",
+            "configs": [scene_description],
+        }
+        
+        assert len(builder.configs) == 1
+        assert builder.configs[0] == expected_config
+
     def test_method_chaining(self, builder, sample_assistant_configs, sample_character_config, sample_location_config):
         """Test that all methods can be chained together."""
+        scene_description = "A bustling marketplace filled with merchants and travelers."
         result = (builder
                  .with_assistant_configs(sample_assistant_configs)
                  .with_character_config(sample_character_config)
-                 .with_location_config(sample_location_config))
+                 .with_location_config(sample_location_config)
+                 .with_current_scene_description(scene_description))
         
         expected_configs = [
             {
@@ -152,11 +174,15 @@ class TestCharacterMoveSystemPromptBuilder:
             {
                 "template": "\n<Location description>\n{}\n</Location description>\n",
                 "configs": [sample_location_config],
+            },
+            {
+                "template": "\n<Current scene description>\n{}\n</Current scene description>\n",
+                "configs": [scene_description],
             }
         ]
         
         assert result is builder
-        assert len(builder.configs) == 3
+        assert len(builder.configs) == 4
         assert builder.configs == expected_configs
 
     def test_build_default_template_only(self, builder):
@@ -171,12 +197,29 @@ class TestCharacterMoveSystemPromptBuilder:
         
         assert result == "Custom system prompt template.\n"
 
+    def test_build_with_scene_description_only(self, builder):
+        """Test building with only scene description."""
+        scene_description = "A mysterious forest clearing illuminated by moonlight."
+        result = builder.with_current_scene_description(scene_description).build()
+        
+        expected_result = (
+            "Assistant is a character in the role play game.\n"
+            "Assistant strictly has to follow the character description and general instructions.\n"
+            "\n<Current scene description>\n"
+            "A mysterious forest clearing illuminated by moonlight.\n"
+            "</Current scene description>\n"
+        )
+        
+        assert result == expected_result
+
     def test_build_with_all_configs(self, builder, sample_assistant_configs, sample_character_config, sample_location_config):
         """Test building a complete prompt with all config types."""
+        scene_description = "A bustling marketplace filled with merchants and travelers."
         result = (builder
                  .with_assistant_configs(sample_assistant_configs)
                  .with_character_config(sample_character_config)
                  .with_location_config(sample_location_config)
+                 .with_current_scene_description(scene_description)
                  .build())
         
         expected_result = (
@@ -210,6 +253,9 @@ class TestCharacterMoveSystemPromptBuilder:
             "Glowing crystals\n"
             "Ancient artifacts\n"
             "</Location description>\n"
+            "\n<Current scene description>\n"
+            "A bustling marketplace filled with merchants and travelers.\n"
+            "</Current scene description>\n"
         )
         
         assert result == expected_result
