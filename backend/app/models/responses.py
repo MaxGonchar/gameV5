@@ -19,6 +19,7 @@ class BotResponse(BaseModel):
     id: str
     content: str
     author_name: str
+    scene_description: str
 
 class SendMessageResponse(BaseModel):
     """Response model for sending a message."""
@@ -29,6 +30,7 @@ class SendMessageResponse(BaseModel):
 class ChatHistoryResponse(BaseModel):
     """Response model for chat history."""
     messages: List[ChatMessage]
+    scene_description: str
 
 class SummarizeChatResponse(BaseModel):
     """Response model for chat summarization."""

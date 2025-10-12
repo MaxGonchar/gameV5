@@ -23,7 +23,7 @@ class CharacterMoveSystemPromptBuilder:
         )
         return self
 
-    def with_character_config(self, character_config: Dict[str, Any]) -> "CharacterMoveSystemPromptBuilder":
+    def with_character_config(self, character_config: list[Dict[str, Any]]) -> "CharacterMoveSystemPromptBuilder":
         self.configs.append(
             {
                 "template": "\n<Character description>\n{}\n</Character description>\n",

@@ -2,48 +2,41 @@
 Chat service module containing business logic and prompt processing.
 """
 
-import asyncio
-from enum import Enum
-from typing import Any, List
+from typing import List
 import os
 from dotenv import load_dotenv
 import logging
+import asyncio
 
-from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
+from langchain.prompts import PromptTemplate
 
-from app.chat_types import ChatItem, ProcessUserMessageResponse
+from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
 from app.llm.venice_client import VeniceClient
 from app.models.assistant_response import AssistantResponse
-from app.dao.character_dao import CharacterDAO
-from app.dao.chat_history_dao import ChatHistoryDAO
-from app.dao.location_dao import LocationDAO
 from app.builders import CharacterMoveSystemPromptBuilder
-from app.objects import Character, ChatHistory
-from app.objects.location import Location
+from app.objects.global_state import GlobalState
+from app.services.prompt_templates import SCENE_DESCRIPTION
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# temporary constants:
-CHARACTER_NAME = "Nira"
-CHARACTER_ID = "nira"
-USER_NAME = "Max"
-USER_ID = "max"
-
-
-class AuthorType(Enum):
-    USER = "user"
-    BOT = "bot"
-
 
 class ChatService:
     """Service class handling chat business logic with LangChain-based prompt processing."""
+
+    # TODO: Using async __new__ is an anti-pattern and can cause issues with object initialization.
+    # Consider using a factory method or async context manager instead.
+    async def __new__(cls, *a, **kw):
+        instance = super().__new__(cls)
+        await instance.__init__(*a, **kw)
+        return instance
     
-    def __init__(
-        self, 
+    async def __init__(
+        self,
         character_name: str = "nira"
     ):
         """
@@ -58,11 +51,8 @@ class ChatService:
         load_dotenv()  # Load environment variables
         
         self.character_name = character_name
-        
-        # Initialize DAOs
-        self.character_dao = CharacterDAO()
-        self.chat_history_dao = ChatHistoryDAO()
-        self.location_dao = LocationDAO()
+
+        self.global_state: GlobalState = await GlobalState(character_name)
         
         # Initialize character prompt builder with default template
         self.system_prompt_builder = CharacterMoveSystemPromptBuilder()
@@ -89,18 +79,18 @@ class ChatService:
         except Exception as e:
             raise ValueError(f"Failed to initialize VeniceAI model: {e}")
 
-    def _generate_chat_messages(self, chat_history: ChatHistory, character_config: dict[str, Any], location: Location) -> list[BaseMessage]:
+    def _generate_chat_messages(self) -> list[BaseMessage]:
         messages = []
 
         system_prompt = self.system_prompt_builder\
-            .with_assistant_configs(character_config["assistant"])\
-            .with_character_config(character_config["character"])\
-            .with_location_config(location.description)\
+            .with_assistant_configs(self.global_state.get_character_assistant_configs())\
+            .with_character_config(self.global_state.get_character_prompt_configs())\
+            .with_location_config(self.global_state.get_location_description())\
             .build()
 
         messages.append(SystemMessage(content=system_prompt))
 
-        for item in chat_history:
+        for item in self.global_state.get_chat_history():
             if item["author_type"] == "user":
                 messages.append(HumanMessage(content=item["content"]))
             elif item["author_type"] == "bot":
@@ -109,56 +99,54 @@ class ChatService:
         return messages
 
 
-    async def _generate_bot_response(self, chat_history: ChatHistory, character_config: dict[str, Any], location: Location) -> str:
-        messages = self._generate_chat_messages(chat_history, character_config, location)
+    async def _generate_bot_response(self) -> str:
+        messages = self._generate_chat_messages()
         response = await self.venice_model.ainvoke(messages)
-
         return str(response.content)
 
-    async def _get_data(self) -> tuple[Character, ChatHistory, Location]:
-        character, chat_history, location = await asyncio.gather(
-            self.character_dao.get_character(self.character_name),
-            self.chat_history_dao.load_chat_history(),
-            self.location_dao.get_location()
-        )
-        return character, chat_history, location
-
-    async def _store_data(self, character: Character, chat_history: ChatHistory) -> None:
-        await asyncio.gather(
-            self.chat_history_dao.save(chat_history),
-            self.character_dao.store_character(character)
-        )
-
-    async def _update_character(self, character: Character, user_message: str) -> Character:
+    async def _update_character(self, user_message: str) -> None:
         embeddings = await self._get_user_message_embeddings(user_message)
-        character.update_dynamic_configs_according_to_message_embeddings(embeddings)
-        return character
+        self.global_state.update_character_configs(embeddings)
     
     async def _get_user_message_embeddings(self, user_message: str) -> list[float]:
         embeddings = await self.llm_client.embed([user_message])
         return embeddings[0]
+
+    async def _update_chat_history(self, message: str, author_user: bool) -> None:
+        last_description = self.global_state.get_last_scene_description()
+        new_description = await self._change_scene_description(last_description, message)
+        if author_user:
+            self.global_state.add_user_message(message, new_description)
+        else:
+            self.global_state.add_character_message(message, new_description)
     
+    async def _change_scene_description(self, previous_description: str, message: str) -> str:
+        template = SCENE_DESCRIPTION
+        prompt = PromptTemplate(
+            input_variables=["previous_description", "message"],
+            template=template
+        )
+        chain = prompt | self.venice_model | StrOutputParser()
+        response = await chain.ainvoke(
+            {
+                "previous_description": previous_description,
+                "message": message
+            }
+        )
+        return response
+
     async def process_user_message(self, message: str) -> None:
-        character, chat_history, location = await self._get_data()
-        chat_history.add_message(
-            author_id=USER_ID,
-            author_type=AuthorType.USER.value,
-            author_name=USER_NAME,
-            content=message
+
+        await asyncio.gather(
+            self._update_chat_history(message, author_user=True),
+            self._update_character(message)
         )
 
-        character = await self._update_character(character, message)
-        bot_response = await self._generate_bot_response(chat_history, character.to_prompt_dict(), location)
+        bot_response = await self._generate_bot_response()
 
-        chat_history.add_message(
-            author_id=CHARACTER_ID,
-            author_type=AuthorType.BOT.value,
-            author_name=CHARACTER_NAME,
-            content=bot_response
-        )
+        await self._update_chat_history(bot_response, author_user=False)
 
-        await self._store_data(character, chat_history)
+        await self.global_state.save_state()
     
     async def get_chat_history(self) -> List[ChatItem]:
-        chat_history = await self.chat_history_dao.load_chat_history()
-        return chat_history.get_data()
+        return self.global_state.get_chat_history()

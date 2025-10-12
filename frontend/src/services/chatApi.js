@@ -52,12 +52,15 @@ export const sendMessage = async (message) => {
 
 /**
  * Get the complete chat history
- * @returns {Promise<Array>} Array of chat messages
+ * @returns {Promise<Object>} Object containing messages array and scene_description
  */
 export const getChatHistory = async () => {
   try {
     const response = await api.get('/chat/history');
-    return response.data.messages || [];
+    return {
+      messages: response.data.messages || [],
+      sceneDescription: response.data.scene_description || null
+    };
   } catch (error) {
     console.error('Error getting chat history:', error);
     throw error;
