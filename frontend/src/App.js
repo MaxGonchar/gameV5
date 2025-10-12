@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import ChatHeader from './components/ChatHeader';
 import ChatHistory from './components/ChatHistory';
+import SceneDescription from './components/SceneDescription';
 import InputSection from './components/InputSection';
 import ErrorMessage from './components/ErrorMessage';
 import SuccessMessage from './components/SuccessMessage';
@@ -8,6 +8,7 @@ import * as chatApi from './services/chatApi';
 
 function App() {
   const [chatHistory, setChatHistory] = useState([]);
+  const [sceneDescription, setSceneDescription] = useState(null);
   const [loading, setLoading] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
   const [error, setError] = useState(null);
@@ -21,8 +22,9 @@ function App() {
 
   const loadChatHistory = async () => {
     try {
-      const history = await chatApi.getChatHistory();
-      setChatHistory(history);
+      const historyData = await chatApi.getChatHistory();
+      setChatHistory(historyData.messages);
+      setSceneDescription(historyData.sceneDescription);
     } catch (err) {
       console.error('Error loading chat history:', err);
       setError('Failed to load chat history. Please refresh the page.');
@@ -41,7 +43,12 @@ function App() {
 
     try {
       // Send message to backend
-      await chatApi.sendMessage(message);
+      const botResponse = await chatApi.sendMessage(message);
+      
+      // Update scene description from bot response
+      if (botResponse.scene_description) {
+        setSceneDescription(botResponse.scene_description);
+      }
       
       // Reload chat history to get the updated conversation
       await loadChatHistory();
@@ -96,14 +103,20 @@ function App() {
 
   return (
     <div className="container">
-      <ChatHeader />
-      
-      <ChatHistory 
-        messages={chatHistory} 
-        onSummarize={handleSummarize}
-        summarizing={summarizing}
-      />
-      
+      <div className="main-layout">
+        <div className="sidebar">
+          <SceneDescription sceneDescription={sceneDescription} />
+        </div>
+        
+        <div className="chat-section">
+          <ChatHistory 
+            messages={chatHistory} 
+            onSummarize={handleSummarize}
+            summarizing={summarizing}
+          />
+        </div>
+      </div>
+
       {successMessage && (
         <SuccessMessage 
           message={successMessage}
