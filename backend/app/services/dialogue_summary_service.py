@@ -10,13 +10,17 @@ import os
 import logging
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
+from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.dao.character_dao import CharacterDAO
 from app.dao.chat_history_dao import ChatHistoryDAO
-
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
-from langchain_core.messages import SystemMessage, HumanMessage
+from app.services.prompt_templates import (
+    CHAT_HISTORY_SUMMARY_PROMPT,
+    NO_EXISTING_SUMMARY_INSTRUCTION,
+    WITH_EXISTING_SUMMARY_INSTRUCTION
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +78,8 @@ class DialogueSummaryService:
         Returns:
             Dict containing success status and error information
         """
+        logger.info(f"Starting summarization up to chat item ID: {chat_item_id}")
+
         character, chat_history = await asyncio.gather(
             self.character_dao.get_character(self.character_name),
             self.chat_history_dao.load_chat_history()
@@ -125,37 +131,22 @@ class DialogueSummaryService:
         Returns:
             New summary text
         """
-        # Build the prompt
-        system_prompt = """You are an expert at summarizing dialogue between characters. Your task is to create a concise summary that captures:
+        logger.info("Generating new summary...")
 
-1. Key events that happened
-2. Important information revealed or learned
-3. Character development or relationship changes
-4. Critical decisions made
-
-Guidelines:
-- Keep the summary SHORT and focused on essential information only
-- Avoid redundancy with existing summary information
-- Extract only NEW and SIGNIFICANT information
-- Use clear, concise language
-- Focus on facts and events, not interpretations"""
+        system_prompt = CHAT_HISTORY_SUMMARY_PROMPT
 
         messages = []
         messages.append(SystemMessage(content=system_prompt))
         
         if existing_summary:
-            human_content = f"""Here is the existing summary of previous dialogue:
-{existing_summary}
-
-Now summarize this new dialogue, focusing only on NEW information and events that are NOT already covered in the existing summary:
-
-{dialogue_text}
-
-Provide a complete updated summary that includes both the previous information and the new developments."""
+            human_content = WITH_EXISTING_SUMMARY_INSTRUCTION.format(
+                existing_summary=existing_summary,
+                dialogue_text=dialogue_text
+            )
         else:
-            human_content = f"""Summarize the following dialogue, focusing on key events, important information, and character developments:
-
-{dialogue_text}"""
+            human_content = NO_EXISTING_SUMMARY_INSTRUCTION.format(
+                dialogue_text=dialogue_text
+            )
         
         messages.append(HumanMessage(content=human_content))
         

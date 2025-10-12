@@ -40,6 +40,15 @@ class CharacterMoveSystemPromptBuilder:
             }
         )
         return self
+    
+    def with_current_scene_description(self, scene_description: str) -> "CharacterMoveSystemPromptBuilder":
+        self.configs.append(
+            {
+                "template": "\n<Current scene description>\n{}\n</Current scene description>\n",
+                "configs": [scene_description],
+            }
+        )
+        return self
 
     def build(self) -> str:
         built_prompt = self.template
