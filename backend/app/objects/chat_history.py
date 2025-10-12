@@ -5,13 +5,21 @@ class ChatHistory:
     def __init__(self, data: list[ChatItem] | None):
         self.data = self._init_data(data)
 
-    def add_message(self, author_id: str, author_type: str, author_name: str, content: str) -> None:
+    def add_message(
+            self,
+            author_id: str,
+            author_type: str,
+            author_name: str,
+            content: str,
+            scene_description: str
+    ) -> None:
         message: ChatItem = {
             "id": str(self._last_id() + 1),
             "author_id": author_id,
             "author_type": author_type,
             "author_name": author_name,
-            "content": content
+            "content": content,
+            "scene_description": scene_description
         }
         self.data.append(message)
 
@@ -90,3 +98,8 @@ class ChatHistory:
         self.data = self.data[target_index + 1:]
         
         return items_to_remove
+
+    def get_last_scene_description(self) -> str | None:
+        if not self.data:
+            return None
+        return self.data[-1]["scene_description"]

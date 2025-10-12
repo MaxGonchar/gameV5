@@ -45,7 +45,8 @@ async def process_user_message(request: SendMessageRequest):
         return BotResponse(
             id=last_message["id"],
             content=last_message["content"],
-            author_name=last_message["author_name"]
+            author_name=last_message["author_name"],
+            scene_description=last_message["scene_description"]
             )
     except Exception as e:
         logger.exception(f"Error processing message: {str(e)}")
@@ -72,8 +73,11 @@ async def get_chat_history():
             for item in chat_history
         ]
         
-        return ChatHistoryResponse(messages=messages)
-        
+        return ChatHistoryResponse(
+            messages=messages,
+            scene_description=chat_history[-1]["scene_description"]
+        )
+
     except Exception as e:
         logger.error(f"Error getting chat history: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

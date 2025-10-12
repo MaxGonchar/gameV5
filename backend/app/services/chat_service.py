@@ -2,14 +2,15 @@
 Chat service module containing business logic and prompt processing.
 """
 
-from enum import Enum
 from typing import List
 import os
 from dotenv import load_dotenv
 import logging
+import asyncio
 
-from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
+from langchain.prompts import PromptTemplate
 
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
@@ -17,6 +18,7 @@ from app.llm.venice_client import VeniceClient
 from app.models.assistant_response import AssistantResponse
 from app.builders import CharacterMoveSystemPromptBuilder
 from app.objects.global_state import GlobalState
+from app.services.prompt_templates import SCENE_DESCRIPTION
 
 
 logging.basicConfig(level=logging.INFO)
@@ -99,7 +101,6 @@ class ChatService:
     async def _generate_bot_response(self) -> str:
         messages = self._generate_chat_messages()
         response = await self.venice_model.ainvoke(messages)
-
         return str(response.content)
 
     async def _update_character(self, user_message: str) -> None:
@@ -109,14 +110,40 @@ class ChatService:
     async def _get_user_message_embeddings(self, user_message: str) -> list[float]:
         embeddings = await self.llm_client.embed([user_message])
         return embeddings[0]
-    
-    async def process_user_message(self, message: str) -> None:
-        self.global_state.add_user_message(message)
 
-        await self._update_character(message)
+    async def _update_chat_history(self, message: str, author_user: bool) -> None:
+        last_description = self.global_state.get_last_scene_description()
+        new_description = await self._change_scene_description(last_description, message)
+        if author_user:
+            self.global_state.add_user_message(message, new_description)
+        else:
+            self.global_state.add_character_message(message, new_description)
+    
+    async def _change_scene_description(self, previous_description: str, message: str) -> str:
+        template = SCENE_DESCRIPTION
+        prompt = PromptTemplate(
+            input_variables=["previous_description", "message"],
+            template=template
+        )
+        chain = prompt | self.venice_model | StrOutputParser()
+        response = await chain.ainvoke(
+            {
+                "previous_description": previous_description,
+                "message": message
+            }
+        )
+        return response
+
+    async def process_user_message(self, message: str) -> None:
+
+        await asyncio.gather(
+            self._update_chat_history(message, author_user=True),
+            self._update_character(message)
+        )
+
         bot_response = await self._generate_bot_response()
 
-        self.global_state.add_character_message(bot_response)
+        await self._update_chat_history(bot_response, author_user=False)
 
         await self.global_state.save_state()
     

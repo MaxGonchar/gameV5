@@ -61,20 +61,22 @@ class GlobalState:
         self.location = location
         self.meta = meta
 
-    def add_user_message(self, message: str) -> None:
+    def add_user_message(self, message: str, scene_description: str) -> None:
         self.chat_history.add_message(
             author_id=USER_ID,
             author_type=AuthorType.USER.value,
             author_name=USER_NAME,
-            content=message
+            content=message,
+            scene_description=scene_description
         )
 
-    def add_character_message(self, message: str) -> None:
+    def add_character_message(self, message: str, scene_description: str) -> None:
         self.chat_history.add_message(
             author_id=CHARACTER_ID,
             author_type=AuthorType.BOT.value,
             author_name=CHARACTER_NAME,
-            content=message
+            content=message,
+            scene_description=scene_description
         )
     
     def update_character_configs(self, user_message_embeddings: list[float]) -> None:
@@ -91,6 +93,11 @@ class GlobalState:
     
     def get_chat_history(self) -> list[ChatItem]:
         return self.chat_history.get_data()
+
+    def get_last_scene_description(self) -> str:
+        if description := self.chat_history.get_last_scene_description():
+            return description
+        return self.meta.initial_scene_description
 
     async def save_state(self) -> None:
         await asyncio.gather(
