@@ -11,7 +11,7 @@ import os
 # Add the app directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-from app.api.routes import chat, health
+from app.api.routes import chat, health, characters
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health.router, prefix="/api", tags=["health"])
     app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+    app.include_router(characters.router, prefix="/api/v1", tags=["characters"])
     
     return app
 

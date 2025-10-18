@@ -37,6 +37,15 @@ class SummarizeChatResponse(BaseModel):
     success: bool
     error: Optional[str] = None
 
+class CharacterSummary(BaseModel):
+    """Model for character summary data."""
+    id: str
+    name: str
+
+class CharactersResponse(BaseModel):
+    """Response model for characters list."""
+    characters: List[CharacterSummary]
+
 class HealthResponse(BaseModel):
     """Response model for health check."""
     status: str

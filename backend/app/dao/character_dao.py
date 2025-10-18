@@ -1,9 +1,6 @@
-import yaml
-import aiofiles
+from typing import Optional
 import asyncio
-from typing import Dict, Any, Optional
 from pathlib import Path
-from jinja2 import Template
 
 from .yaml_file_handler import YamlFileHandler
 from app.objects import Character
@@ -12,24 +9,18 @@ from app.objects import Character
 class CharacterDAO:
     """
     Data Access Object for character configurations.
-
-    Handles:
-    - Loading YAML files from filesystem
-    - Jinja2 template rendering for variable substitution
-    - Character data management
-
-    This abstraction allows for easy replacement with database or other storage
-    systems in the future while maintaining the same interface.
+    
+    Handles loading and storing characters from/to YAML files using UUID-based directories.
     """
-
+    
     def __init__(
-        self,
+        self, 
         characters_dir: str = "data/characters",
-        yaml_handler: Optional[YamlFileHandler] = None,
-    ):
+        yaml_handler: Optional[YamlFileHandler] = None
+    ) -> None:
         """
         Initialize the character DAO.
-
+        
         Args:
             characters_dir: Directory containing character YAML files
             yaml_handler: YAML file handler dependency
@@ -37,77 +28,102 @@ class CharacterDAO:
         self.characters_dir = Path(characters_dir)
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
-    async def get_character(self, character_name: str) -> Character:
+    async def get_characters(self) -> list[Character]:
         """
-        Load and render character configuration from YAML file.
-
-        Args:
-            character_name: Name of the character
-
+        Load all characters from the characters directory.
+        
         Returns:
-            Character object containing configuration with variables substituted
+            List of Character objects
+            
+        Raises:
+            FileNotFoundError: If characters directory doesn't exist
+            yaml.YAMLError: If YAML parsing fails for any character
+        """
+        if not self.characters_dir.exists():
+            return []
+        
+        # Collect all character file paths
+        character_files = []
+        for character_dir in self.characters_dir.iterdir():
+            if character_dir.is_dir():
+                character_file = character_dir / "character.yaml"
+                if character_file.exists():
+                    character_files.append(character_file)
+        
+        if not character_files:
+            return []
+        
+        # Load all character files concurrently
+        async def load_character(character_file: Path) -> Character | None:
+            """Load a single character file, returning None if it fails."""
+            try:
+                character_data = await self.yaml_handler.read_yaml_file(character_file)
+                if isinstance(character_data, dict):
+                    return Character(character_data)
+                else:
+                    print(f"Warning: Invalid character data format in {character_file}, expected dict but got {type(character_data)}")
+                    return None
+            except Exception as e:
+                # Log the error but continue with other characters
+                print(f"Warning: Failed to load character from {character_file}: {e}")
+                return None
+        
+        # Load all characters concurrently
+        character_results = await asyncio.gather(
+            *[load_character(file) for file in character_files],
+            return_exceptions=False
+        )
+        
+        # Filter out None results (failed loads)
+        characters = [char for char in character_results if char is not None]
+        
+        return characters
 
+    async def get_character(self, id: str) -> Character:
+        """
+        Load a specific character by ID.
+        
+        Args:
+            id: UUID of the character
+            
+        Returns:
+            Character object
+            
         Raises:
             FileNotFoundError: If character file doesn't exist
             yaml.YAMLError: If YAML parsing fails
         """
-        character_file = self.characters_dir / character_name / "character.yaml"
-        return Character(await self._read_and_render_yaml(character_file))
+        character_file = self.characters_dir / id / "character.yaml"
+        
+        if not character_file.exists():
+            raise FileNotFoundError(f"Character with id {id} not found at {character_file}")
+        
+        character_data = await self.yaml_handler.read_yaml_file(character_file)
+        
+        if not isinstance(character_data, dict):
+            raise ValueError(f"Invalid character data format in {character_file}, expected dict but got {type(character_data)}")
+        
+        return Character(character_data)
 
-    async def _read_and_render_yaml(self, file_path: Path) -> Dict[str, Any]:
+    async def store_character(self, id: str, character: Character) -> None:
         """
-        Read a YAML file, render it using Jinja2 with variables from the file
-        itself, and return its contents as a dict.
-
+        Store a character to a YAML file.
+        
         Args:
-            file_path: Path to the YAML file
-
-        Returns:
-            Contents of the YAML file as a dict with variables rendered
-
+            id: UUID for the character directory
+            character: Character object to store
+            
         Raises:
-            FileNotFoundError: If file doesn't exist
-            yaml.YAMLError: If YAML parsing fails
-            Exception: For other unexpected errors
+            yaml.YAMLError: If YAML serialization fails
+            OSError: If file writing fails
         """
-        try:
-            yaml_string, yaml_dict = await asyncio.gather(
-                self.yaml_handler.read_raw_string(file_path),
-                self.yaml_handler.read_yaml_file(file_path),
-            )
-
-            variables = (
-                yaml_dict.get("variables", {}) if isinstance(yaml_dict, dict) else {}
-            )
-
-            template = Template(yaml_string)
-            rendered_yaml_string = template.render(**variables)
-
-            data = yaml.safe_load(rendered_yaml_string)
-
-            return data
-
-        except yaml.YAMLError as exc:
-            raise yaml.YAMLError(f"Error parsing rendered YAML: {exc}")
-
-    async def store_character(self, character: Character) -> None:
-        """
-        Store character configuration to a YAML file.
-
-        Args:
-            character: Character object containing configuration to store
-
-        Raises:
-            Exception: If an error occurs while writing the file
-        """
-        character_dir = self.characters_dir / character.name.lower()
+        character_dir = self.characters_dir / id
         character_file = character_dir / "character.yaml"
-
+        
         # Ensure the directory exists
         character_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Store the character using the yaml handler
+        await self.yaml_handler.write_yaml_file(character_file, character.to_dict())
 
-        yaml_string = yaml.dump(character.to_dict(), default_flow_style=False)
-
-        async with aiofiles.open(character_file, "w", encoding="utf-8") as file:
-            await file.write(yaml_string)
 
