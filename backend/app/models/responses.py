@@ -46,6 +46,15 @@ class CharactersResponse(BaseModel):
     """Response model for characters list."""
     characters: List[CharacterSummary]
 
+class LocationSummary(BaseModel):
+    """Model for location summary data."""
+    id: str
+    name: str
+
+class LocationsResponse(BaseModel):
+    """Response model for locations list."""
+    locations: List[LocationSummary]
+
 class HealthResponse(BaseModel):
     """Response model for health check."""
     status: str

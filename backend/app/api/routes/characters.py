@@ -8,6 +8,8 @@ import logging
 from app.models.responses import CharactersResponse
 from app.services.character_service import CharacterService
 
+# TODO: move logger configuration to main.py
+# check other files for similar logger setups
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
