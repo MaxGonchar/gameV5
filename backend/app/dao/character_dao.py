@@ -10,7 +10,8 @@ class CharacterDAO:
     """
     Data Access Object for character configurations.
     
-    Handles loading and storing characters from/to YAML files using UUID-based directories.
+    Handles loading and storing characters from/to YAML files.
+    Structure: {characters_dir}/{character_id}/character.yaml
     """
     
     def __init__(
@@ -22,7 +23,7 @@ class CharacterDAO:
         Initialize the character DAO.
         
         Args:
-            characters_dir: Directory containing character YAML files
+            characters_dir: Directory containing character subdirectories (default: "data/characters")
             yaml_handler: YAML file handler dependency
         """
         self.characters_dir = Path(characters_dir)
@@ -79,12 +80,12 @@ class CharacterDAO:
         
         return characters
 
-    async def get_character(self, id: str) -> Character:
+    async def get_character(self, character_id: str) -> Character:
         """
         Load a specific character by ID.
         
         Args:
-            id: UUID of the character
+            character_id: UUID of the character
             
         Returns:
             Character object
@@ -93,10 +94,10 @@ class CharacterDAO:
             FileNotFoundError: If character file doesn't exist
             yaml.YAMLError: If YAML parsing fails
         """
-        character_file = self.characters_dir / id / "character.yaml"
+        character_file = self.characters_dir / character_id / "character.yaml"
         
         if not character_file.exists():
-            raise FileNotFoundError(f"Character with id {id} not found at {character_file}")
+            raise FileNotFoundError(f"Character with id {character_id} not found at {character_file}")
         
         character_data = await self.yaml_handler.read_yaml_file(character_file)
         
@@ -105,19 +106,19 @@ class CharacterDAO:
         
         return Character(character_data)
 
-    async def store_character(self, id: str, character: Character) -> None:
+    async def store_character(self, character_id: str, character: Character) -> None:
         """
         Store a character to a YAML file.
         
         Args:
-            id: UUID for the character directory
+            character_id: UUID for the character directory
             character: Character object to store
             
         Raises:
             yaml.YAMLError: If YAML serialization fails
             OSError: If file writing fails
         """
-        character_dir = self.characters_dir / id
+        character_dir = self.characters_dir / character_id
         character_file = character_dir / "character.yaml"
         
         # Ensure the directory exists
