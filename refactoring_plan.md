@@ -9,9 +9,11 @@ data/
 │       ├── characters/
 │       │   └── <character_id>/
 │       │       └── character.yaml
-│       ├── chat_history.yaml
-│       ├── location.yaml
-│       └── meta.yaml
+|       ├── locations/
+|       │   └── <location_id>/
+|       │       └── location.yaml
+|       ├── chat_history.yaml
+|       └── meta.yaml
 ├── characters/  # Global character templates (existing)
 └── locations/   # Global location templates (existing)
 ```
@@ -29,18 +31,24 @@ data/
 - **Clean Architecture**: DAO doesn't know about specific use cases, just handles character operations
 - **Test**: ✅ PASSED - All backward compatibility maintained + flexible for any future use case
 
-### ✅ Step 2: Refactor ChatHistoryDAO
+### ✅ Step 2: Refactor LocationDAO - COMPLETED ✅
+- **Backward Compatible**: `LocationDAO()` still defaults to `"data/locations"`
+- **Generic Design**: `LocationDAO(locations_dir="any/path/to/locations")`
+- **Usage Examples**:
+  - Locations Service: `dao = LocationDAO()` (unchanged)
+  - Story Locations: `dao = LocationDAO(locations_dir=f"data/stories/{story_id}/locations")`
+  - Future Use Cases: `dao = LocationDAO(locations_dir="any/other/feature/locations")`
+- **Clean Architecture**: DAO doesn't know about specific use cases, just handles location operations
+- **Test**: ✅ PASSED - Successfully loads:
+  - 1 global location (The Stillwood Glade)
+  - 1 story location (The Stillwood Glade) 
+  - Same location exists in both global and story-specific paths
+
+### ✅ Step 3: Refactor ChatHistoryDAO
 - **Current**: `ChatHistoryDAO(chat_history_file="data/chat_history/chat_history.yaml")`
 - **New**: `ChatHistoryDAO(story_id: str, stories_dir="data/stories")`
 - Update path to: `data/stories/{story_id}/chat_history.yaml`
 - **Test**: Verify chat history loading/saving works with story-specific paths
-
-### ✅ Step 3: Refactor LocationDAO
-- **Current**: `LocationDAO(locations_dir="data/locations")` 
-- **New**: `LocationDAO(story_id: str, stories_dir="data/stories")`
-- Update path to: `data/stories/{story_id}/location.yaml`
-- Remove old global location logic, use story-specific locations
-- **Test**: Verify location loading works with story-specific paths
 
 ### ✅ Step 4: Refactor MetaDAO
 - **Current**: `MetaDAO(meta_dir="data")`

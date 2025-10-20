@@ -1,37 +1,17 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 import asyncio
 from app.objects.location import Location
 
 from .yaml_file_handler import YamlFileHandler
 
 
-# class LocationDAO:
-#     def __init__(
-#         self,
-#         locations_dir: str = "data",
-#         yaml_handler: Optional[YamlFileHandler] = None,
-#     ):
-#         self.locations_dir = Path(locations_dir)
-#         self.yaml_handler = yaml_handler or YamlFileHandler()
-
-#     async def get_location(self) -> Location:
-#         path = self.locations_dir / "location.yaml"
-#         data = await self._read_yaml(path)
-#         return Location(data)
-    
-#     async def _read_yaml(self, file_path: Path) -> dict[str, Any]:
-#         data = await self.yaml_handler.read_yaml_file(file_path)
-#         if not data or not isinstance(data, dict):
-#             raise ValueError(f"Invalid location data in {file_path}")
-#         return data
-
-
 class LocationDAO:
     """
     Data Access Object for location configurations.
     
-    Handles loading and storing locations from/to YAML files using UUID-based directories.
+    Handles loading and storing locations from/to YAML files.
+    Structure: {locations_dir}/{location_id}/location.yaml
     """
     
     def __init__(
@@ -43,7 +23,7 @@ class LocationDAO:
         Initialize the location DAO.
         
         Args:
-            locations_dir: Directory containing location YAML files
+            locations_dir: Directory containing location subdirectories (default: "data/locations")
             yaml_handler: YAML file handler dependency
         """
         self.locations_dir = Path(locations_dir)
