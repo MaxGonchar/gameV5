@@ -44,17 +44,20 @@ data/
   - 1 story location (The Stillwood Glade) 
   - Same location exists in both global and story-specific paths
 
-### ✅ Step 3: Refactor ChatHistoryDAO
+### ✅ Step 3: Refactor MetaDAO - COMPLETED ✅
+- **Backward Compatible**: `MetaDAO()` still defaults to `"data"`
+- **Generic Design**: `MetaDAO(meta_dir="any/path/to/directory")`
+- **Usage Examples**:
+  - Old Usage: `dao = MetaDAO()` → `data/meta.yaml` (if file exists)
+  - Story Usage: `dao = MetaDAO(meta_dir=f"data/stories/{story_id}")` → `data/stories/{story_id}/meta.yaml`
+- **Clean Architecture**: DAO doesn't know about specific use cases, just handles meta operations
+- **Test**: ✅ PASSED - Successfully loads story meta with initial scene description
+
+### ✅ Step 4: Refactor ChatHistoryDAO
 - **Current**: `ChatHistoryDAO(chat_history_file="data/chat_history/chat_history.yaml")`
 - **New**: `ChatHistoryDAO(story_id: str, stories_dir="data/stories")`
 - Update path to: `data/stories/{story_id}/chat_history.yaml`
 - **Test**: Verify chat history loading/saving works with story-specific paths
-
-### ✅ Step 4: Refactor MetaDAO
-- **Current**: `MetaDAO(meta_dir="data")`
-- **New**: `MetaDAO(story_id: str, stories_dir="data/stories")`
-- Update path to: `data/stories/{story_id}/meta.yaml`
-- **Test**: Verify meta loading works with story-specific paths
 
 ## Phase 2: Update GlobalState Class
 *Priority: Integrate updated DAOs with GlobalState*
