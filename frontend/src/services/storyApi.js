@@ -54,7 +54,7 @@ export const sendMessage = async (message) => {
  * Get the complete story history
  * @returns {Promise<Object>} Object containing messages array and scene_description
  */
-export const getChatHistory = async () => {
+export const getStoryHistory = async () => {
   try {
     const response = await api.get('/story/history');
     return {
@@ -72,7 +72,7 @@ export const getChatHistory = async () => {
  * @param {string} messageId - ID of the message to summarize up to
  * @returns {Promise<Object>} Summary response
  */
-export const summarizeChat = async (messageId) => {
+export const summarizeStory = async (messageId) => {
   try {
     const response = await api.post(`/story/summarize/${messageId}`);
     return response.data;
@@ -95,3 +95,7 @@ export const checkHealth = async () => {
     throw error;
   }
 };
+
+// Legacy exports for backward compatibility
+export const getChatHistory = getStoryHistory;
+export const summarizeChat = summarizeStory;

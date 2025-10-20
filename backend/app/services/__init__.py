@@ -1,5 +1,5 @@
-"""Services package for chat application."""
+"""Services package for interactive story application."""
 
-from .chat_service import ChatService
+from .story_service import StoryService
 
-__all__ = ['ChatService']
+__all__ = ['StoryService']

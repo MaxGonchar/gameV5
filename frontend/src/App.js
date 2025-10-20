@@ -4,7 +4,7 @@ import SceneDescription from './components/SceneDescription';
 import InputSection from './components/InputSection';
 import ErrorMessage from './components/ErrorMessage';
 import SuccessMessage from './components/SuccessMessage';
-import * as chatApi from './services/chatApi';
+import * as storyApi from './services/storyApi';
 
 function App() {
   const [chatHistory, setChatHistory] = useState([]);
@@ -22,7 +22,7 @@ function App() {
 
   const loadChatHistory = async () => {
     try {
-      const historyData = await chatApi.getChatHistory();
+      const historyData = await storyApi.getStoryHistory();
       setChatHistory(historyData.messages);
       setSceneDescription(historyData.sceneDescription);
     } catch (err) {
@@ -43,7 +43,7 @@ function App() {
 
     try {
       // Send message to backend
-      const botResponse = await chatApi.sendMessage(message);
+      const botResponse = await storyApi.sendMessage(message);
       
       // Update scene description from bot response
       if (botResponse.scene_description) {
@@ -75,7 +75,7 @@ function App() {
     setError(null);
 
     try {
-      await chatApi.summarizeChat(messageId);
+      await storyApi.summarizeStory(messageId);
       
       // Reload chat history after summarization
       await loadChatHistory();

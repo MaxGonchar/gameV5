@@ -1,5 +1,5 @@
 """
-Chat service module containing business logic and prompt processing.
+Story service module containing business logic and prompt processing for interactive story generation.
 """
 
 from typing import List
@@ -25,8 +25,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class ChatService:
-    """Service class handling chat business logic with LangChain-based prompt processing."""
+class StoryService:
+    """Service class handling interactive story business logic with LangChain-based prompt processing."""
 
     # TODO: Using async __new__ is an anti-pattern and can cause issues with object initialization.
     # Consider using a factory method or async context manager instead.
@@ -40,7 +40,7 @@ class ChatService:
         character_name: str = "nira"
     ):
         """
-        Initialize the chat service with VeniceAI integration and dynamic prompt building.
+        Initialize the story service with VeniceAI integration and dynamic prompt building.
         
         Args:
             character_name: Name of the character to load configuration for.
@@ -79,7 +79,7 @@ class ChatService:
         except Exception as e:
             raise ValueError(f"Failed to initialize VeniceAI model: {e}")
 
-    def _generate_chat_messages(self) -> list[BaseMessage]:
+    def _generate_story_messages(self) -> list[BaseMessage]:
         messages = []
 
         system_prompt = self.system_prompt_builder\
@@ -103,7 +103,7 @@ class ChatService:
     async def _generate_bot_response(self) -> str:
         logger.info("Generating bot response...")
 
-        messages = self._generate_chat_messages()
+        messages = self._generate_story_messages()
         response = await self.venice_model.ainvoke(messages)
         return str(response.content)
 
@@ -118,7 +118,7 @@ class ChatService:
         return embeddings[0]
 
     async def _update_chat_history(self, message: str, author_user: bool) -> None:
-        logger.info(f"Updating chat history with message: {message}, author_user: {author_user}")
+        logger.info(f"Updating story history with message: {message}, author_user: {author_user}")
 
         last_description = self.global_state.get_last_scene_description()
         new_description = await self._change_scene_description(last_description, message)

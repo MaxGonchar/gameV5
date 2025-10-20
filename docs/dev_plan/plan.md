@@ -9,19 +9,24 @@ So I can choose character and place for the new story, save it and continue late
 - when I choose character and place I can enter story page
 ### dev plan:
 - [ ] characters storage
-  - [ ] characters dao
-  - [ ] characters endpoint
-    - [ ] getCharacters
-- [ ] places storage
-  - [ ] places dao
-  - [ ] places endpoint
-    - [ ] getPlaces
+  - [x] characters dao
+  - [x] characters endpoint
+    - [x] getCharacters
+- [x] places storage
+  - [x] places dao
+  - [x] places endpoint
+    - [x] getPlaces
+
 - [ ] stories storage
   - [ ] stories dao
   - [ ] stories endpoints
     - [ ] getStories
     - [ ] createStory
     - [ ] storyPage
+
+### post implementation:
+- [ ] solve todos
+- [ ] add created and updated date to the items
 
 ## Time measurement
 I want somehow to measure time during the scene.
