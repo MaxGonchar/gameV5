@@ -12,7 +12,7 @@ data/
 |       ├── locations/
 |       │   └── <location_id>/
 |       │       └── location.yaml
-|       ├── chat_history.yaml
+|       ├── history.yaml
 |       └── meta.yaml
 ├── characters/  # Global character templates (existing)
 └── locations/   # Global location templates (existing)
@@ -53,11 +53,16 @@ data/
 - **Clean Architecture**: DAO doesn't know about specific use cases, just handles meta operations
 - **Test**: ✅ PASSED - Successfully loads story meta with initial scene description
 
-### ✅ Step 4: Refactor ChatHistoryDAO
-- **Current**: `ChatHistoryDAO(chat_history_file="data/chat_history/chat_history.yaml")`
-- **New**: `ChatHistoryDAO(story_id: str, stories_dir="data/stories")`
-- Update path to: `data/stories/{story_id}/chat_history.yaml`
-- **Test**: Verify chat history loading/saving works with story-specific paths
+### ✅ Step 4: Refactor ChatHistoryDAO → HistoryDAO - COMPLETED ✅
+- **Renamed**: `ChatHistoryDAO` → `HistoryDAO` (more generic, future-proof naming)
+- **Backward Compatible**: Alias `ChatHistoryDAO = HistoryDAO` maintained for compatibility
+- **Generic Design**: `HistoryDAO(history_file="any/path/to/history.yaml")`
+- **Usage Examples**:
+  - Old Usage: `dao = HistoryDAO()` → `data/chat_history/chat_history.yaml`
+  - Story Usage: `dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")`
+- **Method Rename**: `load_chat_history()` → `load_history()` (updated in all usages)
+- **Clean Architecture**: DAO doesn't know about specific use cases, just handles history operations
+- **Test**: ✅ PASSED - Successfully loads story history with 6 messages (Max ↔ Nira conversation)
 
 ## Phase 2: Update GlobalState Class
 *Priority: Integrate updated DAOs with GlobalState*

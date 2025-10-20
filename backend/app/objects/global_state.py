@@ -8,7 +8,7 @@ from app.objects.chat_history import ChatHistory
 from app.objects.meta import MetaData
 from app.dao.character_dao import CharacterDAO
 from app.dao.location_dao import LocationDAO
-from app.dao.chat_history_dao import ChatHistoryDAO
+from app.dao.history_dao import HistoryDAO
 from app.dao.meta_dao import MetaDAO
 from app.chat_types import ChatItem
 
@@ -37,7 +37,7 @@ class GlobalState:
 
         self.character_dao = CharacterDAO()
         self.location_dao = LocationDAO()
-        self.chat_history_dao = ChatHistoryDAO()
+        self.chat_history_dao = HistoryDAO()
         self.meta_dao = MetaDAO()
 
         self.character: Character
@@ -50,7 +50,7 @@ class GlobalState:
     async def _get_init_state(self):
         character, chat_history, location, meta = await asyncio.gather(
             self.character_dao.get_character(self.character_name),
-            self.chat_history_dao.load_chat_history(),
+            self.chat_history_dao.load_history(),
             self.location_dao.get_location(),
             self.meta_dao.get_meta()
         )

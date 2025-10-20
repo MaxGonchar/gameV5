@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.dao.character_dao import CharacterDAO
-from app.dao.chat_history_dao import ChatHistoryDAO
+from app.dao.history_dao import HistoryDAO
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
 from app.services.prompt_templates import (
@@ -52,7 +52,7 @@ class DialogueSummaryService:
         
         # Initialize DAOs
         self.character_dao = CharacterDAO()
-        self.chat_history_dao = ChatHistoryDAO()
+        self.chat_history_dao = HistoryDAO()
         
         # Initialize LLM
         venice_api_key = os.getenv("VENICE_API_KEY")
@@ -82,7 +82,7 @@ class DialogueSummaryService:
 
         character, chat_history = await asyncio.gather(
             self.character_dao.get_character(self.character_name),
-            self.chat_history_dao.load_chat_history()
+            self.chat_history_dao.load_history()
         )
         
         chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
