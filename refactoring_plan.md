@@ -104,7 +104,7 @@ data/
 - Update response models to include `story_id` where relevant
 - **Test**: ✅ PASSED - Models validate correctly with and without story_id, backward compatibility maintained
 
-### ✅ Step 10: Update Story Endpoints
+### ✅ Step 10: Update Story Endpoints - COMPLETED ✅
 - **Current URLs**: 
   - `POST /api/v1/story/message`
   - `GET /api/v1/story/history`
@@ -113,13 +113,14 @@ data/
   - `POST /api/v1/stories/{story_id}/message`
   - `GET /api/v1/stories/{story_id}/history`
   - `POST /api/v1/stories/{story_id}/summarize/{message_id}`
-- **Test**: Verify endpoints work with story ID parameter
+  - `GET /api/v1/stories` (NEW - list all stories)
+- **Test**: ✅ PASSED - All endpoints work with story_id parameter, story-specific service instances created per request
 
-### ✅ Step 11: Update Endpoint Handlers
+### ✅ Step 11: Update Endpoint Handlers - COMPLETED ✅
 - Modify story route handlers to extract `story_id` from path
 - Update service instantiation to pass `story_id`
 - Update global service instance management to be story-specific
-- **Test**: Verify full API functionality works end-to-end
+- **Test**: ✅ PASSED - Full API functionality works end-to-end, services are story-specific, responses include story_id
 
 ## Phase 5: Testing & Validation
 *Priority: Comprehensive testing and cleanup*

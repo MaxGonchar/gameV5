@@ -10,7 +10,9 @@ from app.models.requests import SendMessageRequest
 from app.models.responses import (
     ChatHistoryResponse, 
     ChatMessage,
-    BotResponse
+    BotResponse,
+    StoriesResponse,
+    StorySummary
 )
 from app.services.story_service import StoryService
 from app.services.dialogue_summary_service import DialogueSummaryService
@@ -20,34 +22,20 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Services will be initialized lazily on first use
-story_service = None
-dialogue_summary_service = None
+async def get_story_service(story_id: str) -> StoryService:
+    """Create a story service instance for the given story."""
+    return await StoryService(story_id)
 
-# TODO: This should be dynamic based on user session/request
-# For now using the test story ID as default
-DEFAULT_STORY_ID = "fdf6b8ce-57e0-4962-91bd-4f915c3f61e9"
+async def get_dialogue_summary_service(story_id: str) -> DialogueSummaryService:
+    """Create a dialogue summary service instance for the given story."""
+    return DialogueSummaryService(story_id)
 
-async def get_story_service():
-    """Get or create the story service instance."""
-    global story_service
-    if story_service is None:
-        story_service = await StoryService(DEFAULT_STORY_ID)
-    return story_service
-
-async def get_dialogue_summary_service():
-    """Get or create the dialogue summary service instance."""
-    global dialogue_summary_service
-    if dialogue_summary_service is None:
-        dialogue_summary_service = DialogueSummaryService(DEFAULT_STORY_ID)
-    return dialogue_summary_service
-
-@router.post("/story/message", response_model=BotResponse)
-async def process_user_message(request: SendMessageRequest):
+@router.post("/stories/{story_id}/message", response_model=BotResponse)
+async def process_user_message(story_id: str, request: SendMessageRequest):
     try:
-        logger.info(f"Processing message: {request.message[:50]}...")
+        logger.info(f"Processing message for story {story_id}: {request.message[:50]}...")
         
-        story_service = await get_story_service()
+        story_service = await get_story_service(story_id)
         await story_service.process_user_message(request.message)
         
         chat_history = story_service.get_chat_history()
@@ -57,7 +45,8 @@ async def process_user_message(request: SendMessageRequest):
             id=last_message["id"],
             content=last_message["content"],
             author_name=last_message["author_name"],
-            scene_description=last_message["scene_description"]
+            scene_description=last_message["scene_description"],
+            story_id=story_id
             )
     except Exception as e:
         logger.exception(f"Error processing message: {str(e)}")
@@ -66,11 +55,11 @@ async def process_user_message(request: SendMessageRequest):
             detail=f"Internal server error: {str(e)}"
         )
 
-@router.get("/story/history", response_model=ChatHistoryResponse)
-async def get_story_history():
-    logger.info("Fetching story history")
+@router.get("/stories/{story_id}/history", response_model=ChatHistoryResponse)
+async def get_story_history(story_id: str):
+    logger.info(f"Fetching story history for story {story_id}")
     try:
-        story_service = await get_story_service()
+        story_service = await get_story_service(story_id)
         chat_history = story_service.get_chat_history()
         
         messages = [
@@ -86,22 +75,45 @@ async def get_story_history():
         
         return ChatHistoryResponse(
             messages=messages,
-            scene_description=chat_history[-1]["scene_description"]
+            scene_description=chat_history[-1]["scene_description"],
+            story_id=story_id
         )
 
     except Exception as e:
         logger.error(f"Error getting story history: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.post("/story/summarize/{message_id}")
-async def summarize_story(message_id: str):
+@router.post("/stories/{story_id}/summarize/{message_id}")
+async def summarize_story(story_id: str, message_id: str):
     try:
-        logger.info(f"Summarizing story up to message {message_id}")
+        logger.info(f"Summarizing story {story_id} up to message {message_id}")
         
-        dialogue_service = await get_dialogue_summary_service()
+        dialogue_service = await get_dialogue_summary_service(story_id)
         await dialogue_service.summarize_chat_up_to_item(message_id)
-        return {"message": "success"}
+        return {"message": "success", "story_id": story_id}
         
     except Exception as e:
         logger.error(f"Error summarizing story: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.get("/stories", response_model=StoriesResponse)
+async def list_stories():
+    """List all available stories."""
+    try:
+        logger.info("Fetching available stories")
+        
+        # For now, return the single test story we have
+        # This will be expanded when we add story management utilities
+        test_story = StorySummary(
+            id="fdf6b8ce-57e0-4962-91bd-4f915c3f61e9",
+            title="The Enchanted Forest Adventure",
+            initial_scene_description="A mystical forest where magic dwells...",
+            character_count=1,
+            message_count=6
+        )
+        
+        return StoriesResponse(stories=[test_story])
+        
+    except Exception as e:
+        logger.error(f"Error listing stories: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
