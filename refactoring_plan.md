@@ -90,11 +90,11 @@ data/
 - Update all method signatures to work with story context
 - **Test**: Verify StoryService works end-to-end with story context
 
-### ✅ Step 8: Update DialogueSummaryService
+### ✅ Step 8: Update DialogueSummaryService - COMPLETED ✅
 - **Current**: `DialogueSummaryService.__init__(character_name: str = "nira")`
 - **New**: `DialogueSummaryService.__init__(story_id: str, character_id: str = None)`
 - Update DAO instantiations to use story-specific paths
-- **Test**: Verify dialogue summarization works with story context
+- **Test**: ✅ PASSED - Successfully initializes with story context, auto-detects character ID, loads story-specific data
 
 ## Phase 4: API Layer Changes
 *Priority: Update API contract and handlers*

@@ -8,7 +8,7 @@ while keeping chat history manageable by removing summarized portions.
 import asyncio
 import os
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 
@@ -39,20 +39,22 @@ class DialogueSummaryService:
     7. Saves updated character and chat history
     """
     
-    def __init__(self, character_name: str = "nira"):
+    def __init__(self, story_id: str, character_id: str | None = None):
         """
         Initialize the dialogue summary service.
         
         Args:
-            character_name: Name of the character to work with
+            story_id: UUID of the story to work with
+            character_id: UUID of the character (will be determined from story if None)
         """
         load_dotenv()
         
-        self.character_name = character_name
+        self.story_id = story_id
+        self.character_id = character_id
         
-        # Initialize DAOs
-        self.character_dao = CharacterDAO()
-        self.chat_history_dao = HistoryDAO()
+        # Initialize DAOs with story-specific paths
+        self.character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
+        self.chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
         
         # Initialize LLM
         venice_api_key = os.getenv("VENICE_API_KEY")
@@ -80,8 +82,15 @@ class DialogueSummaryService:
         """
         logger.info(f"Starting summarization up to chat item ID: {chat_item_id}")
 
+        # Determine character_id if not provided
+        if not self.character_id:
+            characters = await self.character_dao.get_characters()
+            if not characters:
+                raise ValueError(f"No characters found in story {self.story_id}")
+            self.character_id = characters[0].id
+
         character, chat_history = await asyncio.gather(
-            self.character_dao.get_character(self.character_name),
+            self.character_dao.get_character(self.character_id),
             self.chat_history_dao.load_history()
         )
         
@@ -98,7 +107,7 @@ class DialogueSummaryService:
         chat_history.trim_messages_up_to_id(chat_item_id)
         
         await asyncio.gather(
-            self.character_dao.store_character(character),
+            self.character_dao.store_character(self.character_id, character),
             self.chat_history_dao.save(chat_history)
         )
     

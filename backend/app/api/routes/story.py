@@ -20,19 +20,27 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Story service will be initialized lazily on first use
+# Services will be initialized lazily on first use
 story_service = None
-dialogue_summary_service = DialogueSummaryService()
+dialogue_summary_service = None
+
+# TODO: This should be dynamic based on user session/request
+# For now using the test story ID as default
+DEFAULT_STORY_ID = "fdf6b8ce-57e0-4962-91bd-4f915c3f61e9"
 
 async def get_story_service():
     """Get or create the story service instance."""
     global story_service
     if story_service is None:
-        # TODO: This should be dynamic based on user session/request
-        # For now using the test story ID as default
-        default_story_id = "fdf6b8ce-57e0-4962-91bd-4f915c3f61e9"
-        story_service = await StoryService(default_story_id)
+        story_service = await StoryService(DEFAULT_STORY_ID)
     return story_service
+
+async def get_dialogue_summary_service():
+    """Get or create the dialogue summary service instance."""
+    global dialogue_summary_service
+    if dialogue_summary_service is None:
+        dialogue_summary_service = DialogueSummaryService(DEFAULT_STORY_ID)
+    return dialogue_summary_service
 
 @router.post("/story/message", response_model=BotResponse)
 async def process_user_message(request: SendMessageRequest):
@@ -90,7 +98,8 @@ async def summarize_story(message_id: str):
     try:
         logger.info(f"Summarizing story up to message {message_id}")
         
-        await dialogue_summary_service.summarize_chat_up_to_item(message_id)
+        dialogue_service = await get_dialogue_summary_service()
+        await dialogue_service.summarize_chat_up_to_item(message_id)
         return {"message": "success"}
         
     except Exception as e:
