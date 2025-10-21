@@ -28,7 +28,10 @@ async def get_story_service():
     """Get or create the story service instance."""
     global story_service
     if story_service is None:
-        story_service = await StoryService()
+        # TODO: This should be dynamic based on user session/request
+        # For now using the test story ID as default
+        default_story_id = "fdf6b8ce-57e0-4962-91bd-4f915c3f61e9"
+        story_service = await StoryService(default_story_id)
     return story_service
 
 @router.post("/story/message", response_model=BotResponse)
@@ -39,7 +42,7 @@ async def process_user_message(request: SendMessageRequest):
         story_service = await get_story_service()
         await story_service.process_user_message(request.message)
         
-        chat_history = await story_service.get_chat_history()
+        chat_history = story_service.get_chat_history()
 
         last_message = chat_history[-1]
         return BotResponse(
@@ -60,7 +63,7 @@ async def get_story_history():
     logger.info("Fetching story history")
     try:
         story_service = await get_story_service()
-        chat_history = await story_service.get_chat_history()
+        chat_history = story_service.get_chat_history()
         
         messages = [
             ChatMessage(

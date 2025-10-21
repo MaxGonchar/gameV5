@@ -27,6 +27,7 @@ So I can choose character and place for the new story, save it and continue late
 ### post implementation:
 - [ ] solve todos
 - [ ] add created and updated date to the items
+- [ ] card for a user character
 
 ## Time measurement
 I want somehow to measure time during the scene.
