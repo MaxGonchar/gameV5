@@ -2,7 +2,6 @@
 Story service module containing business logic and prompt processing for interactive story generation.
 """
 
-from typing import List
 import os
 from dotenv import load_dotenv
 import logging
@@ -157,7 +156,7 @@ class StoryService:
 
         await self._update_chat_history(bot_response, author_user=False)
 
-        logger.info("Updating global state...")
+        logger.info("Updating story state...")
         await self.story_state.save_state()
 
     def get_chat_history(self) -> list[ChatItem]:
