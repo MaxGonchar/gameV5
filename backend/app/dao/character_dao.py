@@ -126,5 +126,15 @@ class CharacterDAO:
         
         # Store the character using the yaml handler
         await self.yaml_handler.write_yaml_file(character_file, character.to_dict())
+    
+    def get_character_folder(self, character_id: str) -> Path:
+        """
+        Get the folder path for a specific character by ID.
 
+        Args:
+            character_id: UUID of the character
 
+        Returns:
+            Path object representing the character's folder
+        """
+        return self.characters_dir / character_id

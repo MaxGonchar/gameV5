@@ -61,10 +61,8 @@ class LocationsResponse(BaseModel):
 class StorySummary(BaseModel):
     """Model for story summary data."""
     id: str
-    title: Optional[str] = None
-    initial_scene_description: Optional[str] = None
-    character_count: int = 0
-    message_count: int = 0
+    location: str
+    character: str
 
 class StoriesResponse(BaseModel):
     """Response model for stories list."""

@@ -6,15 +6,15 @@ from fastapi import APIRouter, HTTPException
 import logging
 
 
-from app.models.requests import SendMessageRequest
+from app.models.requests import SendMessageRequest, CreateStoryRequest
 from app.models.responses import (
     ChatHistoryResponse, 
     ChatMessage,
     BotResponse,
     StoriesResponse,
-    StorySummary
 )
 from app.services.story_service import StoryService
+from app.services.stories_service import StoriesService
 from app.services.dialogue_summary_service import DialogueSummaryService
 
 logging.basicConfig(level=logging.INFO)
@@ -90,30 +90,39 @@ async def summarize_story(story_id: str, message_id: str):
         
         dialogue_service = await get_dialogue_summary_service(story_id)
         await dialogue_service.summarize_chat_up_to_item(message_id)
+        # TODO: return proper response model
         return {"message": "success", "story_id": story_id}
         
     except Exception as e:
         logger.error(f"Error summarizing story: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.get("/stories", response_model=StoriesResponse)
-async def list_stories():
-    """List all available stories."""
+
+@router.post("/stories")
+async def create_story(request: CreateStoryRequest):
     try:
-        logger.info("Fetching available stories")
+        logger.info("Creating a new story via API")
         
-        # For now, return the single test story we have
-        # This will be expanded when we add story management utilities
-        test_story = StorySummary(
-            id="fdf6b8ce-57e0-4962-91bd-4f915c3f61e9",
-            title="The Enchanted Forest Adventure",
-            initial_scene_description="A mystical forest where magic dwells...",
-            character_count=1,
-            message_count=6
-        )
+        stories_service = StoriesService()
+        new_story_id = await stories_service.create_story(request)
         
-        return StoriesResponse(stories=[test_story])
+        # TODO: return proper response model
+        return {"message": "success", "story_id": new_story_id}
         
     except Exception as e:
-        logger.error(f"Error listing stories: {str(e)}")
+        logger.error(f"Error creating story: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/stories", response_model=StoriesResponse)
+async def get_stories_summary():
+    try:
+        logger.info("Fetching stories summary via API")
+
+        stories_service = StoriesService()
+
+        return await stories_service.get_stories_summary()
+        
+    except Exception as e:
+        logger.error(f"Error fetching stories summary: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

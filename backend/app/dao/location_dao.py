@@ -105,3 +105,14 @@ class LocationDAO:
         locations = [loc for loc in location_results if loc is not None]
         
         return locations
+    
+    def get_location_path(self, location_id: str) -> Path:
+        """
+        Get the file path for a specific location by ID.
+        
+        Args:
+            id: UUID of the location
+        Returns:
+            Path to the location.yaml file
+        """
+        return self.locations_dir / location_id
