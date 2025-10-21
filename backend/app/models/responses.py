@@ -20,6 +20,7 @@ class BotResponse(BaseModel):
     content: str
     author_name: str
     scene_description: str
+    story_id: Optional[str] = None
 
 class SendMessageResponse(BaseModel):
     """Response model for sending a message."""
@@ -31,10 +32,12 @@ class ChatHistoryResponse(BaseModel):
     """Response model for chat history."""
     messages: List[ChatMessage]
     scene_description: str
+    story_id: Optional[str] = None
 
 class SummarizeChatResponse(BaseModel):
     """Response model for chat summarization."""
     success: bool
+    story_id: Optional[str] = None
     error: Optional[str] = None
 
 class CharacterSummary(BaseModel):
@@ -54,6 +57,18 @@ class LocationSummary(BaseModel):
 class LocationsResponse(BaseModel):
     """Response model for locations list."""
     locations: List[LocationSummary]
+
+class StorySummary(BaseModel):
+    """Model for story summary data."""
+    id: str
+    title: Optional[str] = None
+    initial_scene_description: Optional[str] = None
+    character_count: int = 0
+    message_count: int = 0
+
+class StoriesResponse(BaseModel):
+    """Response model for stories list."""
+    stories: List[StorySummary]
 
 class HealthResponse(BaseModel):
     """Response model for health check."""
