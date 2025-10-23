@@ -85,11 +85,6 @@ function CreateStory() {
 
   return (
     <div className="create-story">
-      <div className="create-story__header">
-        <h1>✨ Create New Story</h1>
-        <Link to="/" className="create-story__back-link">← Back to Stories</Link>
-      </div>
-
       <form onSubmit={handleCreateStory} className="create-story__form">
         {/* Side-by-side dropdowns */}
         <div className="create-story__selectors">

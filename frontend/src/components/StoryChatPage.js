@@ -150,10 +150,6 @@ function StoryChatPage() {
   if (initialLoading) {
     return (
       <div className="story-chat-page">
-        <div className="story-chat-page__header">
-          <Link to="/" className="story-chat-page__back-link">← Back to Stories</Link>
-          <h1>Loading Story...</h1>
-        </div>
         <div className="story-chat-page__loading">
           <div className="loading-spinner"></div>
           <p>Loading story content...</p>
@@ -166,10 +162,6 @@ function StoryChatPage() {
   if (error && !chatHistory.length && !sceneDescription) {
     return (
       <div className="story-chat-page">
-        <div className="story-chat-page__header">
-          <Link to="/" className="story-chat-page__back-link">← Back to Stories</Link>
-          <h1>Story Error</h1>
-        </div>
         <div className="story-chat-page__error">
           <p>{error}</p>
           <Link to="/" className="story-chat-page__return-button">Return to Dashboard</Link>
@@ -180,19 +172,6 @@ function StoryChatPage() {
 
   return (
     <div className="story-chat-page">
-      <div className="story-chat-page__header">
-        <Link to="/" className="story-chat-page__back-link">← Back to Stories</Link>
-        <div className="story-chat-page__title">
-          <h1>Story Adventure</h1>
-          {storyInfo && (
-            <div className="story-chat-page__meta">
-              <span className="story-meta__character">👤 {storyInfo.character}</span>
-              <span className="story-meta__location">📍 {storyInfo.location}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="container">
         <div className="main-layout">
           <div className="sidebar">
