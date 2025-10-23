@@ -553,3 +553,296 @@ code {
   outline: 2px solid rgba(0, 123, 255, 0.5);
   outline-offset: 2px;
 }
+
+/* Create Story Styles */
+.create-story {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.create-story__header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.create-story__header h1 {
+  font-size: 2rem;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.create-story__back-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.create-story__back-link:hover {
+  color: #0052a3;
+  text-decoration: underline;
+}
+
+.create-story__form {
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.create-story__scene-section {
+  margin-bottom: 24px;
+}
+
+.create-story__scene-label {
+  display: block;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.create-story__scene-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color 0.2s ease;
+}
+
+.create-story__scene-textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.create-story__scene-textarea:disabled {
+  background-color: #f9fafb;
+  cursor: not-allowed;
+}
+
+.create-story__char-count {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.create-story__error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+}
+
+.create-story__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.create-story__cancel-button {
+  padding: 10px 20px;
+  color: #6b7280;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.create-story__cancel-button:hover {
+  color: #374151;
+  text-decoration: underline;
+}
+
+.create-story__create-button {
+  padding: 12px 24px;
+  background: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-story__create-button:hover:not(:disabled) {
+  background: #0052a3;
+  transform: translateY(-1px);
+}
+
+.create-story__create-button:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Selector Component Styles */
+.character-selector,
+.location-selector {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(225, 229, 233, 0.5);
+}
+
+.character-selector__label,
+.location-selector__label {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.character-selector__label::before {
+  content: "👤";
+  font-size: 1.2rem;
+}
+
+.location-selector__label::before {
+  content: "📍";
+  font-size: 1.2rem;
+}
+
+.character-selector__select,
+.location-selector__select {
+  padding: 16px 20px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafb 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 50px;
+}
+
+.character-selector__select:hover,
+.location-selector__select:hover {
+  border-color: #0066cc;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+  transform: translateY(-2px);
+}
+
+.character-selector__select:focus,
+.location-selector__select:focus {
+  outline: none;
+  border-color: #0066cc;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15), 0 4px 12px rgba(0, 102, 204, 0.1);
+  transform: translateY(-1px);
+}
+
+.character-selector__select:disabled,
+.location-selector__select:disabled {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.character-selector__select option,
+.location-selector__select option {
+  padding: 12px;
+  font-size: 1rem;
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+.character-selector__loading,
+.location-selector__loading {
+  padding: 16px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.character-selector__loading::before,
+.location-selector__loading::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #6b7280;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced selector container styling */
+.create-story__selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafb 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 1px solid #e1e5e9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Additional Responsive Design for Create Story */
+@media (max-width: 768px) {
+  .create-story {
+    padding: 16px;
+  }
+  
+  .create-story__form {
+    padding: 24px;
+  }
+  
+  .create-story__selectors {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .create-story__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  
+  .create-story__create-button,
+  .create-story__cancel-button {
+    text-align: center;
+    padding: 12px;
+  }
+}
