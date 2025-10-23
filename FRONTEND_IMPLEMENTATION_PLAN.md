@@ -45,8 +45,8 @@ services/
   - `getCharacters()`, `getLocations()`
 - [x] Create `healthService.js` with `checkHealth()`
 - [x] Create `testServices.js` for API validation
-- [ ] Update existing components to use new service structure (will do in Item 5)
-- [ ] Remove old `storyApi.js` file (will do after migration)
+- [x] Update existing components to use new service structure (completed in Item 5)
+- [x] Remove old `storyApi.js` file (completed - legacy files cleaned up)
 - [x] Test all new service functions
 
 **API Mappings:**
@@ -191,17 +191,17 @@ services/
 ### 🔄 Phase 3: Integration
 
 #### Item 5: Adapt Existing Story Page
-**Status:** ⏳ PENDING  
+**Status:** ✅ COMPLETED  
 **Files:** `frontend/src/components/StoryChatPage.js` (renamed from `App.js`)  
 **Goal:** Make existing chat interface work with specific story IDs
 
 **Tasks:**
-- [ ] Extract chat logic from `App.js` to `StoryChatPage.js`
-- [ ] Add storyId parameter from URL using `useParams()`
-- [ ] Update all API calls to use storyId parameter
-- [ ] Test chat functionality with different story IDs
-- [ ] Add navigation back to dashboard
-- [ ] Handle invalid/missing story IDs with error page
+- [x] Extract chat logic from `App.js` to `StoryChatPage.js`
+- [x] Add storyId parameter from URL using `useParams()`
+- [x] Update all API calls to use storyId parameter
+- [x] Test chat functionality with different story IDs
+- [x] Add navigation back to dashboard
+- [x] Handle invalid/missing story IDs with error page
 
 **Changes:**
 - `sendMessage(message)` → `sendMessage(storyId, message)`  

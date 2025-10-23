@@ -25,6 +25,7 @@ So I can choose character and place for the new story, save it and continue late
     - [ ] storyPage
 
 ### post implementation:
+- story with no history problem
 - [ ] solve todos
 - [ ] sanitize the code
   - [ ] remove unused imports
