@@ -26,6 +26,11 @@ So I can choose character and place for the new story, save it and continue late
 
 ### post implementation:
 - [ ] solve todos
+- [ ] sanitize the code
+  - [ ] remove unused imports
+  - [ ] organize imports
+  - [ ] look for places where similar actions are implemented in a different way and make it uniform
+  - [ ] ask assistant to look for code smells
 - [ ] add created and updated date to the items
 - [ ] card for a user character
 
