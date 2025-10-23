@@ -23,7 +23,7 @@ Converting the single-story React frontend to support multiple stories with char
 
 ### 🔄 Phase 1: Foundation
 #### Item 1: Restructure API Service Layer
-**Status:** ⏳ PENDING  
+**Status:** ✅ COMPLETED  
 **Files:** `frontend/src/services/api.js`, `frontend/src/services/storyService.js`, `frontend/src/services/catalogService.js`, `frontend/src/services/healthService.js`  
 **Goal:** Create modular API service structure for multi-story operations
 
@@ -37,16 +37,17 @@ services/
 ```
 
 **Tasks:**
-- [ ] Create `api.js` with shared axios configuration
-- [ ] Create `storyService.js` with story functions:
+- [x] Create `api.js` with shared axios configuration
+- [x] Create `storyService.js` with story functions:
   - `getStories()`, `createStory()`, `sendMessage(storyId, message)`
   - `getStoryHistory(storyId)`, `summarizeStory(storyId, messageId)`
-- [ ] Create `catalogService.js` with catalog functions:
+- [x] Create `catalogService.js` with catalog functions:
   - `getCharacters()`, `getLocations()`
-- [ ] Create `healthService.js` with `checkHealth()`
-- [ ] Update existing components to use new service structure
-- [ ] Remove old `storyApi.js` file
-- [ ] Test all new service functions
+- [x] Create `healthService.js` with `checkHealth()`
+- [x] Create `testServices.js` for API validation
+- [ ] Update existing components to use new service structure (will do in Item 5)
+- [ ] Remove old `storyApi.js` file (will do after migration)
+- [x] Test all new service functions
 
 **API Mappings:**
 - `GET /stories` → `storyService.getStories()`
