@@ -82,19 +82,20 @@ services/
 ### 🔄 Phase 2: New Pages
 
 #### Item 3: Create Story Dashboard Page
-**Status:** ⏳ PENDING  
+**Status:** ✅ COMPLETED  
 **Files:** `frontend/src/components/Dashboard.js`, `frontend/src/components/StoryCard.js`  
 **Goal:** Main landing page with story list and create option
 
 **Tasks:**
-- [ ] Create `Dashboard.js` component
-- [ ] Create `StoryCard.js` component for individual story display  
-- [ ] Create interactive "New Story" card (fully clickable) → `/create`
-- [ ] Implement story loading with `storyService.getStories()` API
-- [ ] Add "Continue Story" navigation to `/story/:storyId`
-- [ ] Position "New Story" card first in the layout
-- [ ] Style dashboard with CSS (consistent layout, different interactions)
-- [ ] Test story list display and navigation
+- [x] Create `Dashboard.js` component with API integration
+- [x] Create `StoryCard.js` component for both story types  
+- [x] Create interactive "New Story" card (fully clickable) → `/create`
+- [x] Implement story loading with `storyService.getStories()` API
+- [x] Add "Continue Story" navigation to `/story/:storyId`
+- [x] Position "New Story" card first in the layout
+- [x] Style dashboard with CSS (consistent layout, different interactions)
+- [x] Add loading and error states
+- [x] Test story list display and navigation
 
 **Dashboard Features:**
 - Display all user stories (character + location + story ID)
