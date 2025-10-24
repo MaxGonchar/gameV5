@@ -161,3 +161,6 @@ class StoryService:
 
     def get_chat_history(self) -> list[ChatItem]:
         return self.story_state.get_chat_history()
+
+    def get_initial_scene_description(self) -> str:
+        return self.story_state.get_last_scene_description()

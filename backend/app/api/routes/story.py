@@ -75,7 +75,7 @@ async def get_story_history(story_id: str):
         
         return ChatHistoryResponse(
             messages=messages,
-            scene_description=chat_history[-1]["scene_description"],
+            scene_description=chat_history[-1]["scene_description"] if chat_history else story_service.get_initial_scene_description(),
             story_id=story_id
         )
 

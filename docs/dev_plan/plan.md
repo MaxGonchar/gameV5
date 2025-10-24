@@ -17,15 +17,15 @@ So I can choose character and place for the new story, save it and continue late
   - [x] places endpoint
     - [x] getPlaces
 
-- [ ] stories storage
-  - [ ] stories dao
-  - [ ] stories endpoints
-    - [ ] getStories
-    - [ ] createStory
-    - [ ] storyPage
+- [X] stories storage
+  - [x] stories dao
+  - [x] stories endpoints
+    - [x] getStories
+    - [x] createStory
+    - [x] storyPage
 
 ### post implementation:
-- story with no history problem
+- [x] story with no history problem
 - [ ] solve todos
 - [ ] sanitize the code
   - [ ] remove unused imports
