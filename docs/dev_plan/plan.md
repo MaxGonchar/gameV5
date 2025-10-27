@@ -1,28 +1,16 @@
 # Features
 
-## Stories
-I want to be able start and continue different stories. I want to have set of characters, places, ...
-So I can choose character and place for the new story, save it and continue later.
-### Main features I need for it:
-- entering page where I can see list of stories and create new one
-- creating new story I can see list of characters and places to choose from
-- when I choose character and place I can enter story page
-### dev plan:
-- [ ] characters storage
-  - [x] characters dao
-  - [x] characters endpoint
-    - [x] getCharacters
-- [x] places storage
-  - [x] places dao
-  - [x] places endpoint
-    - [x] getPlaces
-
-- [X] stories storage
-  - [x] stories dao
-  - [x] stories endpoints
-    - [x] getStories
-    - [x] createStory
-    - [x] storyPage
+## new character prompt template
+- [x] develop new character prompt template
+- [ ] develop a prompts helping user to crete a character
+- [ ] develop new scene description prompt template
+  - [ ] it should generate scene description for user and for character separately
+- [ ] develop new memory generation prompt template
+  - [ ] for now let it stores predefined amount of memory items cutting the oldest ones
+  - [ ] later it should be able to summarize old memories
+- [ ] develop new character data structure
+- [ ] implement new character prompt builder
+- [ ] integrate new prompt templates and prompt builder into the main codebase
 
 ### post implementation:
 - [x] story with no history problem
