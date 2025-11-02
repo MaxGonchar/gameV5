@@ -17,8 +17,9 @@ class Character:
         try:
             self.assistant = character_data["assistant"]
             self.character = character_data["character"]
-            self.name = character_data["name"]
             self.variables = character_data["variables"]
+            self.name = self.variables["name"]
+            self.id = self.variables["id"]
         except KeyError as e:
             raise ValueError(f"Invalid character_data, missing key: {e}")
 
@@ -56,7 +57,6 @@ class Character:
     def to_dict(self) -> dict[str, Any]:
         data = {
             "variables": self.variables,
-            "name": self.name,
             "assistant": self.assistant,
             "character": self.character,
         }

@@ -10,8 +10,7 @@ class TestCharacter:
     def minimal_character_data(self):
         """Minimal character data for basic functionality tests."""
         return {
-            "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [
                 {"title": "main goal", "type": "system", "value": "Be helpful"}
             ],
@@ -25,8 +24,7 @@ class TestCharacter:
     def character_data_with_dynamics(self):
         """Character data with dynamic configurations for advanced tests."""
         return {
-            "name": "DynamicChar",
-            "variables": {"name": "DynamicChar"},
+            "variables": {"name": "DynamicChar", "id": "dynamic-id-456"},
             "assistant": [
                 {"title": "main goal", "type": "system", "value": "Adapt behavior"}
             ],
@@ -70,8 +68,7 @@ class TestCharacter:
     def character_data_with_memory(self):
         """Character data with memory for memory-related tests."""
         return {
-            "name": "MemoryChar",
-            "variables": {"name": "MemoryChar"},
+            "variables": {"name": "MemoryChar", "id": "memory-id-789"},
             "assistant": [
                 {"title": "main goal", "type": "system", "value": "Remember things"}
             ],
@@ -90,7 +87,8 @@ class TestCharacterInitialization(TestCharacter):
         character = Character(minimal_character_data)
         
         assert character.name == "TestChar"
-        assert character.variables == {"name": "TestChar"}
+        assert character.id == "test-id-123"
+        assert character.variables == {"name": "TestChar", "id": "test-id-123"}
         
         # Check actual assistant content, not just length
         assert character.assistant == [
@@ -113,7 +111,8 @@ class TestCharacterInitialization(TestCharacter):
         character = Character(character_data_with_dynamics)
         
         assert character.name == "DynamicChar"
-        assert character.variables == {"name": "DynamicChar"}
+        assert character.id == "dynamic-id-456"
+        assert character.variables == {"name": "DynamicChar", "id": "dynamic-id-456"}
         
         # Check actual assistant content
         assert character.assistant == [
@@ -175,7 +174,7 @@ class TestCharacterInitialization(TestCharacter):
         """Test that dynamic configs set default parameters when not provided."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}],
             "dynamic_configs": [
@@ -222,8 +221,7 @@ class TestCharacterConversionMethods(TestCharacter):
         
         # Check actual dictionary content, not just keys
         expected_dict = {
-            "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [
                 {"title": "main goal", "type": "system", "value": "Be helpful"}
             ],
@@ -241,8 +239,7 @@ class TestCharacterConversionMethods(TestCharacter):
         
         # Check actual dictionary content with dynamics
         expected_dict = {
-            "name": "DynamicChar",
-            "variables": {"name": "DynamicChar"},
+            "variables": {"name": "DynamicChar", "id": "dynamic-id-456"},
             "assistant": [
                 {"title": "main goal", "type": "system", "value": "Adapt behavior"}
             ],
@@ -270,7 +267,7 @@ class TestCharacterMemoryMethods(TestCharacter):
         """Test getting memory when memory exists as a string."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -293,7 +290,7 @@ class TestCharacterMemoryMethods(TestCharacter):
         """Test getting memory when memory field is empty."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -325,7 +322,7 @@ class TestCharacterMemoryMethods(TestCharacter):
         """Test adding memory item when existing memory is a string."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -342,7 +339,7 @@ class TestCharacterMemoryMethods(TestCharacter):
         """Test adding memory item when memory value is None."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -363,7 +360,7 @@ class TestCharacterDynamicBehavior(TestCharacter):
         """Test impact calculation with positive similarity."""
         character = Character({
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}]
         })
@@ -381,7 +378,7 @@ class TestCharacterDynamicBehavior(TestCharacter):
         """Test impact calculation with negative similarity."""
         character = Character({
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}]
         })
@@ -399,7 +396,7 @@ class TestCharacterDynamicBehavior(TestCharacter):
         """Test impact calculation with diagonal vectors for precision validation."""
         character = Character({
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}]
         })
@@ -418,7 +415,7 @@ class TestCharacterDynamicBehavior(TestCharacter):
         """Test sigmoid mapping keeps values in expected range."""
         character = Character({
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}]
         })
@@ -459,7 +456,7 @@ class TestCharacterDynamicBehavior(TestCharacter):
         """Test that _correct_property updates character correctly."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -505,7 +502,7 @@ class TestCharacterEdgeCases(TestCharacter):
         """Test that memory matching is case insensitive."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -521,7 +518,7 @@ class TestCharacterEdgeCases(TestCharacter):
         """Test that property correction is case insensitive."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [
                 {"title": "name", "value": "TestChar"},
@@ -566,7 +563,7 @@ class TestCharacterEdgeCases(TestCharacter):
         """Test initialization with no dynamic configs returns None for parameters."""
         data = {
             "name": "TestChar",
-            "variables": {"name": "TestChar"},
+            "variables": {"name": "TestChar", "id": "test-id-123"},
             "assistant": [{"title": "goal", "value": "test"}],
             "character": [{"title": "name", "value": "TestChar"}]
         }

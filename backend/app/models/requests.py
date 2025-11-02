@@ -12,3 +12,10 @@ class SendMessageRequest(BaseModel):
 class SummarizeChatRequest(BaseModel):
     """Request model for chat summarization (optional body)."""
     pass
+
+
+class CreateStoryRequest(BaseModel):
+    """Request model for creating a new story."""
+    character_id: str = Field(..., description="UUID of the character for the new story")
+    location_id: str = Field(..., description="UUID of the location for the new story")
+    init_scene_description: str = Field(..., description="Initial scene description for the new story")

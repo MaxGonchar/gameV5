@@ -1,5 +1,5 @@
 """
-FastAPI main application for the chat bot.
+FastAPI main application for the interactive story bot.
 Run with: uvicorn app.main:app --reload
 """
 
@@ -11,14 +11,14 @@ import os
 # Add the app directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-from app.api.routes import chat, health
+from app.api.routes import story, health, characters, locations
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     
     app = FastAPI(
-        title="Chat Bot API",
-        description="REST API for LLM-driven chat application",
+        title="Interactive Story Bot API",
+        description="REST API for LLM-driven interactive story application",
         version="1.0.0"
     )
     
@@ -33,7 +33,9 @@ def create_app() -> FastAPI:
     
     # Include routers
     app.include_router(health.router, prefix="/api", tags=["health"])
-    app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+    app.include_router(story.router, prefix="/api/v1", tags=["story"])
+    app.include_router(characters.router, prefix="/api/v1", tags=["characters"])
+    app.include_router(locations.router, prefix="/api/v1", tags=["locations"])
     
     return app
 
