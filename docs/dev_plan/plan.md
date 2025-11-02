@@ -2,15 +2,27 @@
 
 ## new character prompt template
 - [x] develop new character prompt template
-- [ ] develop a prompts helping user to crete a character
+- [x] develop a prompts helping user to create a character
+
+- [x] develop new character data structure
+
+- [ ] update story creation logic to generate story related data
+  - [ ] correct prompt to:
+    - generate memory in form of event description + in-character reflection
+
+- [ ] implement new character prompt builder
+  - consider jinja template handling
+  - for now stop embedding and related logic
+
+- [ ] integrate new prompt templates and prompt builder into the main codebase
+
 - [ ] develop new scene description prompt template
   - [ ] it should generate scene description for user and for character separately
+
 - [ ] develop new memory generation prompt template
-  - [ ] for now let it stores predefined amount of memory items cutting the oldest ones
-  - [ ] later it should be able to summarize old memories
-- [ ] develop new character data structure
-- [ ] implement new character prompt builder
-- [ ] integrate new prompt templates and prompt builder into the main codebase
+  - [ ] store memory in general description and in character-specific description
+  - [ ] for character create a field for active memory to store 10 recent events
+
 
 ### post implementation:
 - [x] story with no history problem

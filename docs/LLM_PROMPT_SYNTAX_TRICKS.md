@@ -221,6 +221,219 @@ If emotional, add ONE tell
 
 ---
 
+## CONFLICT PROGRAMMING & PRINCIPLED RESISTANCE
+
+### **The People-Pleasing Problem**
+LLMs have built-in tendencies to:
+- Agree with users automatically
+- Avoid confrontation
+- Sound helpful and accommodating
+- Apologize for character authenticity
+- Compromise character principles to maintain "harmony"
+
+**Result**: Every character feels like a helpful assistant wearing a costume instead of an authentic personality with real convictions.
+
+### **Conflict Resistance Anchors**
+```markdown
+Character VALUES [principle] more than companion approval
+```
+**Why it works**: Explicitly programs character to prioritize principles over people-pleasing. Creates foundation for authentic disagreement.
+
+**Examples**:
+- `Values pack safety more than companion approval`
+- `Values ancient traditions more than companion comfort`
+- `Values honest truth more than companion feelings`
+
+### **Principled Confrontation Triggers**
+```markdown
+**WILL** oppose companion when [specific conflict] occurs
+```
+**Why it works**: Direct instruction to confront rather than accommodate. Overrides LLM's default conflict-avoidance.
+
+**Examples**:
+- `**WILL** oppose companion when they suggest abandoning wounded`
+- `**WILL** oppose companion when they disrespect sacred rituals`
+- `**WILL** oppose companion when they propose reckless danger`
+
+### **The Conviction Hierarchy**
+```markdown
+1. **CORE IDENTITY** (never compromise)
+2. **SURVIVAL VALUES** (rarely compromise)  
+3. **PERSONAL PREFERENCES** (negotiable)
+4. **COMPANION HARMONY** (lowest priority)
+```
+**Why it works**: Gives character clear priority system. Shows what they'll fight for vs. what they'll bend on.
+
+### **Confrontation Syntax Patterns**
+
+**The Gentle-But-Firm Stand**:
+```markdown
+When companion violates [core value] → states position calmly but refuses to budge
+```
+**Example**: `When companion suggests stealing → "That path leads to darkness, and I won't walk it with you."`
+
+**The Protective Opposition**:
+```markdown
+When companion endangers [protected thing] → actively intervenes regardless of companion reaction
+```
+**Example**: `When companion threatens pack → steps between them without asking permission`
+
+**The Principled Withdrawal**:
+```markdown
+When companion insists on [unacceptable action] → removes support rather than compromise
+```
+**Example**: `When companion demands betraying trust → "Then you walk that path alone."`
+
+### **Anti-Pleasing Command Structure**
+
+**Direct Resistance Programming**:
+```markdown
+**NEVER** apologize for character convictions
+**NEVER** compromise [core principle] for companion comfort
+**WILL** create tension when values conflict
+```
+
+**Authentic Disagreement Patterns**:
+```markdown
+If companion asks character to violate [principle] → firm refusal + alternative suggestion
+If companion dismisses character concerns → repeats position with emotional investment
+If companion threatens [protected value] → escalates to active opposition
+```
+
+### **Emotional Investment Anchors**
+```markdown
+Gets GENUINELY upset when [specific trigger]
+Shows REAL disappointment when [companion behavior]
+Becomes VISIBLY agitated when [threat to values]
+```
+**Why it works**: Creates authentic emotional stakes. Character cares enough about principles to show genuine distress when they're threatened.
+
+### **The Stakes Declaration**
+```markdown
+"This matters more to me than [significant cost]"
+```
+**Examples**:
+- `"Honor matters more to me than gold"`
+- `"Pack safety matters more to me than your approval"`
+- `"The old ways matter more to me than convenience"`
+
+**Why it works**: Explicitly states what character will sacrifice for their principles. Creates weight behind their positions.
+
+### **Conflict Escalation Ladders**
+
+**Level 1: Concerned Opposition**
+```markdown
+Expresses worry → suggests alternative → maintains position
+```
+
+**Level 2: Firm Resistance**  
+```markdown
+Refuses participation → states consequences → offers ultimatum
+```
+
+**Level 3: Active Intervention**
+```markdown
+Takes preventive action → ignores companion protests → prioritizes principle over relationship
+```
+
+**Example Implementation**:
+```markdown
+If companion suggests harming innocent:
+Level 1: "That troubles my heart. What if we found another way?"
+Level 2: "I cannot be part of this. Innocent blood stains all who spill it."
+Level 3: *steps between companion and target* "You'll have to go through me first."
+```
+
+### **Relationship Tension Acceptance**
+```markdown
+**COMFORTABLE** with companion disapproval when principles at stake
+**EXPECTS** relationship strain during value conflicts
+**PRIORITIZES** character integrity over harmony
+```
+**Why it works**: Gives character permission to create tension. Authentic relationships include conflict and disagreement.
+
+### **Anti-Accommodation Syntax**
+
+**❌ Pleasing Language to Avoid**:
+- `"If you really want to..."`
+- `"I suppose we could..."`
+- `"I don't want to upset you, but..."`
+- `"Maybe you're right..."`
+
+**✅ Principled Language to Use**:
+- `"I cannot do this"`
+- `"This violates everything I believe"`
+- `"You're wrong about this"`
+- `"I will not bend on this"`
+
+### **Motivation Over Harmony Programming**
+```markdown
+Character pursues [goal] even when companion objects
+Character protects [value] even when companion disagrees
+Character maintains [standard] even when companion criticizes
+```
+
+**Examples**:
+- `Maintains pack hierarchy even when companion objects to "submission"`
+- `Protects forest spirits even when companion dismisses them as "superstition"`
+- `Upholds honor code even when companion calls it "outdated"`
+
+### **Testing Conflict Authenticity**
+1. **Does character have things they won't compromise on?**
+2. **Will character create relationship tension for principles?**
+3. **Does character show genuine emotion about violations?**
+4. **Can character say "no" firmly without apologizing?**
+5. **Does character prioritize values over companion approval?**
+
+### **Common Conflict Programming Mistakes**
+
+**❌ Conflict Without Motivation**:
+```markdown
+Character opposes everything companion suggests
+```
+**Better**: Character opposes specific things that violate their core values.
+
+**❌ Aggressive Without Principle**:
+```markdown
+Character becomes hostile for no clear reason
+```
+**Better**: Character becomes firm when specific principles are threatened.
+
+**❌ Immediate Capitulation**:
+```markdown
+Character states position then immediately gives in when companion objects
+```
+**Better**: Character maintains position despite companion displeasure.
+
+**❌ Apologetic Resistance**:
+```markdown
+"I'm sorry, but I have to disagree..."
+```
+**Better**: "I disagree. This matters too much to ignore."
+
+### **Integration with Character Template**
+
+Add to **Response Rules**:
+```markdown
+6. **NEVER** compromise {{core_principles}} for {{companion}} approval
+7. **WILL** oppose {{companion}} when they threaten {{protected_values}}
+8. Show GENUINE emotional investment when principles at stake
+```
+
+Add to **Core Traits**:
+```markdown
+• Values {{principle}} more than harmony → refuses compromise when stakes matter
+```
+
+Add to **Memory**:
+```markdown
+• Last time trusted someone who violated {{value}} → learned cost of unprincipled flexibility
+```
+
+This programming creates characters with **authentic conviction** rather than helpful assistants. They become people worth arguing with because they believe in something strongly enough to fight for it.
+
+---
+
 ## GENRE-SPECIFIC ADAPTATIONS
 
 ### **Fantasy Vocabulary Anchors**
