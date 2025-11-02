@@ -120,17 +120,17 @@ class StoryState:
             scene_description=scene_description
         )
     
-    def update_character_configs(self, user_message_embeddings: list[float]) -> None:
-        """Update character configurations based on user message embeddings."""
-        self.character.update_dynamic_configs_according_to_message_embeddings(user_message_embeddings)
+    # def update_character_configs(self, user_message_embeddings: list[float]) -> None:
+    #     """Update character configurations based on user message embeddings."""
+    #     self.character.update_dynamic_configs_according_to_message_embeddings(user_message_embeddings)
 
-    def get_character_prompt_configs(self) -> list[dict[str, Any]]:
-        """Get character prompt configurations."""
-        return self.character.to_prompt_dict()["character"]
+    # def get_character_prompt_configs(self) -> list[dict[str, Any]]:
+    #     """Get character prompt configurations."""
+    #     return self.character.to_prompt_dict()["character"]
     
-    def get_character_assistant_configs(self) -> list[dict[str, Any]]:
-        """Get character assistant configurations."""
-        return self.character.to_prompt_dict()["assistant"]
+    # def get_character_assistant_configs(self) -> list[dict[str, Any]]:
+    #     """Get character assistant configurations."""
+    #     return self.character.to_prompt_dict()["assistant"]
 
     def get_location_description(self) -> dict[str, Any]:
         """Get location description."""

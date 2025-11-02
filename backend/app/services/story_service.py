@@ -109,11 +109,11 @@ class StoryService:
         response = await self.venice_model.ainvoke(messages)
         return str(response.content)
 
-    async def _update_character(self, user_message: str) -> None:
-        logger.info(f"Updating character configs based on user message: {user_message}")
+    # async def _update_character(self, user_message: str) -> None:
+    #     logger.info(f"Updating character configs based on user message: {user_message}")
 
-        embeddings = await self._get_user_message_embeddings(user_message)
-        self.story_state.update_character_configs(embeddings)
+    #     embeddings = await self._get_user_message_embeddings(user_message)
+    #     self.story_state.update_character_configs(embeddings)
     
     async def _get_user_message_embeddings(self, user_message: str) -> list[float]:
         embeddings = await self.llm_client.embed([user_message])
@@ -149,7 +149,7 @@ class StoryService:
 
         await asyncio.gather(
             self._update_chat_history(message, author_user=True),
-            self._update_character(message)
+            # self._update_character(message)
         )
 
         bot_response = await self._generate_bot_response()
