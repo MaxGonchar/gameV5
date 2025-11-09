@@ -11,7 +11,7 @@ class ChatHistory:
             author_type: str,
             author_name: str,
             content: str,
-            scene_description: str
+            scene_description: dict[str, str]
     ) -> None:
         message: ChatItem = {
             "id": str(self._last_id() + 1),
@@ -99,7 +99,7 @@ class ChatHistory:
         
         return items_to_remove
 
-    def get_last_scene_description(self) -> str | None:
+    def get_last_scene_description(self) -> dict[str, str] | None:
         if not self.data:
             return None
         return self.data[-1]["scene_description"]

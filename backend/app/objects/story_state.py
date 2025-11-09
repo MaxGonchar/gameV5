@@ -7,7 +7,7 @@ from app.objects.location import Location
 from app.objects.chat_history import ChatHistory
 from app.objects.meta import MetaData
 from app.dao.character_dao import CharacterDAO
-from app.dao.location_dao import LocationDAO
+# from app.dao.location_dao import LocationDAO
 from app.dao.history_dao import HistoryDAO
 from app.dao.meta_dao import MetaDAO
 from app.chat_types import ChatItem
@@ -53,12 +53,12 @@ class StoryState:
 
         # Initialize DAOs with story-specific paths
         self.character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
-        self.location_dao = LocationDAO(locations_dir=f"data/stories/{story_id}/locations")
+        # self.location_dao = LocationDAO(locations_dir=f"data/stories/{story_id}/locations")
         self.chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
         self.meta_dao = MetaDAO(meta_dir=f"data/stories/{story_id}")
 
         self.character: Character
-        self.location: Location
+        # self.location: Location
         self.chat_history: ChatHistory
         self.meta: MetaData
 
@@ -81,26 +81,28 @@ class StoryState:
             self.character_id = characters[0].id
 
         # Determine location_id from the first available location
-        locations = await self.location_dao.get_locations()
-        if not locations:
-            raise ValueError(f"No locations found in story {self.story_id}")
-        location_id = locations[0].id
+        # locations = await self.location_dao.get_locations()
+        # if not locations:
+        #     raise ValueError(f"No locations found in story {self.story_id}")
+        # location_id = locations[0].id
 
         # Load character and location
-        character, location = await asyncio.gather(
-            self.character_dao.get_character(self.character_id),
-            self.location_dao.get_location(location_id)
-        )
+        # character, location = await asyncio.gather(
+        #     self.character_dao.get_character(self.character_id),
+        #     self.location_dao.get_location(location_id)
+        # )
 
-        if not character or not location or not meta:
-            raise ValueError(f"Failed to initialize story state for story {self.story_id}: missing data")
+        character = await self.character_dao.get_character(self.character_id)
+
+        # if not character or not location or not meta:
+        #     raise ValueError(f"Failed to initialize story state for story {self.story_id}: missing data")
 
         self.character = character
         self.chat_history = chat_history
-        self.location = location
+        # self.location = location
         self.meta = meta
 
-    def add_user_message(self, message: str, scene_description: str) -> None:
+    def add_user_message(self, message: str, scene_description: dict[str, str]) -> None:
         """Add a user message to the chat history."""
         self.chat_history.add_message(
             author_id=self.user_id,
@@ -110,7 +112,7 @@ class StoryState:
             scene_description=scene_description
         )
 
-    def add_character_message(self, message: str, scene_description: str) -> None:
+    def add_character_message(self, message: str, scene_description: dict[str, str]) -> None:
         """Add a character message to the chat history."""
         self.chat_history.add_message(
             author_id=self.character.id,
@@ -132,19 +134,19 @@ class StoryState:
     #     """Get character assistant configurations."""
     #     return self.character.to_prompt_dict()["assistant"]
 
-    def get_location_description(self) -> dict[str, Any]:
-        """Get location description."""
-        return self.location.description
+    # def get_location_description(self) -> dict[str, Any]:
+    #     """Get location description."""
+    #     return self.location.description
     
     def get_chat_history(self) -> list[ChatItem]:
         """Get chat history data."""
         return self.chat_history.get_data()
 
-    def get_last_scene_description(self) -> str:
+    def get_last_scene_description(self) -> dict[str, str]:
         """Get the last scene description from history or meta initial scene."""
         if description := self.chat_history.get_last_scene_description():
             return description
-        return self.meta.initial_scene_description
+        return self.meta.to_dict().get("initial_scene_description", {"companion_side": "", "character_side": ""})
 
     async def save_state(self) -> None:
         """Save the current state to files."""
@@ -152,6 +154,9 @@ class StoryState:
             self.chat_history_dao.save(self.chat_history),
             self.character_dao.store_character(self.character.id, self.character),
         )
+
+    def add_story_context_character_data(self, data: dict[str, Any]) -> None:
+        self.character.add_story_context_data(data)
 
 
 # Backward compatibility alias

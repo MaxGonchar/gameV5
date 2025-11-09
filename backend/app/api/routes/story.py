@@ -45,7 +45,7 @@ async def process_user_message(story_id: str, request: SendMessageRequest):
             id=last_message["id"],
             content=last_message["content"],
             author_name=last_message["author_name"],
-            scene_description=last_message["scene_description"],
+            scene_description=last_message["scene_description"]["companion_side"],
             story_id=story_id
             )
     except Exception as e:
@@ -75,7 +75,7 @@ async def get_story_history(story_id: str):
         
         return ChatHistoryResponse(
             messages=messages,
-            scene_description=chat_history[-1]["scene_description"] if chat_history else story_service.get_initial_scene_description(),
+            scene_description=chat_history[-1]["scene_description"]["companion_side"] if chat_history else story_service.get_initial_scene_description(),
             story_id=story_id
         )
 

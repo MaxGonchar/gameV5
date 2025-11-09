@@ -21,6 +21,18 @@ class SessionMemory(BaseModel):
     )
 
 
+class MeetingSceneDescription(BaseModel):
+    """Model for meeting scene description from different perspectives."""
+    companion_side: str = Field(
+        ...,
+        description="Scene description from the companion (user) point of view - objective narrative"
+    )
+    character_side: str = Field(
+        ...,
+        description="Scene description from the character's point of view in character's voice"
+    )
+
+
 class SessionContextResponse(BaseModel):
     """Response model for session context generation."""
     companion: str = Field(
@@ -48,6 +60,10 @@ class SessionContextResponse(BaseModel):
     confused_phrase: str = Field(
         ..., 
         description="Character's deflection phrase for forbidden concepts (in character's voice)"
+    )
+    meeting_scene_description: MeetingSceneDescription = Field(
+        ...,
+        description="Meeting scene description from both companion and character perspectives"
     )
 
 
@@ -156,6 +172,38 @@ You will receive:
 - "I know nothing of these iron-words you speak"
 - "Such concepts find no place in the old paths"
 
+### 7. meeting_scene_description
+**Purpose**: Dual-perspective scene description to establish meeting context and prevent action conflicts
+**Structure**: MeetingSceneDescription object with companion_side and character_side
+**Requirements**:
+- Provides clear understanding of character disposition, poses, and interaction setup
+- Establishes scene continuity for future AI generations
+- Prevents action conflicts and inconsistencies
+
+**7.1 companion_side**:
+- Objective, third-person narrative perspective
+- Clear description of physical positioning and environment
+- Character's visible disposition and body language
+- Interaction dynamics and spatial relationships
+- Environmental details affecting possible actions
+
+**7.2 character_side**:
+- First-person perspective in character's voice and speech patterns
+- Character's internal experience of the meeting moment
+- Sensory details as character perceives them
+- Emotional/mental state reflected in character's vocabulary
+- Character's interpretation of the companion's presence
+
+**Examples**:
+
+*Fantasy Setting*:
+- companion_side: "The elven ranger stands at the forest edge, one hand resting on her bow while the other gestures welcomingly toward a hidden path. Her green cloak blends with the foliage behind her, and her eyes scan the treeline with practiced wariness even as she maintains a gentle smile toward you."
+- character_side: "The forest-song whispers of your approach, bright-heart, and I feel the old paths stirring beneath my feet. My bow-hand stays ready—not from mistrust of you, but from the shadow-whispers that follow travelers these days."
+
+*Cyberpunk Setting*:
+- companion_side: "The data-runner crouches behind a stack of shipping containers, neon light from nearby advertisements casting shifting colors across her augmented face. Her fingers dance over a portable interface while she keeps one eye on the approaching figure, body coiled and ready to move."
+- character_side: "Chrome-light burns my retinas as I jack into the local grid, but I keep visual lock on you through the rain-static. Every neural pathway screams 'run protocol' but something about your heat-signature feels... clean. Untracked."
+
 ## Generation Process
 
 ### Step 1: Analyze Session Context
@@ -172,11 +220,13 @@ You will receive:
 - What memories would be relevant to this meeting situation?
 - What immediate goal makes sense given the meeting scenario?
 - How does character's background connect to current meeting events?
+- How should the meeting scene be physically positioned and emotionally set?
 
 ### Step 4: Ensure Consistency
 - Do all variables work together cohesively?
 - Does everything match established character voice and world?
 - Are there natural conversation starters and roleplay hooks?
+- Do both scene perspectives align while maintaining their distinct viewpoints?
 
 ## Quality Standards
 
@@ -185,6 +235,7 @@ You will receive:
 **Scenario Relevance**: Variables connect naturally to meeting situation
 **Roleplay Potential**: Creates clear opportunities for interaction
 **Urgency Creation**: Immediate goals and constraints drive action
+**Scene Continuity**: Meeting scene descriptions provide clear spatial and emotional context for consistent future actions
 
 ## Remember:
 - Integrate all character elements into cohesive session context

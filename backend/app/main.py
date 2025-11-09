@@ -3,6 +3,7 @@ FastAPI main application for the interactive story bot.
 Run with: uvicorn app.main:app --reload
 """
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sys
@@ -15,6 +16,8 @@ from app.api.routes import story, health, characters, locations
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+
+    load_dotenv()
     
     app = FastAPI(
         title="Interactive Story Bot API",

@@ -11,7 +11,7 @@ class ChatItem(TypedDict):
     author_type: str # type of the author ("user" or "bot")
     author_name: str # name of the author
     content: str # content of the chat message
-    scene_description: str # description of the scene at the time right after the content was happened
+    scene_description: dict[str, str] # dictionary with 'companion_side' and 'character_side' keys describing the scene after the content
 
 
 class ProcessUserMessageResponse(TypedDict):

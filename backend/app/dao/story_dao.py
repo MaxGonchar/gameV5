@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 class StorySummary(TypedDict):
     id: str
-    location_name: str
-    character_name: str
+    title: str
 
 
 class StoryDAO:
@@ -21,7 +20,7 @@ class StoryDAO:
 
     # TODO: delete the story folder if creation fails halfway
     # TODO: refactor method to smaller pieces
-    async def create_story(self, character_path: Path, location_path: Path, story_meta: MetaData) -> str:
+    async def create_story(self, character_path: Path, story_meta: MetaData) -> str:
         """Create a new story and return its ID."""
         new_story_id = str(uuid4())
         logger.info("Creating new story with id=%s", new_story_id)
@@ -48,20 +47,20 @@ class StoryDAO:
         logger.info("Copied %d character files for story %s", char_files_copied, new_story_id)
 
         # copy location dir from general locations to story locations
-        new_location_dir = new_story_dir / "locations" / location_path.name
-        new_location_dir.mkdir(parents=True, exist_ok=True)
-        logger.info("Copying location from %s to %s", location_path, new_location_dir)
-        loc_files_copied = 0
-        for item in location_path.iterdir():
-            if item.is_file():
-                try:
-                    dest = new_location_dir / item.name
-                    dest.write_bytes(item.read_bytes())
-                    loc_files_copied += 1
-                    logger.info("Copied location file %s -> %s", item, dest)
-                except Exception:
-                    logger.exception("Failed to copy location file %s", item)
-        logger.info("Copied %d location files for story %s", loc_files_copied, new_story_id)
+        # new_location_dir = new_story_dir / "locations" / location_path.name
+        # new_location_dir.mkdir(parents=True, exist_ok=True)
+        # logger.info("Copying location from %s to %s", location_path, new_location_dir)
+        # loc_files_copied = 0
+        # for item in location_path.iterdir():
+        #     if item.is_file():
+        #         try:
+        #             dest = new_location_dir / item.name
+        #             dest.write_bytes(item.read_bytes())
+        #             loc_files_copied += 1
+        #             logger.info("Copied location file %s -> %s", item, dest)
+        #         except Exception:
+        #             logger.exception("Failed to copy location file %s", item)
+        # logger.info("Copied %d location files for story %s", loc_files_copied, new_story_id)
 
         # create meta.yaml from story_meta
         meta_file = new_story_dir / "meta.yaml"
@@ -102,37 +101,45 @@ class StoryDAO:
             logger.debug("Processing story %s", story_id)
             
             try:
-                # Get character name
-                character_name = "Unknown Character"
-                characters_dir = story_dir / "characters"
-                if characters_dir.exists():
-                    for char_dir in characters_dir.iterdir():
-                        if char_dir.is_dir():
-                            char_file = char_dir / "character.yaml"
-                            if char_file.exists():
-                                char_data = await yaml_handler.read_yaml_file(char_file)
-                                if isinstance(char_data, dict) and "variables" in char_data:
-                                    character_name = char_data["variables"].get("name", "Unknown Character")
-                                break  # Take first character found
+                # # Get character name
+                # character_name = "Unknown Character"
+                # characters_dir = story_dir / "characters"
+                # if characters_dir.exists():
+                #     for char_dir in characters_dir.iterdir():
+                #         if char_dir.is_dir():
+                #             char_file = char_dir / "character.yaml"
+                #             if char_file.exists():
+                #                 char_data = await yaml_handler.read_yaml_file(char_file)
+                #                 if isinstance(char_data, dict) and "variables" in char_data:
+                #                     character_name = char_data["variables"].get("name", "Unknown Character")
+                #                 break  # Take first character found
                 
-                # Get location name
-                location_name = "Unknown Location"
-                locations_dir = story_dir / "locations"
-                if locations_dir.exists():
-                    for loc_dir in locations_dir.iterdir():
-                        if loc_dir.is_dir():
-                            loc_file = loc_dir / "location.yaml"
-                            if loc_file.exists():
-                                loc_data = await yaml_handler.read_yaml_file(loc_file)
-                                if isinstance(loc_data, dict):
-                                    location_name = loc_data.get("name", "Unknown Location")
-                                break  # Take first location found
+                # # Get location name
+                # location_name = "Unknown Location"
+                # locations_dir = story_dir / "locations"
+                # if locations_dir.exists():
+                #     for loc_dir in locations_dir.iterdir():
+                #         if loc_dir.is_dir():
+                #             loc_file = loc_dir / "location.yaml"
+                #             if loc_file.exists():
+                #                 loc_data = await yaml_handler.read_yaml_file(loc_file)
+                #                 if isinstance(loc_data, dict):
+                #                     location_name = loc_data.get("name", "Unknown Location")
+                #                 break  # Take first location found
+                metadata_dir = story_dir / "meta.yaml"
+                if metadata_dir.exists():
+                    meta_data = await yaml_handler.read_yaml_file(metadata_dir)
+                    if isinstance(meta_data, dict) and "title" in meta_data:
+                        title = meta_data["title"]
+                    else:
+                        title = "Untitled Story"
+                else:
+                    title = "Untitled Story"
                 
                 # Create story summary
                 story_summary: StorySummary = {
                     "id": story_id,
-                    "location_name": location_name,
-                    "character_name": character_name
+                    "title": title,
                 }
                 stories.append(story_summary)
                 logger.debug("Added story summary: %s", story_summary)

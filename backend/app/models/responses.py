@@ -61,8 +61,7 @@ class LocationsResponse(BaseModel):
 class StorySummary(BaseModel):
     """Model for story summary data."""
     id: str
-    location: str
-    character: str
+    title: str
 
 class StoriesResponse(BaseModel):
     """Response model for stories list."""

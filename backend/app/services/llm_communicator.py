@@ -10,7 +10,6 @@ from typing import TypeVar, Type, Any, Dict, Optional
 from pydantic import BaseModel, ValidationError
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.prompts import ChatPromptTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -68,14 +67,8 @@ class LLMCommunicator:
         # Create output parser for the response model
         parser = PydanticOutputParser(pydantic_object=response_model)
         
-        # Create chat prompt template with format instructions
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"{system_prompt}\n\n{parser.get_format_instructions()}"),
-            ("user", "{user_input}")
-        ])
-        
-        # Create the chain: prompt | llm | parser
-        chain = prompt | self.llm_model | parser
+        # Get format instructions
+        format_instructions = parser.get_format_instructions()
         
         # Attempt generation with retries
         last_error = None
@@ -84,8 +77,17 @@ class LLMCommunicator:
             try:
                 logger.debug(f"LLM generation attempt {attempt + 1}/{self.max_retries}")
                 
-                # Execute the chain
-                result = await chain.ainvoke({"user_input": user_prompt})
+                # Create messages directly to avoid template variable conflicts
+                messages = [
+                    ("system", f"{system_prompt}\n\n{format_instructions}"),
+                    ("human", user_prompt)
+                ]
+                
+                # Execute the LLM directly with messages
+                raw_response = await self.llm_model.ainvoke(messages)
+                
+                # Parse the response manually using the parser
+                result = parser.parse(raw_response.content)
                 
                 logger.info(f"Successfully generated and parsed {response_model.__name__}")
                 return result

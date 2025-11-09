@@ -3,13 +3,14 @@ Story service module containing business logic and prompt processing for interac
 """
 
 import os
+from typing import Any
 from dotenv import load_dotenv
 import logging
 import asyncio
 
-from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
+from jinja2 import Template
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
-from langchain.prompts import PromptTemplate
 
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
@@ -17,7 +18,8 @@ from app.llm.venice_client import VeniceClient
 from app.models.assistant_response import AssistantResponse
 from app.builders import CharacterMoveSystemPromptBuilder
 from app.objects.story_state import StoryState
-from app.services.prompt_templates import SCENE_DESCRIPTION
+from app.services.llm_communicator import LLMCommunicator
+from app.models.scene_description import MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, MOVE_SCENE_DESCRIPTION_USER_PROMPT, MoveSceneDescriptionResponse
 
 
 logging.basicConfig(level=logging.INFO)
@@ -57,7 +59,7 @@ class StoryService:
         self.story_state: StoryState = await StoryState(story_id, character_id)
         
         # Initialize character prompt builder with default template
-        self.system_prompt_builder = CharacterMoveSystemPromptBuilder()
+        self.system_prompt_builder = CharacterMoveSystemPromptBuilder
 
         # Setup output parser
         self.output_parser = PydanticOutputParser(pydantic_object=AssistantResponse)
@@ -84,12 +86,16 @@ class StoryService:
     def _generate_story_messages(self) -> list[BaseMessage]:
         messages = []
 
-        system_prompt = self.system_prompt_builder\
-            .with_assistant_configs(self.story_state.get_character_assistant_configs())\
-            .with_character_config(self.story_state.get_character_prompt_configs())\
-            .with_location_config(self.story_state.get_location_description())\
-            .with_current_scene_description(self.story_state.get_last_scene_description())\
-            .build()
+        system_prompt = self.system_prompt_builder(
+            character=self.story_state.character
+        ).with_current_reality(
+            self.story_state.get_last_scene_description()["character_side"]
+        ).build()
+
+        print("*" * 100)
+        print("SYSTEM PROMPT:")
+        print(system_prompt)
+        print("*" * 100)
 
         messages.append(SystemMessage(content=system_prompt))
 
@@ -123,34 +129,64 @@ class StoryService:
         logger.info(f"Updating story history with message: {message}, author_user: {author_user}")
 
         last_description = self.story_state.get_last_scene_description()
-        new_description = await self._change_scene_description(last_description, message)
+        new_description = await self._change_scene_description(
+            previous_description=last_description,
+            actor= "User" if author_user else "character",
+            message=message
+        )
         if author_user:
             self.story_state.add_user_message(message, new_description)
         else:
             self.story_state.add_character_message(message, new_description)
-    
-    async def _change_scene_description(self, previous_description: str, message: str) -> str:
-        template = SCENE_DESCRIPTION
-        prompt = PromptTemplate(
-            input_variables=["previous_description", "message"],
-            template=template
+
+    async def _change_scene_description(self, previous_description: dict[str, str], actor: str, message: str) -> dict[str, str]:
+        """
+        Generate updated scene description from both perspectives after a character action.
+        
+        Args:
+            previous_description: Dict with 'companion_side' and 'character_side' keys
+            message: Character action/message that changes the scene
+            
+        Returns:
+            Dict with updated 'companion_side' and 'character_side' descriptions
+        """
+        # Create user prompt with previous scene and action
+        prompt_template = Template(MOVE_SCENE_DESCRIPTION_USER_PROMPT)
+        user_prompt = prompt_template.render({
+            "companion_side": previous_description["companion_side"],
+            "character_side": previous_description["character_side"],
+            "actor": actor,
+            "message": message,
+            "character_name": self.story_state.character.base_personality["name"],
+            "in_universe_self_description": self.story_state.character.base_personality["in-universe_self_description"],
+            "sensory_origin_memory": self.story_state.character.base_personality["sensory_origin_memory"],
+            "character_native_deflection": self.story_state.character.base_personality["character_native_deflection"],
+            "traits": self.story_state.character.base_personality["traits"],
+            "core_principles": self.story_state.character.base_personality["core_principles"],
+            "physical_tells": self.story_state.character.base_personality["physical_tells"],
+            "speech_patterns": self.story_state.character.base_personality["speech_patterns"]
+        })
+
+        llm_communicator = LLMCommunicator(llm_model=self.venice_model)
+        scene_description = await llm_communicator.generate_structured_response(
+            system_prompt=MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=MoveSceneDescriptionResponse
         )
-        chain = prompt | self.venice_model | StrOutputParser()
-        response = await chain.ainvoke(
-            {
-                "previous_description": previous_description,
-                "message": message
-            }
-        )
-        return response
+        
+        return {
+            "companion_side": scene_description.companion_side,
+            "character_side": scene_description.character_side
+        }
 
     async def process_user_message(self, message: str) -> None:
         logger.info(f"Processing user message: {message}")
 
-        await asyncio.gather(
-            self._update_chat_history(message, author_user=True),
-            # self._update_character(message)
-        )
+        await self._update_chat_history(message, author_user=True)
+        # await asyncio.gather(
+        #     self._update_chat_history(message, author_user=True),
+        #     # self._update_character(message)
+        # )
 
         bot_response = await self._generate_bot_response()
 
@@ -163,4 +199,4 @@ class StoryService:
         return self.story_state.get_chat_history()
 
     def get_initial_scene_description(self) -> str:
-        return self.story_state.get_last_scene_description()
+        return self.story_state.get_last_scene_description()["companion_side"]
