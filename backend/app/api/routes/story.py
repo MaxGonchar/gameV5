@@ -80,7 +80,7 @@ async def get_story_history(story_id: str):
         )
 
     except Exception as e:
-        logger.error(f"Error getting story history: {str(e)}")
+        logger.exception(f"Error getting story history: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/stories/{story_id}/summarize/{message_id}")

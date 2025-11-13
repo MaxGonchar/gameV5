@@ -194,7 +194,7 @@ class StoriesService:
             )
             await story_state.save_state()
 
-            return "story_id"
+            return story_id
         except Exception as e:
             logger.exception(f"Error creating story: {e}")
             raise

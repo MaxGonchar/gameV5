@@ -43,7 +43,7 @@ async def get_characters():
         return characters_response
         
     except Exception as e:
-        logger.error(f"Error getting characters: {e}")
+        logger.exception(f"Error getting characters: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"

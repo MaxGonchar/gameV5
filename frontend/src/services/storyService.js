@@ -16,18 +16,12 @@ export const getStories = async () => {
 
 /**
  * Create a new story
- * @param {string} characterId - UUID of the character
- * @param {string} locationId - UUID of the location  
- * @param {string} initSceneDescription - Initial scene description
+ * @param {Object} storyData - Story creation data matching CreateStoryRequest
  * @returns {Promise<Object>} Created story response with story_id
  */
-export const createStory = async (characterId, locationId, initSceneDescription) => {
+export const createStory = async (storyData) => {
   try {
-    const response = await api.post('/stories', {
-      character_id: characterId,
-      location_id: locationId,
-      init_scene_description: initSceneDescription
-    });
+    const response = await api.post('/stories', storyData);
     return response.data;
   } catch (error) {
     console.error('Error creating story:', error);
