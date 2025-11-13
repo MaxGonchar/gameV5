@@ -11,7 +11,9 @@ import logging
 from typing import List, Optional
 from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
+from jinja2 import Template
 
+from app.objects.character import Character
 from app.dao.character_dao import CharacterDAO
 from app.dao.history_dao import HistoryDAO
 from app.chat_types import ChatItem
@@ -21,6 +23,8 @@ from app.services.prompt_templates import (
     NO_EXISTING_SUMMARY_INSTRUCTION,
     WITH_EXISTING_SUMMARY_INSTRUCTION
 )
+from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT, DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT
+from app.services.llm_communicator import LLMCommunicator
 
 logger = logging.getLogger(__name__)
 
@@ -95,15 +99,28 @@ class DialogueSummaryService:
         )
         
         chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
-        dialogue_text = self._format_chat_as_dialogue(chat_slice)
+        dialogue_items = self._format_chat_as_dialogue(chat_slice)
 
-        existing_memory = character.get_memory()
-        existing_summary = "\n".join(existing_memory) if existing_memory else None
-        
-        new_summary = await self._generate_summary(dialogue_text, existing_summary)
-        
-        character.add_item_to_memory(new_summary)
-        
+        new_summary = await self._generate_summary(dialogue_items, character)
+
+        print("*" * 100)
+        print("New Summary Generated:")
+        print("*" * 100)
+        for item in new_summary.memory_items:
+            print(f"- {item.event_description}")
+            print(f"  Reflection: {item.in_character_reflection}")
+        print("*" * 100)
+
+        character.add_items_to_memory(
+            [
+                {
+                    "event_description": item.event_description,
+                    "in_character_reflection": item.in_character_reflection
+                }
+                for item in new_summary.memory_items
+            ]
+        )
+
         chat_history.trim_messages_up_to_id(chat_item_id)
         
         await asyncio.gather(
@@ -111,7 +128,7 @@ class DialogueSummaryService:
             self.chat_history_dao.save(chat_history)
         )
     
-    def _format_chat_as_dialogue(self, chat_slice: List[ChatItem]) -> str:
+    def _format_chat_as_dialogue(self, chat_slice: List[ChatItem]) -> list[str]:
         """
         Convert chat items to dialogue format.
         
@@ -125,16 +142,16 @@ class DialogueSummaryService:
         for item in chat_slice:
             author_name = item.get("author_name", "Unknown")
             content = item.get("content", "")
-            dialogue_lines.append(f"{author_name}: {content}")
-        
-        return "\n".join(dialogue_lines)
-    
-    async def _generate_summary(self, dialogue_text: str, existing_summary: Optional[str]) -> str:
+            dialogue_lines.append(f"*Actor:* {author_name}\n*Action/Message:* {content}")
+
+        return dialogue_lines
+
+    async def _generate_summary(self, dialogue_items: list[str], character: Character) -> DialogueMemorySummaryResponse:
         """
         Generate a new summary using the LLM.
         
         Args:
-            dialogue_text: Current dialogue to summarize
+            dialogue_items: Current dialogue to summarize
             existing_summary: Previous summary if any
             
         Returns:
@@ -142,22 +159,25 @@ class DialogueSummaryService:
         """
         logger.info("Generating new summary...")
 
-        system_prompt = CHAT_HISTORY_SUMMARY_PROMPT
+        prompt_template = Template(DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT)
+        user_prompt = prompt_template.render({
+            "character_name": character.base_personality["name"],
+            "in_universe_self_description": character.base_personality["in-universe_self_description"],
+            "sensory_origin_memory": character.base_personality["sensory_origin_memory"],
+            "character_native_deflection": character.base_personality["character_native_deflection"],
+            "personality": character.general["personality"],
+            "traits": character.base_personality["traits"],
+            "core_principles": character.base_personality["core_principles"],
+            "physical_tells": character.base_personality["physical_tells"],
+            "speech_patterns": character.base_personality["speech_patterns"],
+            "dialogue_segments": dialogue_items
+        })
 
-        messages = []
-        messages.append(SystemMessage(content=system_prompt))
-        
-        if existing_summary:
-            human_content = WITH_EXISTING_SUMMARY_INSTRUCTION.format(
-                existing_summary=existing_summary,
-                dialogue_text=dialogue_text
-            )
-        else:
-            human_content = NO_EXISTING_SUMMARY_INSTRUCTION.format(
-                dialogue_text=dialogue_text
-            )
-        
-        messages.append(HumanMessage(content=human_content))
-        
-        response = await self.venice_model.ainvoke(messages)
-        return str(response.content).strip()
+        llm_communicator = LLMCommunicator(llm_model=self.venice_model)
+        memory_items = await llm_communicator.generate_structured_response(
+            system_prompt=DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=DialogueMemorySummaryResponse
+        )
+
+        return memory_items

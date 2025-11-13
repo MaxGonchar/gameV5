@@ -1,6 +1,11 @@
 from copy import deepcopy
-from typing import Any
+from typing import Any, TypedDict
 import numpy as np
+
+
+class MemoryItemType(TypedDict):
+    event_description: str
+    in_character_reflection: str
 
 
 class Character:
@@ -29,6 +34,18 @@ class Character:
     @property
     def memories(self) -> list[str]:
         return self.data.get("memories", [])
+    
+    def add_items_to_memory(self, items: list[MemoryItemType]) -> None:
+        if "memories" not in self.data:
+            self.data["memories"] = []
+
+        for item in items:
+            self.data["memories"].append(
+                {
+                    "event_description": item["event_description"],
+                    "in_character_reflection": item["in_character_reflection"]
+                }
+            )
 
     @property
     def story_context(self) -> dict[str, Any]:
