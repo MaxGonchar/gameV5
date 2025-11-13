@@ -164,7 +164,8 @@ class StoriesService:
                         "title": request.story_title,
                         "initial_scene_description": {
                             "companion_side": session_context.meeting_scene_description.companion_side,
-                            "character_side": session_context.meeting_scene_description.character_side
+                            "character_side": session_context.meeting_scene_description.character_side,
+                            "environmental_context": session_context.meeting_scene_description.environmental_context
                         }
                     }
                 )

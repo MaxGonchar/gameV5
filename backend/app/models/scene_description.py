@@ -11,6 +11,10 @@ class MoveSceneDescriptionResponse(BaseModel):
         ...,
         description="Scene description from the character's point of view in character's voice"
     )
+    environmental_context: str = Field(
+        ...,
+        description="Pure environmental context for character situational awareness - no character actions described"
+    )
 
 
 MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT = """
@@ -48,6 +52,17 @@ You will receive:
 - Uses established character speech patterns and world vocabulary
 - Maintains continuity with previous character_side description
 
+### environmental_context
+**Purpose**: Pure environmental awareness for character situational context - NEVER mention character actions
+**Requirements**:
+- Current environmental state (lighting, weather, sounds, smells, temperature)
+- Spatial constraints and hazards that affect movement options
+- Atmospheric changes and environmental shifts
+- Available resources, objects, or terrain features
+- Time-based environmental factors (day/night progression, seasonal changes)
+- Written from neutral perspective - describe PLACE not PEOPLE
+- Focus on "what exists in this space NOW" not "what anyone is doing"
+
 ## Scene Description Standards
 
 **Environmental Continuity**: Changes flow logically from previous scene
@@ -74,6 +89,7 @@ You will receive:
 *After Action: "I sheathe my sword and approach the ancient tree"*:
 - companion_side: "The warrior slides her blade into its scabbard and moves toward the massive oak, her footsteps silent on the frost-covered ground. The tree's gnarled branches cast shifting shadows across her determined face."
 - character_side: "Cold steel settles against my hip as I walk toward the ancient one's embrace. Each step brings whispers from root-deep memories, and I feel the tree's patience like a heartbeat in the earth."
+- environmental_context: "The ancient oak towers overhead, its massive trunk scarred by centuries of storms. Frost covers the ground in crystalline patches that crunch underfoot. Moonlight filters through bare branches, creating a lattice of silver shadows. The air smells of winter earth and old wood, with a hint of approaching snow on the wind."
 
 ## Remember:
 - Maintain established character voice and world rules

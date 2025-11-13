@@ -146,7 +146,7 @@ class StoryState:
         """Get the last scene description from history or meta initial scene."""
         if description := self.chat_history.get_last_scene_description():
             return description
-        return self.meta.to_dict().get("initial_scene_description", {"companion_side": "", "character_side": ""})
+        return self.meta.to_dict().get("initial_scene_description", {"companion_side": "", "character_side": "", "environmental_context": ""})
 
     async def save_state(self) -> None:
         """Save the current state to files."""

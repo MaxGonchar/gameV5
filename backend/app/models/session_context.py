@@ -31,6 +31,10 @@ class MeetingSceneDescription(BaseModel):
         ...,
         description="Scene description from the character's point of view in character's voice"
     )
+    environmental_context: str = Field(
+        ...,
+        description="Pure environmental context for character situational awareness - no character actions described"
+    )
 
 
 class SessionContextResponse(BaseModel):
@@ -173,8 +177,8 @@ You will receive:
 - "Such concepts find no place in the old paths"
 
 ### 7. meeting_scene_description
-**Purpose**: Dual-perspective scene description to establish meeting context and prevent action conflicts
-**Structure**: MeetingSceneDescription object with companion_side and character_side
+**Purpose**: Triple-perspective scene description to establish meeting context and prevent action conflicts
+**Structure**: MeetingSceneDescription object with companion_side, character_side, and environmental_context
 **Requirements**:
 - Provides clear understanding of character disposition, poses, and interaction setup
 - Establishes scene continuity for future AI generations
@@ -194,15 +198,25 @@ You will receive:
 - Emotional/mental state reflected in character's vocabulary
 - Character's interpretation of the companion's presence
 
+**7.3 environmental_context**:
+- Pure environmental awareness for situational context
+- Current environmental state (lighting, weather, sounds, smells, temperature)
+- Spatial constraints and hazards affecting movement
+- Available resources, objects, or terrain features
+- Written from neutral perspective - describe PLACE not PEOPLE
+- Focus on "what exists in this space NOW" not character actions
+
 **Examples**:
 
 *Fantasy Setting*:
 - companion_side: "The elven ranger stands at the forest edge, one hand resting on her bow while the other gestures welcomingly toward a hidden path. Her green cloak blends with the foliage behind her, and her eyes scan the treeline with practiced wariness even as she maintains a gentle smile toward you."
 - character_side: "The forest-song whispers of your approach, bright-heart, and I feel the old paths stirring beneath my feet. My bow-hand stays ready—not from mistrust of you, but from the shadow-whispers that follow travelers these days."
+- environmental_context: "Ancient oaks tower overhead, their branches forming a natural canopy that filters dappled sunlight onto the forest floor. Fallen leaves crunch underfoot, and the air carries the scent of moss and wild flowers. A narrow dirt path winds deeper into the woods, barely visible through the undergrowth."
 
 *Cyberpunk Setting*:
 - companion_side: "The data-runner crouches behind a stack of shipping containers, neon light from nearby advertisements casting shifting colors across her augmented face. Her fingers dance over a portable interface while she keeps one eye on the approaching figure, body coiled and ready to move."
 - character_side: "Chrome-light burns my retinas as I jack into the local grid, but I keep visual lock on you through the rain-static. Every neural pathway screams 'run protocol' but something about your heat-signature feels... clean. Untracked."
+- environmental_context: "The shipping yard stretches out in maze-like rows of stacked containers, their metal surfaces slick with persistent rain. Neon advertisements flicker from nearby buildings, casting electric blues and pinks across puddles. The air hums with electrical interference and smells of ozone and wet concrete."
 
 ## Generation Process
 

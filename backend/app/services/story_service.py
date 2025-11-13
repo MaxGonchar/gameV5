@@ -89,7 +89,7 @@ class StoryService:
         system_prompt = self.system_prompt_builder(
             character=self.story_state.character
         ).with_current_reality(
-            self.story_state.get_last_scene_description()["character_side"]
+            self.story_state.get_last_scene_description()["environmental_context"]
         ).build()
 
         print("*" * 100)
@@ -176,7 +176,8 @@ class StoryService:
         
         return {
             "companion_side": scene_description.companion_side,
-            "character_side": scene_description.character_side
+            "character_side": scene_description.character_side,
+            "environmental_context": scene_description.environmental_context
         }
 
     async def process_user_message(self, message: str) -> None:
