@@ -76,7 +76,8 @@ class StoryService:
         try:
             self.venice_model = VeniceAIChatModel(
                 api_key=venice_api_key,
-                model="mistral-31-24b",
+                # model="mistral-31-24b",
+                model="venice-uncensored",
                 temperature=0.7
             )
             print("✅ VeniceAI integration enabled")

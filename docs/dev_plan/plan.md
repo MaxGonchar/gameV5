@@ -1,37 +1,22 @@
 # Features
 
-## new character prompt template
-- [x] develop new character prompt template
-- [x] develop a prompts helping user to create a character
-
-- [x] develop new character data structure
-
-- [ ] update story creation logic to generate story related data
-  - [ ] correct prompt to:
-    - generate memory in form of event description + in-character reflection
-
-- [ ] implement new character prompt builder
-  - consider jinja template handling
-  - for now stop embedding and related logic
-
-- [ ] integrate new prompt templates and prompt builder into the main codebase
-
-- [ ] develop new scene description prompt template
-  - [ ] it should generate scene description for user and for character separately
-
-- [ ] develop new memory generation prompt template
-  - [ ] store memory in general description and in character-specific description
-  - [ ] for character create a field for active memory to store 10 recent events
-
+## enhancements
+- add actions to the characters' responses
+- adjust current reality for character to concentrate on positions, feeling and changing in mood.
+- shorten some content (characters' memory, scene descriptions) (keep in short, tag like form)
+- PROBLEM: growing scene description
+- PROBLEM: still conflicts with poses.
+- consider moving speech pattern to RESPONSE RULES
+- restrict amount of characters' active memory (memory items going to prompt)
 
 ### post implementation:
-- [x] story with no history problem
 - [ ] solve todos
 - [ ] sanitize the code
   - [ ] remove unused imports
   - [ ] organize imports
   - [ ] look for places where similar actions are implemented in a different way and make it uniform
   - [ ] ask assistant to look for code smells
+- [ ] do not allow summarize the last message
 - [ ] add created and updated date to the items
 - [ ] card for a user character
 
