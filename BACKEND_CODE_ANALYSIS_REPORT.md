@@ -69,24 +69,37 @@ settings = Settings()  # Single instance, validated at startup
 
 ---
 
-### 3. Global Logger Configuration Anti-Pattern
-**Severity:** High  
-**Files:** Multiple route files, services  
-**Impact:** Medium - Log configuration conflicts
+### 3. ✅ Global Logger Configuration Anti-Pattern [RESOLVED]
+**Severity:** ~~High~~ **FIXED**  
+**Files:** ~~Multiple~~ **CENTRALIZED** in `app/core/config.py`  
+**Impact:** ~~Medium~~ **RESOLVED** - Log configuration conflicts
 
-**Problem:**
+**Problem:** [FIXED]
 ```python
-# Found in multiple files
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ✅ SOLUTION IMPLEMENTED: Centralized logging configuration
+def configure_logging(log_level: str = "INFO") -> None:
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        force=True  # Override any existing configuration
+    )
+
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(name)
+
+# All modules now use: from app.core.config import get_logger
 ```
 
-**Issues:**
-- Multiple `basicConfig()` calls can interfere with each other
-- No centralized logging configuration
-- Inconsistent log levels across modules
+**Resolution:**
+- ✅ Centralized logging configuration in `app/core/config.py`
+- ✅ Removed all scattered `basicConfig()` calls from 8+ files
+- ✅ Added `LOG_LEVEL` environment variable support with validation
+- ✅ Created `get_logger()` helper for consistent logger creation
+- ✅ Configured external library log levels to reduce noise
+- ✅ Single logging configuration at application startup
+- ✅ Proper log formatting with timestamps and module names
 
-**Recommendation:** Configure logging once in main.py
+**Status:** COMPLETED - All modules now use centralized logging configuration
 
 ---
 
@@ -298,7 +311,7 @@ temperature=0.7
 ### Immediate Actions (This Sprint)
 1. ✅ **Fix async constructor anti-pattern** - ~~Replace with factory methods~~ **COMPLETED**
 2. ✅ **Centralize configuration management** - ~~Create settings singleton~~ **COMPLETED**
-3. **Fix logging configuration** - Configure once in main.py
+3. ✅ **Fix logging configuration** - ~~Configure once in main.py~~ **COMPLETED**
 4. **Remove commented code** - Clean up codebase
 
 ### Short Term (Next 2-3 Sprints)

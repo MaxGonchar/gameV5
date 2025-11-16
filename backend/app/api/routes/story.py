@@ -16,9 +16,9 @@ from app.models.responses import (
 from app.services.story_service import StoryService
 from app.services.stories_service import StoriesService
 from app.services.dialogue_summary_service import DialogueSummaryService
+from app.core.config import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

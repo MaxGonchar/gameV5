@@ -10,8 +10,9 @@ from typing import TypeVar, Type, Any, Dict, Optional
 from pydantic import BaseModel, ValidationError
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
+from app.core.config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Generic type for Pydantic response models
 T = TypeVar('T', bound=BaseModel)

@@ -7,9 +7,9 @@ import logging
 
 from app.models.responses import LocationsResponse
 from app.services.location_service import LocationService
+from app.core.config import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

@@ -18,9 +18,9 @@ from app.models.requests import CreateStoryRequest
 from app.services.llm_communicator import LLMCommunicator
 from app.llm.venice_ai import VeniceAIChatModel
 from app.models.session_context import SessionContextResponse, SESSION_CONTEXT_GENERATION_PROMPT
+from app.core.config import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 SESSION_CONTEXT_GENERATION_USER_PROMPT = """

@@ -25,8 +25,9 @@ from app.services.prompt_templates import (
 )
 from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT, DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT
 from app.services.llm_communicator import LLMCommunicator
+from app.core.config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DialogueSummaryService:

@@ -11,7 +11,7 @@ from jinja2 import Template
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 
-from app.core.config import settings
+from app.core.config import settings, get_logger
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
 from app.llm.venice_client import VeniceClient
@@ -21,9 +21,7 @@ from app.objects.story_state import StoryState
 from app.services.llm_communicator import LLMCommunicator
 from app.models.scene_description import MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, MOVE_SCENE_DESCRIPTION_USER_PROMPT, MoveSceneDescriptionResponse
 
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class StoryService:

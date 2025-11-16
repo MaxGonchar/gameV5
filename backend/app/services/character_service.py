@@ -2,13 +2,11 @@
 Character service module containing business logic for character operations.
 """
 
-import logging
-
+from app.core.config import get_logger
 from app.dao.character_dao import CharacterDAO
 from app.models.responses import CharacterSummary, CharactersResponse
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class CharacterService:

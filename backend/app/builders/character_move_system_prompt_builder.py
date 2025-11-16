@@ -1,10 +1,10 @@
-import logging
 from typing import Dict, List, Any
 
 from jinja2 import Template
 from app.objects.character import Character
+from app.core.config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _TEMPLATE = """
 You ARE {{name}}, {{in_universe_self_description}}.

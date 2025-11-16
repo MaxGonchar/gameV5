@@ -2,13 +2,12 @@
 Location service module containing business logic for location operations.
 """
 
-import logging
-
+from app.core.config import get_logger
 from app.dao.location_dao import LocationDAO
+from app.objects.location import Location
 from app.models.responses import LocationSummary, LocationsResponse
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LocationService:
