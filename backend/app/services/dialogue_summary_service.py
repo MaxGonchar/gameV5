@@ -9,10 +9,10 @@ import asyncio
 import os
 import logging
 from typing import List, Optional
-from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 from jinja2 import Template
 
+from app.core.config import settings
 from app.objects.character import Character
 from app.dao.character_dao import CharacterDAO
 from app.dao.history_dao import HistoryDAO
@@ -51,22 +51,15 @@ class DialogueSummaryService:
             story_id: UUID of the story to work with
             character_id: UUID of the character (will be determined from story if None)
         """
-        load_dotenv()
-        
         self.story_id = story_id
         self.character_id = character_id
         
         # Initialize DAOs with story-specific paths
-        self.character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
-        self.chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
+        self.character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
+        self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
         
-        # Initialize LLM
-        venice_api_key = os.getenv("VENICE_API_KEY")
-        if not venice_api_key:
-            raise ValueError(
-                "VENICE_API_KEY environment variable is required. "
-                "Please set it in your .env file or environment."
-            )
+        # Venice API key is validated in settings
+        venice_api_key = settings.VENICE_API_KEY
         
         self.venice_model = VeniceAIChatModel(
             api_key=venice_api_key,

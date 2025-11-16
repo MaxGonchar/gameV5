@@ -7,6 +7,7 @@ import os
 
 from jinja2 import Template
 
+from app.core.config import settings
 from app.dao.story_dao import StoryDAO
 from app.dao.character_dao import CharacterDAO
 from app.dao.location_dao import LocationDAO
@@ -96,14 +97,9 @@ class StoriesService:
             str: The ID of the newly created story.
         """
         try:
-            venice_api_key = os.getenv("VENICE_API_KEY")
-            if not venice_api_key:
-                raise ValueError(
-                    "VENICE_API_KEY environment variable is required. "
-                    "Please set it in your .env file or environment."
-                )
+            # Venice API key is validated in settings
             venice_model = VeniceAIChatModel(
-                api_key=venice_api_key,
+                api_key=settings.VENICE_API_KEY,
                 model="mistral-31-24b",
                 temperature=0.7
             )
@@ -173,10 +169,7 @@ class StoriesService:
             logger.info(f"Successfully created story with ID: {story_id}")
 
             # Create StoryState entity and fill the character related data
-            story_state = await StoryState(
-                story_id=story_id,
-                character_id=request.character_id
-            )
+            story_state = await StoryState.create(story_id=story_id)
             story_state.add_story_context_character_data(
                 {
                     "companion": session_context.companion,

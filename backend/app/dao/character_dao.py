@@ -2,6 +2,7 @@ from typing import Optional
 import asyncio
 from pathlib import Path
 
+from app.core.config import settings
 from .yaml_file_handler import YamlFileHandler
 from app.objects import Character
 
@@ -15,18 +16,18 @@ class CharacterDAO:
     """
     
     def __init__(
-        self, 
-        characters_dir: str = "data/characters",
+        self,
+        characters_dir: str | None = None,
         yaml_handler: Optional[YamlFileHandler] = None
     ) -> None:
         """
         Initialize the character DAO.
         
         Args:
-            characters_dir: Directory containing character subdirectories (default: "data/characters")
-            yaml_handler: YAML file handler dependency
+            characters_dir: Directory containing character subdirectories (default: from settings)
+            yaml_handler: Optional YAML file handler (for testing)
         """
-        self.characters_dir = Path(characters_dir)
+        self.characters_dir = Path(characters_dir or settings.characters_base_dir)
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
     async def get_characters(self) -> list[Character]:

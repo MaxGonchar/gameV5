@@ -3,7 +3,6 @@ FastAPI main application for the interactive story bot.
 Run with: uvicorn app.main:app --reload
 """
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sys
@@ -12,12 +11,11 @@ import os
 # Add the app directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
+from app.core.config import settings
 from app.api.routes import story, health, characters, locations
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-
-    load_dotenv()
     
     app = FastAPI(
         title="Interactive Story Bot API",
@@ -28,7 +26,7 @@ def create_app() -> FastAPI:
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],  # React dev server
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

@@ -4,7 +4,6 @@ Story service module containing business logic and prompt processing for interac
 
 import os
 from typing import Any
-from dotenv import load_dotenv
 import logging
 import asyncio
 
@@ -12,6 +11,7 @@ from jinja2 import Template
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 
+from app.core.config import settings
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
 from app.llm.venice_client import VeniceClient
@@ -57,8 +57,6 @@ class StoryService:
                 "Use StoryService.create(story_id) for proper async initialization."
             )
         
-        load_dotenv()  # Load environment variables
-        
         self.story_id = story_id
         self.story_state = story_state
         
@@ -68,13 +66,8 @@ class StoryService:
         # Setup output parser
         self.output_parser = PydanticOutputParser(pydantic_object=AssistantResponse)
         
-        # Get VeniceAI API key - required for this app
-        venice_api_key = os.getenv("VENICE_API_KEY")
-        if not venice_api_key:
-            raise ValueError(
-                "VENICE_API_KEY environment variable is required. "
-                "Please set it in your .env file or environment."
-            )
+        # Venice API key is validated in settings
+        venice_api_key = settings.VENICE_API_KEY
         self.llm_client = VeniceClient(venice_api_key)
         # Initialize VeniceAI model
         try:

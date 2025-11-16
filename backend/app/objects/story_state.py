@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 from enum import Enum
 
+from app.core.config import settings
 from app.objects.character import Character
 from app.objects.location import Location
 from app.objects.chat_history import ChatHistory
@@ -71,9 +72,9 @@ class StoryState:
         self.character_id = character.id
 
         # Initialize DAOs with story-specific paths (for saving operations)
-        self.character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
-        self.chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
-        self.meta_dao = MetaDAO(meta_dir=f"data/stories/{story_id}")
+        self.character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
+        self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
+        self.meta_dao = MetaDAO(meta_dir=settings.get_story_meta_dir(story_id))
 
     @classmethod
     async def create(cls, story_id: str) -> 'StoryState':
@@ -111,9 +112,9 @@ class StoryState:
             ValueError: If story data is missing or invalid
         """
         # Initialize DAOs for loading
-        character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
-        chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
-        meta_dao = MetaDAO(meta_dir=f"data/stories/{story_id}")
+        character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
+        chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
+        meta_dao = MetaDAO(meta_dir=settings.get_story_meta_dir(story_id))
         
         # Load all data concurrently
         meta, chat_history, characters = await asyncio.gather(

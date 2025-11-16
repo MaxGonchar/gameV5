@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TypedDict
 from uuid import uuid4
 
+from app.core.config import settings
 from app.objects.meta import MetaData
 from .yaml_file_handler import YamlFileHandler
 
@@ -15,8 +16,8 @@ class StorySummary(TypedDict):
 
 
 class StoryDAO:
-    def __init__(self, stories_dir: str = "data/stories"):
-        self.stories_dir = Path(stories_dir)
+    def __init__(self, stories_dir: str | None = None):
+        self.stories_dir = Path(stories_dir or settings.stories_base_dir)
 
     # TODO: delete the story folder if creation fails halfway
     # TODO: refactor method to smaller pieces

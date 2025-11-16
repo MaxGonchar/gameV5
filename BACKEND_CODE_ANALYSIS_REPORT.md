@@ -12,43 +12,60 @@ This report identifies code smells, architectural issues, and maintainability pr
 
 ## 🚨 Critical Issues (High Priority)
 
-### 1. Async Constructor Anti-Pattern
-**Severity:** Critical  
-**Files:** `app/services/story_service.py:32`, `app/objects/story_state.py:32`  
-**Impact:** High - Memory leaks, initialization failures, hard to test
+### 1. ✅ Async Constructor Anti-Pattern [RESOLVED]
+**Severity:** ~~Critical~~ **FIXED**  
+**Files:** `app/services/story_service.py`, `app/objects/story_state.py`  
+**Impact:** ~~High~~ **RESOLVED** - Memory leaks, initialization failures, hard to test
 
-**Problem:**
+**Problem:** [FIXED]
 ```python
-# ANTI-PATTERN: Using async __new__ for object initialization
-async def __new__(cls, *a, **kw):
-    instance = super().__new__(cls)
-    await instance.__init__(*a, **kw)
-    return instance
+# ✅ SOLUTION IMPLEMENTED: Factory method pattern
+@classmethod
+async def create(cls, story_id: str) -> 'StoryState':
+    story_state = await cls._load_async_data(story_id)
+    return cls(story_id, story_state=story_state)
 ```
 
-**Issues:**
-- Creates objects that can fail after allocation
-- Makes testing and debugging difficult  
-- Breaks normal Python object lifecycle
-- Can cause memory leaks if initialization fails
-- Makes error handling unpredictable
+**Resolution:**
+- ✅ Replaced async constructors with factory methods
+- ✅ Added parameter validation in constructors
+- ✅ Implemented fail-fast design with clear error messages
+- ✅ Improved testability and debugging
+- ✅ Eliminated memory leak potential
 
-**Recommendation:** Replace with factory methods or async context managers
+**Status:** COMPLETED - Both `StoryState` and `StoryService` now use proper factory method pattern
 
 ---
 
-### 2. Environment Variable Loading Scattered Throughout Code
-**Severity:** High  
-**Files:** Multiple (`main.py:20`, `story_service.py:54`, etc.)  
-**Impact:** High - Configuration management chaos
+### 2. ✅ Environment Variable Loading Scattered Throughout Code [RESOLVED]
+**Severity:** ~~High~~ **FIXED**  
+**Files:** ~~Multiple~~ **CENTRALIZED** in `app/core/config.py`  
+**Impact:** ~~High~~ **RESOLVED** - Configuration management chaos
 
-**Problem:**
-- `load_dotenv()` called in multiple locations
-- No centralized configuration management
-- Environment variables accessed directly in business logic
-- Inconsistent handling of missing environment variables
+**Problem:** [FIXED]
+```python
+# ✅ SOLUTION IMPLEMENTED: Centralized configuration with validation
+class Settings(BaseModel):
+    VENICE_API_KEY: str = Field(default_factory=lambda: os.getenv("VENICE_API_KEY", ""))
+    
+    @validator('VENICE_API_KEY')
+    def validate_venice_api_key(cls, v: str) -> str:
+        if not v or v.strip() == "":
+            raise ValueError("VENICE_API_KEY environment variable is required.")
+        return v.strip()
 
-**Recommendation:** Centralize in settings/config singleton
+settings = Settings()  # Single instance, validated at startup
+```
+
+**Resolution:**
+- ✅ Centralized all configuration in `app/core/config.py`
+- ✅ Removed scattered `load_dotenv()` calls from services
+- ✅ Replaced direct `os.getenv()` calls with `settings.VENICE_API_KEY`
+- ✅ Added Pydantic validation for required environment variables
+- ✅ Implemented fail-fast configuration loading at startup
+- ✅ Single source of truth for all application settings
+
+**Status:** COMPLETED - All services now use centralized configuration
 
 ---
 
@@ -279,8 +296,8 @@ temperature=0.7
 ## 📈 Recommendations by Priority
 
 ### Immediate Actions (This Sprint)
-1. **Fix async constructor anti-pattern** - Replace with factory methods
-2. **Centralize configuration management** - Create settings singleton
+1. ✅ **Fix async constructor anti-pattern** - ~~Replace with factory methods~~ **COMPLETED**
+2. ✅ **Centralize configuration management** - ~~Create settings singleton~~ **COMPLETED**
 3. **Fix logging configuration** - Configure once in main.py
 4. **Remove commented code** - Clean up codebase
 
