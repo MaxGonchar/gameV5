@@ -27,36 +27,40 @@ logger = logging.getLogger(__name__)
 
 
 class StoryService:
-    """Service class handling interactive story business logic with LangChain-based prompt processing."""
-
-    # TODO: Using async __new__ is an anti-pattern and can cause issues with object initialization.
-    # Consider using a factory method or async context manager instead.
-    async def __new__(cls, *a, **kw):
-        instance = super().__new__(cls)
-        await instance.__init__(*a, **kw)
-        return instance
+    """Service class handling interactive story business logic with LangChain-based prompt processing.
     
-    async def __init__(
+    Use StoryService.create() factory method for async initialization.
+    """
+    
+    def __init__(
         self,
         story_id: str,
-        character_id: str | None = None
+        *,  # Force keyword-only parameters
+        story_state: StoryState | None = None
     ):
         """
-        Initialize the story service with VeniceAI integration and dynamic prompt building.
+        Initialize the story service with required data.
         
         Args:
-            story_id: UUID of the story to load
-            character_id: UUID of the character (optional, will use first available if not specified)
+            story_id: UUID of the story
+            story_state: StoryState instance (required)
             
         Raises:
-            ValueError: If VENICE_API_KEY environment variable is not set or story data not found.
+            ValueError: If story_state parameter is None
+            
+        Note: Use StoryService.create(story_id) for proper initialization.
+        Direct instantiation requires story_state parameter.
         """
+        if story_state is None:
+            raise ValueError(
+                "StoryService requires story_state parameter. "
+                "Use StoryService.create(story_id) for proper async initialization."
+            )
+        
         load_dotenv()  # Load environment variables
         
         self.story_id = story_id
-        self.character_id = character_id
-
-        self.story_state: StoryState = await StoryState(story_id, character_id)
+        self.story_state = story_state
         
         # Initialize character prompt builder with default template
         self.system_prompt_builder = CharacterMoveSystemPromptBuilder
@@ -83,6 +87,23 @@ class StoryService:
             print("✅ VeniceAI integration enabled")
         except Exception as e:
             raise ValueError(f"Failed to initialize VeniceAI model: {e}")
+
+    @classmethod
+    async def create(cls, story_id: str) -> 'StoryService':
+        """
+        Factory method for creating a fully initialized StoryService.
+        
+        Args:
+            story_id: UUID of the story to load
+            
+        Returns:
+            Fully initialized StoryService instance
+            
+        Raises:
+            ValueError: If VENICE_API_KEY environment variable is not set or story data not found.
+        """
+        story_state = await StoryState.create(story_id)
+        return cls(story_id, story_state=story_state)
 
     def _generate_story_messages(self) -> list[BaseMessage]:
         messages = []
@@ -126,36 +147,33 @@ class StoryService:
         embeddings = await self.llm_client.embed([user_message])
         return embeddings[0]
 
-    async def _update_chat_history(self, message: str, author_user: bool) -> None:
-        logger.info(f"Updating story history with message: {message}, author_user: {author_user}")
-
-        last_description = self.story_state.get_last_scene_description()
-        new_description = await self._change_scene_description(
-            previous_description=last_description,
-            actor= "User" if author_user else "character",
+    async def _update_chat_history(self, message: str, author_user: bool = True) -> None:
+        scene_description = await self._update_scene_description(
+            actor="user" if author_user else self.story_state.character.name,
             message=message
         )
         if author_user:
-            self.story_state.add_user_message(message, new_description)
+            self.story_state.add_user_message(message, scene_description)
         else:
-            self.story_state.add_character_message(message, new_description)
+            self.story_state.add_character_message(message, scene_description)
 
-    async def _change_scene_description(self, previous_description: dict[str, str], actor: str, message: str) -> dict[str, str]:
+    async def _update_scene_description(self, actor: str, message: str) -> dict[str, str]:
         """
-        Generate updated scene description from both perspectives after a character action.
+        Update scene description based on the latest message.
         
         Args:
-            previous_description: Dict with 'companion_side' and 'character_side' keys
-            message: Character action/message that changes the scene
+            actor: Who is speaking ("user" or character name)
+            message: The message content
             
         Returns:
             Dict with updated 'companion_side' and 'character_side' descriptions
         """
         # Create user prompt with previous scene and action
         prompt_template = Template(MOVE_SCENE_DESCRIPTION_USER_PROMPT)
+        last_description = self.story_state.get_last_scene_description()
         user_prompt = prompt_template.render({
-            "companion_side": previous_description["companion_side"],
-            "character_side": previous_description["character_side"],
+            "companion_side": last_description["companion_side"],
+            "character_side": last_description["character_side"],
             "actor": actor,
             "message": message,
             "character_name": self.story_state.character.base_personality["name"],

@@ -24,7 +24,7 @@ router = APIRouter()
 
 async def get_story_service(story_id: str) -> StoryService:
     """Create a story service instance for the given story."""
-    return await StoryService(story_id)
+    return await StoryService.create(story_id)
 
 async def get_dialogue_summary_service(story_id: str) -> DialogueSummaryService:
     """Create a dialogue summary service instance for the given story."""
