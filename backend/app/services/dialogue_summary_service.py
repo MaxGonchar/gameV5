@@ -6,11 +6,7 @@ while keeping chat history manageable by removing summarized portions.
 """
 
 import asyncio
-import os
-import logging
-from typing import List, Optional
-from langchain_core.messages import SystemMessage, HumanMessage
-from jinja2 import Template
+from typing import List
 
 from app.core.config import settings
 from app.objects.character import Character
@@ -18,12 +14,7 @@ from app.dao.character_dao import CharacterDAO
 from app.dao.history_dao import HistoryDAO
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
-from app.services.prompt_templates import (
-    CHAT_HISTORY_SUMMARY_PROMPT,
-    NO_EXISTING_SUMMARY_INSTRUCTION,
-    WITH_EXISTING_SUMMARY_INSTRUCTION
-)
-from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT, DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT
+from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, build_memory_summary_prompt
 from app.services.llm_communicator import LLMCommunicator
 from app.core.config import get_logger
 
@@ -59,14 +50,13 @@ class DialogueSummaryService:
         self.character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
         self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
         
-        # Venice API key is validated in settings
-        venice_api_key = settings.VENICE_API_KEY
-        
+        # Initialize centralized LLM components
         self.venice_model = VeniceAIChatModel(
-            api_key=venice_api_key,
+            api_key=settings.VENICE_API_KEY,
             model="mistral-31-24b",
             temperature=0.3  # Lower temperature for more consistent summaries
         )
+        self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
     
     async def summarize_chat_up_to_item(self, chat_item_id: str) -> None:
         """
@@ -97,13 +87,9 @@ class DialogueSummaryService:
 
         new_summary = await self._generate_summary(dialogue_items, character)
 
-        print("*" * 100)
-        print("New Summary Generated:")
-        print("*" * 100)
-        for item in new_summary.memory_items:
-            print(f"- {item.event_description}")
-            print(f"  Reflection: {item.in_character_reflection}")
-        print("*" * 100)
+        logger.info(f"Generated {len(new_summary.memory_items)} new memory items")
+        for i, item in enumerate(new_summary.memory_items, 1):
+            logger.debug(f"Memory {i}: {item.event_description[:50]}...")
 
         character.add_items_to_memory(
             [
@@ -153,23 +139,16 @@ class DialogueSummaryService:
         """
         logger.info("Generating new summary...")
 
-        prompt_template = Template(DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT)
-        user_prompt = prompt_template.render({
-            "character_name": character.base_personality["name"],
-            "in_universe_self_description": character.base_personality["in-universe_self_description"],
-            "sensory_origin_memory": character.base_personality["sensory_origin_memory"],
-            "character_native_deflection": character.base_personality["character_native_deflection"],
-            "personality": character.general["personality"],
-            "traits": character.base_personality["traits"],
-            "core_principles": character.base_personality["core_principles"],
-            "physical_tells": character.base_personality["physical_tells"],
-            "speech_patterns": character.base_personality["speech_patterns"],
-            "dialogue_segments": dialogue_items
-        })
+        # Build input data dict for prompt builder
+        input_data = {
+            "character": character,
+            "dialogue_items": dialogue_items
+        }
+        
+        system_prompt, user_prompt = build_memory_summary_prompt(input_data)
 
-        llm_communicator = LLMCommunicator(llm_model=self.venice_model)
-        memory_items = await llm_communicator.generate_structured_response(
-            system_prompt=DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT,
+        memory_items = await self.llm_communicator.generate_structured_response(
+            system_prompt=system_prompt,
             user_prompt=user_prompt,
             response_model=DialogueMemorySummaryResponse
         )

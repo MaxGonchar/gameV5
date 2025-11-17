@@ -7,6 +7,14 @@ session-specific character configurations using the SESSION CONTEXT GENERATION A
 
 from typing import List
 from pydantic import BaseModel, Field
+from jinja2 import Template
+from app.core.config import get_logger
+
+logger = get_logger(__name__)
+from jinja2 import Template
+from app.core.config import get_logger
+
+logger = get_logger(__name__)
 
 
 class SessionMemory(BaseModel):
@@ -257,3 +265,101 @@ You will receive:
 - Maintain character authenticity while serving story needs
 - Build foundation for engaging, dynamic character interaction
 - Focus on the specific meeting scenario provided by the user"""
+
+
+# User prompt template for session context generation
+SESSION_CONTEXT_GENERATION_USER_PROMPT = """
+## Character personality:
+*Name:* {{character_name}}
+
+*In-Universe Self Description:* {{in_universe_self_description}}
+
+*Sensory Origin Memory:* {{sensory_origin_memory}}
+
+*Character Native Deflection:* {{character_native_deflection}}
+
+*Traits:*
+{% for trait in traits %}
+- {{trait}}
+{% endfor %}
+
+*Core Principles:*
+{% for principle in core_principles %}
+- {{principle}}
+{% endfor %}
+
+*Physical Tells:*
+{% for tell in physical_tells %}
+- {{tell}}
+{% endfor %}
+
+*Speech Patterns:*
+{% for pattern in speech_patterns %}
+- {{pattern}}
+{% endfor %}
+
+*General Demeanor:*
+{{general_demeanor}}
+
+## Character Home World description:
+{{character_home_world_description}}
+
+## Character Appearance description:
+{{character_appearance_description}}
+
+## Character Background history:
+{{character_background_history}}
+
+## Companion Context
+*Name:* {{companion_name}}
+*Description:* {{companion_description}}
+*Context:* {{companion_context}}
+
+## Meeting Location Description
+{{meeting_location_description}}
+
+## Meeting Description
+{{meeting_description}}
+"""
+
+
+def build_session_context_prompt(input_data: dict) -> tuple[str, str]:
+    """Build system and user prompts for session context generation.
+    
+    Args:
+        input_data: Dict containing character, request data, and other context
+        
+    Returns:
+        Tuple of (system_prompt, user_prompt)
+    """
+    logger.debug("Building session context prompt")
+    
+    character = input_data["character"]
+    request = input_data["request"]
+    
+    # Template rendering logic
+    prompt_template = Template(SESSION_CONTEXT_GENERATION_USER_PROMPT)
+    
+    user_prompt = prompt_template.render({
+        "character_name": character.base_personality["name"],
+        "in_universe_self_description": character.base_personality["in-universe_self_description"],
+        "sensory_origin_memory": character.base_personality["sensory_origin_memory"],
+        "character_native_deflection": character.base_personality["character_native_deflection"],
+        "traits": character.base_personality["traits"],
+        "core_principles": character.base_personality["core_principles"],
+        "physical_tells": character.base_personality["physical_tells"],
+        "speech_patterns": character.base_personality["speech_patterns"],
+        "general_demeanor": character.general["personality"],
+        "character_home_world_description": character.general["home_world"],
+        "character_appearance_description": character.general["appearance"],
+        "character_background_history": character.general["background"],
+        "companion_name": request.companion_name,
+        "companion_description": request.companion_description,
+        "companion_context": request.companion_context,
+        "meeting_location_description": request.meeting_location_description,
+        "meeting_description": request.meeting_description
+    })
+    
+    logger.debug("Session context prompt built successfully")
+    
+    return SESSION_CONTEXT_GENERATION_PROMPT, user_prompt
