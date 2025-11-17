@@ -1,4 +1,8 @@
 from pydantic import BaseModel, Field
+from jinja2 import Template
+from app.core.config import get_logger
+
+logger = get_logger(__name__)
 
 
 class MoveSceneDescriptionResponse(BaseModel):
@@ -140,3 +144,42 @@ MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 - {{pattern}}
 {% endfor %}
 """
+
+
+def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
+    """Build system and user prompts for scene description.
+    
+    Args:
+        input_data: Dict containing story_state, actor, message
+        
+    Returns:
+        Tuple of (system_prompt, user_prompt)
+    """
+    logger.debug("Building scene description prompt")
+    
+    story_state = input_data["story_state"]
+    actor = input_data["actor"]
+    message = input_data["message"]
+    
+    # Template rendering logic
+    prompt_template = Template(MOVE_SCENE_DESCRIPTION_USER_PROMPT)
+    last_description = story_state.get_last_scene_description()
+    
+    user_prompt = prompt_template.render({
+        "companion_side": last_description["companion_side"],
+        "character_side": last_description["character_side"],
+        "actor": actor,
+        "message": message,
+        "character_name": story_state.character.base_personality["name"],
+        "in_universe_self_description": story_state.character.base_personality["in-universe_self_description"],
+        "sensory_origin_memory": story_state.character.base_personality["sensory_origin_memory"],
+        "character_native_deflection": story_state.character.base_personality["character_native_deflection"],
+        "traits": story_state.character.base_personality["traits"],
+        "core_principles": story_state.character.base_personality.get("core_principles", []),
+        "physical_tells": story_state.character.base_personality["physical_tells"],
+        "speech_patterns": story_state.character.base_personality["speech_patterns"]
+    })
+    
+    logger.debug("Scene description prompt built successfully")
+    
+    return MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, user_prompt

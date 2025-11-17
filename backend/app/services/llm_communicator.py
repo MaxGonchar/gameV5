@@ -10,6 +10,7 @@ from typing import TypeVar, Type, Any, Dict, Optional
 from pydantic import BaseModel, ValidationError
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.messages import BaseMessage
 from app.core.config import get_logger
 
 logger = get_logger(__name__)
@@ -109,3 +110,28 @@ class LLMCommunicator:
         )
         logger.error(error_msg)
         raise ValueError(error_msg)
+
+    async def generate_chat_response(self, messages: list[BaseMessage]) -> str:
+        """Generate chat response from message chain.
+        
+        Args:
+            messages: LangChain message chain for conversation
+            
+        Returns:
+            Generated response string
+            
+        Raises:
+            Exception: For LLM-related errors
+        """
+        logger.info("Generating chat response from message chain")
+        
+        try:
+            response = await self.llm_model.ainvoke(messages)
+            result = str(response.content)
+            
+            logger.info("Successfully generated chat response")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Failed to generate chat response: {e}")
+            raise
