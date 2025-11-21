@@ -92,12 +92,12 @@ class StoriesService:
             # Create story metadata
             story_meta = MetaData(data={
                 "title": request.story_title,
-                "description": f"Story created for character {character.name}",
-                "session_context": session_context.dict()
+                "initial_scene_description": session_context.meeting_scene_description.dict()
             })
             
             # Use character's data path to create story
-            character_path = Path(settings.DATA_PATH) / "characters" / f"{character.id}.yaml"
+            # TODO: move path creation logic to DAO
+            character_path = Path(settings.DATA_BASE_DIR) / "characters" / f"{character.id}"
             story_id = await self.story_dao.create_story(
                 character_path=character_path,
                 story_meta=story_meta

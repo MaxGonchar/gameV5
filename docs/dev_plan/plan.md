@@ -6,6 +6,8 @@
 - shorten some content (characters' memory, scene descriptions) (keep in short, tag like form)
 - PROBLEM: growing scene description
 - PROBLEM: still conflicts with poses.
+- PROBLEM: involving in dialogue disturbs the actions to reach the goal.
+- PROBLEM: confuses with character's sex.
 - consider moving speech pattern to RESPONSE RULES
 - restrict amount of characters' active memory (memory items going to prompt)
 
