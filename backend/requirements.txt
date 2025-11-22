@@ -8,6 +8,7 @@ httpx==0.27.0
 python-dotenv==1.0.0
 jinja2==3.1.2
 aiofiles==24.1.0
+aioshutil==1.6
 
 # Testing
 pytest==7.4.0
