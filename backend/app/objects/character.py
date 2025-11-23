@@ -2,6 +2,10 @@ from copy import deepcopy
 from typing import Any, TypedDict
 import numpy as np
 
+from app.core.config import get_logger
+
+logger = get_logger(__name__)
+
 
 class MemoryItemType(TypedDict):
     event_description: str
@@ -14,6 +18,34 @@ class Character:
     
     def to_dict(self) -> dict[str, Any]:
         return deepcopy(self.data)
+    
+    @property
+    def current_goal(self) -> dict[str, Any] | None:
+        return self.data.get("goal")
+    
+    @property
+    def traits(self) -> list[str]:
+        return self._get_from_goal_first("traits", list)
+    
+    @property
+    def speech_patterns(self) -> list[str]:
+        return self._get_from_goal_first("speech_patterns", list)
+    
+    @property
+    def physical_tells(self) -> list[str]:
+        return self._get_from_goal_first("physical_tells", list)
+
+    def _get_from_goal_first(self, key: str, none_type: type) -> Any:
+        value = (
+            self.current_goal.get(f"goal_{key}", none_type())
+            if self.current_goal
+            else self.data["base_personality"].get(key, none_type())
+        )
+
+        if not value:
+            logger.warning(f"Character '{self.name}' has no '{key}' defined.")
+
+        return value
     
     @property
     def id(self) -> str:

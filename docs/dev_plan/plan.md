@@ -1,10 +1,18 @@
 # Features
 
+## Goal-oriented character behavior
+- [ ] add current_goal to character
+- [ ] adjust character move prompt to include current_goal
+- [ ] add goal achievement validation
+- [ ] add initial goal generation
+- [ ] add goal updating mechanism (summarize dialogue when goal updates)
+
+
 ## enhancements
 - add actions to the characters' responses
 - adjust current reality for character to concentrate on positions, feeling and changing in mood.
 - shorten some content (characters' memory, scene descriptions) (keep in short, tag like form)
-- PROBLEM: growing scene description
+- PROBLEM: growing scene description (Not sure)
 - PROBLEM: still conflicts with poses.
 - PROBLEM: involving in dialogue disturbs the actions to reach the goal.
 - PROBLEM: confuses with character's sex.
@@ -12,6 +20,7 @@
 - restrict amount of characters' active memory (memory items going to prompt)
 
 ### post implementation:
+- [ ] delete story functionality
 - [ ] solve todos
 - [ ] sanitize the code
   - [ ] remove unused imports
@@ -41,8 +50,3 @@ I want to find a form of instructions for coding AI assistant to store general i
 
 ## Keep chat history when create summary
 I want to keep chat history when creating summary. To decrease the history passed to the model I can mark the messages as summarized and filter them out when passing the history to the model.
-
-## prompts improvements
-I want to improve prompts for:
-- scene description (make description shorter, not dialogues in it, concentrate on positions, actions, emotions)
-- chat summary (concentrate on important events)

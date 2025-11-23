@@ -11,10 +11,6 @@ from jinja2 import Template
 from app.core.config import get_logger
 
 logger = get_logger(__name__)
-from jinja2 import Template
-from app.core.config import get_logger
-
-logger = get_logger(__name__)
 
 
 class SessionMemory(BaseModel):

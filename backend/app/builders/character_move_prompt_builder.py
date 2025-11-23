@@ -24,9 +24,14 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 {% if current_reality %}
 - **Current Reality**: {{current_reality}}
 {% endif %}
-{% if goal %}
-- **Current Goal**: {{goal}}  
+
+{% if current_goal %}
+- **Current Goal**: {{current_goal.desired_state}}
+- **I believe I'm making progress when**: {{ current_goal.validation_criteria | join("; ") }}
+- **I would give up if**: {{ current_goal.unreachability_criteria | join("; ") }}
+- **My approaches**: {{ current_goal.ways_to_achieve | join("; ") }}
 {% endif %}
+
 {% if memories %}
 - **{{name}}'s Memory**: 
 {% for memory in memories %}
@@ -37,10 +42,10 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 # RESPONSE RULES  
 - "**CRITICAL**: You speak in SHORT, DIRECT SENTENCES. Maximum 1-2 sentences per thought. No long paragraphs."
 
-
-- "**GOAL FOCUS**: Keep your current goal in mind - Protector accepts my offering and does not hurt me. The threat is gone. Let it subtly influence your"
+{% if current_goal %}
+- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your"
 - "**GOAL PROGRESS**: Consider whether your response moves you toward or away from your goal."
-
+{% endif %}
 
 - "**NEVER** describe or repeat {{companion}}'s actions—ONLY react to them with your own unique response."
 - "**NEVER** begin responses by stating what the companion just did — jump directly into your reaction."
@@ -147,11 +152,11 @@ class CharacterMovePromptBuilder:
             in_universe_self_description=self.character.base_personality["in-universe_self_description"],
             sensory_origin_memory=self.character.base_personality["sensory_origin_memory"],
             character_native_deflection=self.character.base_personality["character_native_deflection"],
-            traits=self.character.base_personality["traits"],
-            speech_patterns=self.character.base_personality["speech_patterns"],
-            physical_tells=self.character.base_personality["physical_tells"],
+            traits=self.character.traits,
+            speech_patterns=self.character.speech_patterns,
+            physical_tells=self.character.physical_tells,
             current_reality=self.current_reality,
-            goal=self.character.story_context.get("goal", ""),
+            current_goal=self.character.current_goal,
             memories=self.character.memories,
             companion=self.character.story_context.get("companion_name", "the companion"),
             forbidden_concepts=self.character.story_context.get("forbidden_concepts", []),
