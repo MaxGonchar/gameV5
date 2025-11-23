@@ -5,6 +5,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AI
 from app.objects.character import Character
 from app.chat_types import ChatItem
 from app.core.config import get_logger
+from app.exceptions import DataValidationException
 
 logger = get_logger(__name__)
 
@@ -90,7 +91,7 @@ class CharacterMovePromptBuilder:
             Self for method chaining
             
         Raises:
-            ValueError: If character is missing required fields
+            DataValidationException: If character is missing required fields
         """
         # Validate character has required fields for template
         required_fields = [
@@ -104,7 +105,15 @@ class CharacterMovePromptBuilder:
                 missing_fields.append(field)
         
         if missing_fields:
-            raise ValueError(f"Character missing required fields: {', '.join(missing_fields)}")
+            raise DataValidationException(
+                f"Character missing required fields for prompt building",
+                details={
+                    "missing_fields": missing_fields,
+                    "required_fields": required_fields,
+                    "character_id": getattr(character, 'id', 'unknown'),
+                    "character_name": character.base_personality.get('name', 'unknown')
+                }
+            )
         
         # Validate that lists are not empty where expected
         list_fields = ["traits", "speech_patterns", "physical_tells"]
@@ -139,32 +148,52 @@ class CharacterMovePromptBuilder:
             Rendered system prompt string
             
         Raises:
-            ValueError: If character is not set
+            DataValidationException: If character is not set or template rendering fails
         """
         if not self.character:
-            raise ValueError("Character must be set before building prompt. Use with_character() first.")
+            raise DataValidationException(
+                "Character must be set before building prompt",
+                details={
+                    "method": "build()",
+                    "required_action": "Call with_character() first",
+                    "current_character": None
+                }
+            )
         
         logger.debug(f"Building prompt for character '{self.character.base_personality['name']}'")
         
-        template = Template(self.template)
-        rendered_prompt = template.render(
-            name=self.character.base_personality["name"],
-            in_universe_self_description=self.character.base_personality["in-universe_self_description"],
-            sensory_origin_memory=self.character.base_personality["sensory_origin_memory"],
-            character_native_deflection=self.character.base_personality["character_native_deflection"],
-            traits=self.character.traits,
-            speech_patterns=self.character.speech_patterns,
-            physical_tells=self.character.physical_tells,
-            current_reality=self.current_reality,
-            current_goal=self.character.current_goal,
-            memories=self.character.memories,
-            companion=self.character.story_context.get("companion_name", "the companion"),
-            forbidden_concepts=self.character.story_context.get("forbidden_concepts", []),
-            core_principles=self.character.base_personality.get("core_principles", []),
-        )
-        
-        logger.debug("System prompt built successfully")
-        return rendered_prompt
+        try:
+            template = Template(self.template)
+            rendered_prompt = template.render(
+                name=self.character.base_personality["name"],
+                in_universe_self_description=self.character.base_personality["in-universe_self_description"],
+                sensory_origin_memory=self.character.base_personality["sensory_origin_memory"],
+                character_native_deflection=self.character.base_personality["character_native_deflection"],
+                traits=self.character.traits,
+                speech_patterns=self.character.speech_patterns,
+                physical_tells=self.character.physical_tells,
+                current_reality=self.current_reality,
+                current_goal=self.character.current_goal,
+                memories=self.character.memories,
+                companion=self.character.story_context.get("companion_name", "the companion"),
+                forbidden_concepts=self.character.story_context.get("forbidden_concepts", []),
+                core_principles=self.character.base_personality.get("core_principles", []),
+            )
+            
+            logger.debug("System prompt built successfully")
+            return rendered_prompt
+            
+        except Exception as e:
+            logger.error(f"Template rendering failed for character '{self.character.base_personality.get('name', 'unknown')}': {e}")
+            raise DataValidationException(
+                "Failed to render character prompt template",
+                details={
+                    "character_id": getattr(self.character, 'id', 'unknown'),
+                    "character_name": self.character.base_personality.get('name', 'unknown'),
+                    "template_error": str(e),
+                    "error_type": type(e).__name__
+                }
+            )
 
 
 # Legacy class name alias for backward compatibility

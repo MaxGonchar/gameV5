@@ -2,11 +2,17 @@ from typing import Optional
 import asyncio
 from pathlib import Path
 
-from app.core.config import settings
+from app.core.config import settings, get_logger
 from .yaml_file_handler import YamlFileHandler
 from app.objects import Character
+from app.exceptions import EntityNotFoundException, DataValidationException
+
+logger = get_logger(__name__)
 
 
+# TODO: refactor:
+# make methods smaller, focused on single tasks
+# consider reusing "FileSystemOperations" where applicable
 class CharacterDAO:
     """
     Data Access Object for character configurations.
@@ -37,11 +43,12 @@ class CharacterDAO:
         Returns:
             List of Character objects
             
-        Raises:
-            FileNotFoundError: If characters directory doesn't exist
-            yaml.YAMLError: If YAML parsing fails for any character
+        Note:
+            Failed character loads are logged but don't stop the operation.
+            Only successfully loaded characters are returned.
         """
         if not self.characters_dir.exists():
+            logger.info(f"Characters directory does not exist: {self.characters_dir}")
             return []
         
         # Collect all character file paths
@@ -51,34 +58,49 @@ class CharacterDAO:
                 character_file = character_dir / "character.yaml"
                 if character_file.exists():
                     character_files.append(character_file)
+                else:
+                    logger.warning(f"Character directory '{character_dir.name}' missing character.yaml file")
         
         if not character_files:
+            logger.info(f"No character files found in {self.characters_dir}")
             return []
         
         # Load all character files concurrently
-        async def load_character(character_file: Path) -> Character | None:
-            """Load a single character file, returning None if it fails."""
-            try:
-                character_data = await self.yaml_handler.read_yaml_file(character_file)
-                if isinstance(character_data, dict):
-                    return Character(character_data)
-                else:
-                    print(f"Warning: Invalid character data format in {character_file}, expected dict but got {type(character_data)}")
-                    return None
-            except Exception as e:
-                # Log the error but continue with other characters
-                print(f"Warning: Failed to load character from {character_file}: {e}")
-                return None
+        async def load_character(character_file: Path) -> Character:
+            """Load a single character file, raising exceptions on failure."""
+            character_data = await self.yaml_handler.read_yaml_file(character_file)
+            
+            if not isinstance(character_data, dict):
+                raise DataValidationException(
+                    f"Invalid character data format in {character_file}",
+                    details={
+                        "file_path": str(character_file),
+                        "expected_type": "dict",
+                        "actual_type": type(character_data).__name__
+                    }
+                )
+            
+            return Character(character_data)
         
-        # Load all characters concurrently
+        # Load all characters concurrently, but collect exceptions
         character_results = await asyncio.gather(
             *[load_character(file) for file in character_files],
-            return_exceptions=False
+            return_exceptions=True
         )
         
-        # Filter out None results (failed loads)
-        characters = [char for char in character_results if char is not None]
+        # Separate successful loads from failures
+        characters = []
+        for i, result in enumerate(character_results):
+            if isinstance(result, Exception):
+                character_file = character_files[i]
+                logger.error(
+                    f"Failed to load character from {character_file}: {result}", 
+                    exc_info=isinstance(result, Exception)
+                )
+            else:
+                characters.append(result)
         
+        logger.info(f"Successfully loaded {len(characters)} out of {len(character_files)} characters")
         return characters
 
     async def get_character(self, character_id: str) -> Character:
@@ -92,18 +114,34 @@ class CharacterDAO:
             Character object
             
         Raises:
-            FileNotFoundError: If character file doesn't exist
-            yaml.YAMLError: If YAML parsing fails
+            EntityNotFoundException: If character file doesn't exist
+            DataValidationException: If character data is invalid
+            YamlException, FileOperationException: From yaml_handler (bubbled up)
         """
         character_file = self.characters_dir / character_id / "character.yaml"
         
         if not character_file.exists():
-            raise FileNotFoundError(f"Character with id {character_id} not found at {character_file}")
+            raise EntityNotFoundException(
+                f"Character '{character_id}' not found",
+                details={
+                    "character_id": character_id,
+                    "file_path": str(character_file),
+                    "characters_dir": str(self.characters_dir)
+                }
+            )
         
         character_data = await self.yaml_handler.read_yaml_file(character_file)
         
         if not isinstance(character_data, dict):
-            raise ValueError(f"Invalid character data format in {character_file}, expected dict but got {type(character_data)}")
+            raise DataValidationException(
+                f"Invalid character data format for '{character_id}'",
+                details={
+                    "character_id": character_id,
+                    "file_path": str(character_file),
+                    "expected_type": "dict",
+                    "actual_type": type(character_data).__name__
+                }
+            )
         
         return Character(character_data)
 
@@ -116,8 +154,8 @@ class CharacterDAO:
             character: Character object to store
             
         Raises:
-            yaml.YAMLError: If YAML serialization fails
-            OSError: If file writing fails
+            YamlException: If YAML serialization fails
+            FileOperationException: If file writing fails
         """
         character_dir = self.characters_dir / character_id
         character_file = character_dir / "character.yaml"

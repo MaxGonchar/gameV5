@@ -5,6 +5,7 @@ Character service module containing business logic for character operations.
 from app.core.config import get_logger
 from app.dao.character_dao import CharacterDAO
 from app.models.responses import CharacterSummary, CharactersResponse
+from app.exceptions import ServiceException, EntityNotFoundException, DataValidationException
 
 logger = get_logger(__name__)
 
@@ -42,6 +43,14 @@ class CharacterService:
             
             return CharactersResponse(characters=character_summaries)
             
+        except (EntityNotFoundException, DataValidationException) as e:
+            # DAO-level exceptions - add service context but let them bubble up
+            logger.warning(f"Character data issue while fetching list: {e.message}")
+            raise  # Let DAO exceptions bubble up with original context
+            
         except Exception as e:
-            logger.error(f"Error fetching characters list: {e}")
-            raise
+            logger.error(f"Unexpected error fetching characters list: {e}", exc_info=True)
+            raise ServiceException(
+                "Failed to fetch characters list due to unexpected error",
+                details={"original_error": str(e)}
+            )

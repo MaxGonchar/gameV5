@@ -10,6 +10,8 @@ import aiofiles
 from typing import Dict, List, Any, Union
 from pathlib import Path
 
+from app.exceptions import YamlException, FileOperationException
+
 
 class YamlFileHandler:
     """
@@ -31,9 +33,8 @@ class YamlFileHandler:
             Contents of the YAML file as dict or list
             
         Raises:
-            FileNotFoundError: If file doesn't exist
-            yaml.YAMLError: If YAML parsing fails
-            Exception: For other unexpected errors
+            FileOperationException: If file doesn't exist or cannot be read
+            YamlException: If YAML parsing fails
         """
         try:
             async with aiofiles.open(file_path, 'r', encoding='utf-8') as file:
@@ -46,12 +47,21 @@ class YamlFileHandler:
                     
                 return data
                     
-        except FileNotFoundError:
-            raise FileNotFoundError(f"The file {file_path} does not exist.")
-        except yaml.YAMLError as exc:
-            raise yaml.YAMLError(f"Error parsing YAML file {file_path}: {exc}")
-        except Exception as exc:
-            raise Exception(f"An unexpected error occurred while reading {file_path}: {exc}")
+        except FileNotFoundError as e:
+            raise FileOperationException(
+                f"YAML file not found: {file_path}",
+                details={"file_path": str(file_path), "original_error": str(e)}
+            )
+        except yaml.YAMLError as e:
+            raise YamlException(
+                f"Failed to parse YAML file: {file_path}",
+                details={"file_path": str(file_path), "yaml_error": str(e)}
+            )
+        except Exception as e:
+            raise FileOperationException(
+                f"Unexpected error reading YAML file: {file_path}",
+                details={"file_path": str(file_path), "original_error": str(e)}
+            )
     
     @staticmethod
     async def write_yaml_file(file_path: Path, data: Union[Dict[str, Any], List[Dict[str, Any]]]) -> None:
@@ -63,8 +73,8 @@ class YamlFileHandler:
             data: Data to write to the file
             
         Raises:
-            yaml.YAMLError: If YAML serialization fails
-            OSError: If file writing fails
+            YamlException: If YAML serialization fails
+            FileOperationException: If file writing fails
         """
         try:
             yaml_content = yaml.safe_dump(
@@ -75,10 +85,16 @@ class YamlFileHandler:
             )
             async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
                 await file.write(yaml_content)
-        except yaml.YAMLError as exc:
-            raise yaml.YAMLError(f"Error writing YAML to file {file_path}: {exc}")
-        except OSError as exc:
-            raise OSError(f"Error writing file {file_path}: {exc}")
+        except yaml.YAMLError as e:
+            raise YamlException(
+                f"Failed to serialize data to YAML: {file_path}",
+                details={"file_path": str(file_path), "yaml_error": str(e)}
+            )
+        except OSError as e:
+            raise FileOperationException(
+                f"Failed to write YAML file: {file_path}",
+                details={"file_path": str(file_path), "os_error": str(e)}
+            )
     
     async def read_raw_string(self, file_path: Path) -> str:
         """
@@ -91,15 +107,20 @@ class YamlFileHandler:
             Raw string content of the file
             
         Raises:
-            FileNotFoundError: If file doesn't exist
-            Exception: For other unexpected errors
+            FileOperationException: If file doesn't exist or cannot be read
         """
         try:
             async with aiofiles.open(file_path, 'r', encoding='utf-8') as file:
                 content = await file.read()
                 return content
-        except FileNotFoundError:
-            raise FileNotFoundError(f"The file {file_path} does not exist.")
-        except Exception as exc:
-            raise Exception(f"An unexpected error occurred while reading {file_path}: {exc}")
+        except FileNotFoundError as e:
+            raise FileOperationException(
+                f"File not found: {file_path}",
+                details={"file_path": str(file_path), "original_error": str(e)}
+            )
+        except Exception as e:
+            raise FileOperationException(
+                f"Failed to read file: {file_path}",
+                details={"file_path": str(file_path), "original_error": str(e)}
+            )
 

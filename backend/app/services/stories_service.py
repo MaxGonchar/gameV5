@@ -15,6 +15,14 @@ from app.llm.venice_ai import VeniceAIChatModel
 from app.models.session_context import SessionContextResponse, build_session_context_prompt
 from pathlib import Path
 from app.core.config import get_logger
+from app.exceptions import (
+    ServiceException, 
+    BusinessLogicException, 
+    ExternalServiceException, 
+    EntityNotFoundException,
+    InitializationException,
+    DataValidationException
+)
 
 logger = get_logger(__name__)
 
@@ -38,7 +46,7 @@ class StoriesService:
         self.story_dao = StoryDAO()
         self.character_dao = CharacterDAO()
         
-        # Initialize Venice model for story context generation
+        # TODO: anti-pattern: Initialize Venice model for story context generation
         venice_api_key = settings.VENICE_API_KEY
         try:
             self.venice_model = VeniceAIChatModel(
@@ -48,7 +56,14 @@ class StoriesService:
             )
             logger.info("✅ VeniceAI integration enabled for story context generation")
         except Exception as e:
-            raise ValueError(f"Failed to initialize VeniceAI model: {e}")
+            logger.error(f"Failed to initialize VeniceAI model: {e}")
+            raise InitializationException(
+                "Failed to initialize VeniceAI model for story service",
+                details={
+                    "model": "mistral-31-24b", 
+                    "original_error": str(e)
+                }
+            )
         
         # Initialize LLM communicator (single instance for reuse)
         self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
@@ -66,8 +81,9 @@ class StoriesService:
             str: The ID of the newly created story.
             
         Raises:
-            ValueError: If character not found or LLM generation fails
-            Exception: For other story creation errors
+            BusinessLogicException: If character not found or business rules violated
+            ExternalServiceException: If LLM communication fails
+            ServiceException: For other story creation errors
         """
         try:
             logger.info(f"Creating new story '{request.story_title}' for character '{request.character_id}'")
@@ -125,9 +141,60 @@ class StoriesService:
             logger.info(f"Successfully created story with ID: {story_id}")
             return story_id
             
-        except Exception as e:
-            logger.exception(f"Error creating story '{request.story_title}': {e}")
+        except EntityNotFoundException as e:
+            # Character not found - could be from initial lookup or StoryState.create()  
+            logger.warning(f"Character not found during story creation: {e.message}")
+            raise BusinessLogicException(
+                "Cannot create story: Character not found",
+                details={
+                    "character_id": request.character_id,
+                    "story_title": request.story_title,
+                    "original_error": e.message
+                }
+            )
+            
+        except ValueError as e:
+            # StoryState.create() data validation errors
+            logger.error(f"Story state creation failed due to data issues: {e}")
+            # story_id is defined by this point since StoryDAO.create_story() succeeded
+            current_story_id = locals().get('story_id', 'unknown')
+            raise InitializationException(
+                "Failed to initialize story state due to data validation error",
+                details={
+                    "story_id": current_story_id,
+                    "story_title": request.story_title,
+                    "original_error": str(e)
+                }
+            )
+            
+        except DataValidationException as e:
+            # Could be from LLM response parsing or DAO operations
+            logger.error(f"Data validation failed during story creation for '{request.story_title}': {e.message}")
+            raise ServiceException(
+                "Story creation failed due to data validation error",
+                details={
+                    "story_title": request.story_title,
+                    "character_id": request.character_id,
+                    "validation_error": e.message
+                }
+            )
+            
+        except ExternalServiceException as e:
+            # LLM communication failed - add story context and re-raise
+            logger.error(f"LLM service failed during story creation for '{request.story_title}': {e.message}")
+            # Let the original exception bubble up - it already has good technical context
             raise
+            
+        except Exception as e:
+            logger.error(f"Unexpected error creating story '{request.story_title}': {e}", exc_info=True)
+            raise ServiceException(
+                "Failed to create story due to unexpected error",
+                details={
+                    "story_title": request.story_title,
+                    "character_id": request.character_id,
+                    "original_error": str(e)
+                }
+            )
     
     async def get_stories_summary(self) -> StorySummary:
         """

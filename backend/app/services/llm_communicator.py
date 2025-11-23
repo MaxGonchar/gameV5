@@ -12,6 +12,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import BaseMessage
 from app.core.config import get_logger
+from app.exceptions import ExternalServiceException, DataValidationException
 
 logger = get_logger(__name__)
 
@@ -19,6 +20,7 @@ logger = get_logger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
 
+# TODO: why only one file uses retry logic?
 class LLMCommunicator:
     """
     General tool for LLM-based communication.
@@ -61,8 +63,8 @@ class LLMCommunicator:
             Parsed response as an instance of the response_model
             
         Raises:
-            ValueError: If LLM response cannot be parsed after max retries
-            Exception: For other LLM-related errors
+            DataValidationException: If LLM response cannot be parsed after max retries
+            ExternalServiceException: For LLM communication errors
         """
         logger.info(f"Generating structured response using model: {response_model.__name__}")
         
@@ -96,20 +98,35 @@ class LLMCommunicator:
                 
             except ValidationError as e:
                 last_error = e
-                logger.warning(f"Validation error on attempt {attempt + 1}: {e}")
+                logger.warning(f"Pydantic validation error on attempt {attempt + 1}: {e}")
                 
             except Exception as e:
                 last_error = e
                 logger.warning(f"LLM generation error on attempt {attempt + 1}: {e}")
         
-        # All attempts failed
-        context_info = f" (Context: {additional_context})" if additional_context else ""
-        error_msg = (
-            f"Failed to generate valid {response_model.__name__} after {self.max_retries} attempts. "
-            f"Last error: {last_error}{context_info}"
-        )
-        logger.error(error_msg)
-        raise ValueError(error_msg)
+        # All attempts failed - determine appropriate exception type
+        if isinstance(last_error, ValidationError):
+            # Pydantic validation failed - response parsing issue
+            raise DataValidationException(
+                f"Failed to parse LLM response into {response_model.__name__} after {self.max_retries} attempts",
+                details={
+                    "response_model": response_model.__name__,
+                    "max_retries": self.max_retries,
+                    "validation_error": str(last_error),
+                    "additional_context": additional_context or {}
+                }
+            )
+        else:
+            # LLM communication error
+            raise ExternalServiceException(
+                f"LLM communication failed after {self.max_retries} attempts",
+                details={
+                    "response_model": response_model.__name__,
+                    "max_retries": self.max_retries,
+                    "original_error": str(last_error),
+                    "additional_context": additional_context or {}
+                }
+            )
 
     async def generate_chat_response(self, messages: list[BaseMessage]) -> str:
         """Generate chat response from message chain.
@@ -121,7 +138,7 @@ class LLMCommunicator:
             Generated response string
             
         Raises:
-            Exception: For LLM-related errors
+            ExternalServiceException: For LLM communication errors
         """
         logger.info("Generating chat response from message chain")
         
@@ -134,4 +151,10 @@ class LLMCommunicator:
             
         except Exception as e:
             logger.error(f"Failed to generate chat response: {e}")
-            raise
+            raise ExternalServiceException(
+                "LLM communication failed during chat response generation",
+                details={
+                    "message_count": len(messages),
+                    "original_error": str(e)
+                }
+            )

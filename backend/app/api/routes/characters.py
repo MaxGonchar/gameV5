@@ -7,8 +7,12 @@ import logging
 
 from app.models.responses import CharactersResponse
 from app.services.character_service import CharacterService
-
 from app.core.config import get_logger
+from app.exceptions import (
+    EntityNotFoundException,
+    DataValidationException,
+    ServiceException
+)
 
 logger = get_logger(__name__)
 
@@ -41,9 +45,30 @@ async def get_characters():
         logger.info(f"Successfully returned {len(characters_response.characters)} characters")
         return characters_response
         
-    except Exception as e:
-        logger.exception(f"Error getting characters: {e}")
+    except EntityNotFoundException as e:
+        logger.warning(f"Characters data not found: {e.message}")
+        raise HTTPException(
+            status_code=404,
+            detail="No characters found"
+        )
+    
+    except DataValidationException as e:
+        logger.error(f"Character data validation error: {e.message}")
         raise HTTPException(
             status_code=500,
-            detail=f"Internal server error: {str(e)}"
+            detail="Character data validation failed. Please contact support."
+        )
+    
+    except ServiceException as e:
+        logger.error(f"Service error getting characters: {e.message}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal service error. Please try again."
+        )
+    
+    except Exception as e:
+        logger.exception(f"Unexpected error getting characters: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred. Please try again."
         )

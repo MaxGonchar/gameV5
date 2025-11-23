@@ -12,6 +12,7 @@ import aioshutil
 
 from app.core.config import get_logger
 from .yaml_file_handler import YamlFileHandler
+from app.exceptions import FileOperationException
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,7 @@ class FileSystemOperations:
             exist_ok: If True, don't raise error if directory already exists
             
         Raises:
-            OSError: If directory creation fails
+            FileOperationException: If directory creation fails
         """
         try:
             logger.info("Creating directory: %s", path)
@@ -48,10 +49,16 @@ class FileSystemOperations:
         except FileExistsError as e:
             if not exist_ok:
                 logger.error("Directory %s already exists: %s", path, e)
-                raise OSError(f"Directory {path} already exists: {e}")
+                raise FileOperationException(
+                    f"Directory already exists: {path}",
+                    details={"path": str(path), "original_error": str(e)}
+                )
         except OSError as e:
             logger.error("Failed to create directory %s: %s", path, e)
-            raise OSError(f"Failed to create directory {path}: {e}")
+            raise FileOperationException(
+                f"Failed to create directory: {path}",
+                details={"path": str(path), "original_error": str(e)}
+            )
     
     async def copy_dir(self, src: Path, dest: Path, create_if_not_exists: bool = True) -> int:
         """
@@ -66,14 +73,19 @@ class FileSystemOperations:
             Number of files copied (estimated from aioshutil.copytree)
             
         Raises:
-            FileNotFoundError: If source directory doesn't exist
-            OSError: If copy operation fails
+            FileOperationException: If source directory doesn't exist or copy operation fails
         """
         if not src.exists():
-            raise FileNotFoundError(f"Source directory {src} does not exist")
+            raise FileOperationException(
+                f"Source directory does not exist: {src}",
+                details={"src_path": str(src)}
+            )
         
         if not src.is_dir():
-            raise OSError(f"Source {src} is not a directory")
+            raise FileOperationException(
+                f"Source path is not a directory: {src}",
+                details={"src_path": str(src)}
+            )
         
         logger.info("Copying directory from %s to %s", src, dest)
         
@@ -93,7 +105,10 @@ class FileSystemOperations:
             
         except Exception as e:
             logger.error("Failed to copy directory from %s to %s: %s", src, dest, e)
-            raise OSError(f"Failed to copy directory from {src} to {dest}: {e}")
+            raise FileOperationException(
+                f"Failed to copy directory from {src} to {dest}",
+                details={"src_path": str(src), "dest_path": str(dest), "original_error": str(e)}
+            )
     
     async def create_yaml_file(
         self, 
@@ -108,8 +123,8 @@ class FileSystemOperations:
             content: Data to write to YAML file
             
         Raises:
-            yaml.YAMLError: If YAML serialization fails
-            OSError: If file writing fails
+            YamlException, FileOperationException: From yaml_handler (bubbled up)
+            FileOperationException: If directory creation fails
         """
         try:
             logger.info("Creating YAML file: %s", path)
@@ -136,15 +151,20 @@ class FileSystemOperations:
             path: Directory path to delete
             
         Raises:
-            OSError: If directory deletion fails
-            FileNotFoundError: If directory doesn't exist
+            FileOperationException: If directory doesn't exist or deletion fails
         """
         try:
             if not path.exists():
-                raise FileNotFoundError(f"Directory {path} does not exist")
+                raise FileOperationException(
+                    f"Directory does not exist: {path}",
+                    details={"path": str(path)}
+                )
             
             if not path.is_dir():
-                raise OSError(f"Path {path} is not a directory")
+                raise FileOperationException(
+                    f"Path is not a directory: {path}",
+                    details={"path": str(path)}
+                )
             
             logger.info("Deleting directory: %s", path)
             
@@ -152,8 +172,11 @@ class FileSystemOperations:
             await aioshutil.rmtree(str(path))
             logger.debug("Successfully deleted directory: %s", path)
             
-        except FileNotFoundError:
+        except FileOperationException:
             raise
         except Exception as e:
             logger.error("Failed to delete directory %s: %s", path, e)
-            raise OSError(f"Failed to delete directory {path}: {e}")
+            raise FileOperationException(
+                f"Failed to delete directory: {path}",
+                details={"path": str(path), "original_error": str(e)}
+            )

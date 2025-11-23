@@ -6,6 +6,7 @@ from app.core.config import settings, get_logger
 from app.objects.meta import MetaData
 from .yaml_file_handler import YamlFileHandler
 from .file_system_operations import FileSystemOperations
+from app.exceptions import ServiceException, FileOperationException
 
 logger = get_logger(__name__)
 
@@ -65,19 +66,42 @@ class StoryDAO:
             logger.info("Story %s created successfully at %s", new_story_id, new_story_dir)
             return new_story_id
             
+        except FileOperationException as e:
+            logger.error("File operation failed during story creation %s: %s", new_story_id, e.message)
+            await self._rollback_story_creation(new_story_dir, new_story_id)
+            raise ServiceException(
+                f"Failed to create story due to file system error",
+                details={
+                    "story_id": new_story_id,
+                    "character_path": str(character_path),
+                    "original_error": str(e)
+                }
+            )
         except Exception as e:
-            logger.error("Failed to create story %s: %s", new_story_id, e)
-            
-            # Rollback: clean up partially created story directory
-            try:
-                logger.info("Rolling back: deleting partially created story directory %s", new_story_dir)
-                await self._delete_story_dir(new_story_dir)
-                logger.info("Successfully rolled back story directory %s", new_story_dir)
-            except Exception as rollback_error:
-                logger.error("Failed to rollback story directory %s: %s", new_story_dir, rollback_error)
-                # Don't raise rollback error, prioritize original error
-            
-            raise
+            logger.error("Unexpected error creating story %s: %s", new_story_id, e)
+            await self._rollback_story_creation(new_story_dir, new_story_id)
+            raise ServiceException(
+                f"Unexpected error during story creation",
+                details={
+                    "story_id": new_story_id,
+                    "character_path": str(character_path),
+                    "original_error": str(e)
+                }
+            )
+    async def _rollback_story_creation(self, story_dir_path: Path, story_id: str) -> None:
+        """Handle rollback of partially created story directory."""
+        try:
+            logger.info("Rolling back: deleting partially created story directory %s", story_dir_path)
+            await self._delete_story_dir(story_dir_path)
+            logger.info("Successfully rolled back story directory %s", story_dir_path)
+        except Exception as rollback_error:
+            logger.error(
+                "Failed to rollback story directory %s: %s", 
+                story_dir_path, 
+                rollback_error,
+                exc_info=True
+            )
+            # Don't raise rollback error, just log it
     
     # TODO: do something with this method
     # options: reuse character/location dao methods or write required story data to meta.yaml
@@ -93,7 +117,7 @@ class StoryDAO:
         
         # Check if stories directory exists
         if not self.stories_dir.exists():
-            logger.info("Stories directory %s does not exist", self.stories_dir)
+            logger.info("Stories directory does not exist: %s", self.stories_dir)
             return stories
         
         # Iterate through all story directories
@@ -111,8 +135,10 @@ class StoryDAO:
                     if isinstance(meta_data, dict) and "title" in meta_data:
                         title = meta_data["title"]
                     else:
+                        logger.warning(f"Story {story_id}: meta.yaml exists but missing 'title' field")
                         title = "Untitled Story"
                 else:
+                    logger.debug(f"Story {story_id}: meta.yaml not found, using default title")
                     title = "Untitled Story"
                 
                 # Create story summary
@@ -123,8 +149,13 @@ class StoryDAO:
                 stories.append(story_summary)
                 logger.debug("Added story summary: %s", story_summary)
                 
-            except Exception:
-                logger.exception("Failed to process story %s", story_id)
+            except Exception as e:
+                logger.error(
+                    "Failed to process story %s: %s", 
+                    story_id, 
+                    e,
+                    exc_info=True
+                )
                 # Continue processing other stories even if one fails
                 continue
         

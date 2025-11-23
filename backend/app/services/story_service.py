@@ -20,6 +20,13 @@ from app.builders.character_move_prompt_builder import build_character_messages_
 from app.objects.story_state import StoryState
 from app.services.llm_communicator import LLMCommunicator
 from app.models.scene_description import MoveSceneDescriptionResponse, build_scene_description_prompt
+from app.exceptions import (
+    InitializationException,
+    EntityNotFoundException,
+    DataValidationException,
+    ExternalServiceException,
+    ServiceException
+)
 
 logger = get_logger(__name__)
 
@@ -83,7 +90,15 @@ class StoryService:
             )
             logger.info("✅ VeniceAI integration enabled")
         except Exception as e:
-            raise ValueError(f"Failed to initialize VeniceAI model: {e}")
+            logger.error(f"Failed to initialize VeniceAI model: {e}")
+            raise InitializationException(
+                "Failed to initialize VeniceAI model for story service",
+                details={
+                    "model": "venice-uncensored",
+                    "api_key_present": bool(venice_api_key),
+                    "original_error": str(e)
+                }
+            )
         
         # Initialize LLM communicator (single instance for reuse)
         self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
@@ -100,10 +115,39 @@ class StoryService:
             Fully initialized StoryService instance
             
         Raises:
-            ValueError: If VENICE_API_KEY environment variable is not set or story data not found.
+            InitializationException: If service initialization fails
+            EntityNotFoundException: If story data not found
+            DataValidationException: If story data is invalid
         """
-        story_state = await StoryState.create(story_id)
-        return cls(story_id, story_state=story_state)
+        try:
+            story_state = await StoryState.create(story_id)
+            return cls(story_id, story_state=story_state)
+            
+        except ValueError as e:
+            # StoryState.create() data validation errors
+            logger.error(f"Story state creation failed for story {story_id}: {e}")
+            raise EntityNotFoundException(
+                f"Failed to load story data",
+                details={
+                    "story_id": story_id,
+                    "original_error": str(e)
+                }
+            )
+            
+        except (DataValidationException, EntityNotFoundException):
+            # Re-raise custom exceptions with story context
+            logger.error(f"Data validation failed for story {story_id}")
+            raise
+            
+        except Exception as e:
+            logger.error(f"Unexpected error creating StoryService for story {story_id}: {e}", exc_info=True)
+            raise InitializationException(
+                "Failed to initialize story service due to unexpected error",
+                details={
+                    "story_id": story_id,
+                    "original_error": str(e)
+                }
+            )
 
     def _generate_story_messages(self) -> list[BaseMessage]:
         """Generate LangChain messages using the dedicated function."""
@@ -170,19 +214,41 @@ class StoryService:
         """Process user message and generate bot response.
         
         Main orchestration method that coordinates the story interaction flow.
+        
+        Raises:
+            ExternalServiceException: If LLM communication fails
+            DataValidationException: If response parsing fails
+            ServiceException: For other processing errors
         """
-        logger.info(f"Processing user message: {message}")
+        try:
+            logger.info(f"Processing user message: {message}")
 
-        # Add user message with scene description
-        await self._update_chat_history(message, author_user=True)
+            # Add user message with scene description
+            await self._update_chat_history(message, author_user=True)
 
-        # Generate and add bot response
-        bot_response = await self._generate_bot_response()
-        await self._update_chat_history(bot_response, author_user=False)
+            # Generate and add bot response
+            bot_response = await self._generate_bot_response()
+            await self._update_chat_history(bot_response, author_user=False)
 
-        # Persist changes
-        logger.info("Saving story state...")
-        await self.story_state.save_state()
+            # Persist changes
+            logger.info("Saving story state...")
+            await self.story_state.save_state()
+            
+        except (ExternalServiceException, DataValidationException):
+            # LLM communication or response parsing failed - re-raise with context
+            logger.error(f"LLM operation failed during message processing for story {self.story_id}")
+            raise
+            
+        except Exception as e:
+            logger.error(f"Unexpected error processing user message in story {self.story_id}: {e}", exc_info=True)
+            raise ServiceException(
+                "Failed to process user message due to unexpected error",
+                details={
+                    "story_id": self.story_id,
+                    "message_preview": message[:50] + "..." if len(message) > 50 else message,
+                    "original_error": str(e)
+                }
+            )
 
     # Façade methods for API routes
     def get_chat_history(self) -> list[ChatItem]:

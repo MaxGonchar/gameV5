@@ -30,6 +30,7 @@
 - [ ] do not allow summarize the last message
 - [ ] add created and updated date to the items
 - [ ] card for a user character
+- [ ] review exceptions handling, consider to make it simpler, reduce number of exception types if possible. Consider refactoring custom exceptions to be more clear what is internal and wat is external so we could have less types of exceptions.
 
 ## Time measurement
 I want somehow to measure time during the scene.

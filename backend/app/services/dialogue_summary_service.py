@@ -17,6 +17,14 @@ from app.llm.venice_ai import VeniceAIChatModel
 from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, build_memory_summary_prompt
 from app.services.llm_communicator import LLMCommunicator
 from app.core.config import get_logger
+from app.exceptions import (
+    InitializationException,
+    EntityNotFoundException,
+    DataValidationException,
+    ExternalServiceException,
+    ServiceException,
+    BusinessLogicException
+)
 
 logger = get_logger(__name__)
 
@@ -51,12 +59,26 @@ class DialogueSummaryService:
         self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
         
         # Initialize centralized LLM components
-        self.venice_model = VeniceAIChatModel(
-            api_key=settings.VENICE_API_KEY,
-            model="mistral-31-24b",
-            temperature=0.3  # Lower temperature for more consistent summaries
-        )
-        self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
+        try:
+            self.venice_model = VeniceAIChatModel(
+                api_key=settings.VENICE_API_KEY,
+                model="mistral-31-24b",
+                temperature=0.3  # Lower temperature for more consistent summaries
+            )
+            self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
+            logger.info("✅ VeniceAI integration enabled for dialogue summary service")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize VeniceAI model for dialogue summary: {e}")
+            raise InitializationException(
+                "Failed to initialize VeniceAI model for dialogue summary service",
+                details={
+                    "story_id": story_id,
+                    "model": "mistral-31-24b",
+                    "api_key_present": bool(settings.VENICE_API_KEY),
+                    "original_error": str(e)
+                }
+            )
     
     async def summarize_chat_up_to_item(self, chat_item_id: str) -> None:
         """
@@ -65,48 +87,86 @@ class DialogueSummaryService:
         Args:
             chat_item_id: ID of the chat item to summarize up to (inclusive)
             
-        Returns:
-            Dict containing success status and error information
+        Raises:
+            EntityNotFoundException: If character or chat item not found
+            ExternalServiceException: If LLM communication fails
+            DataValidationException: If response parsing fails  
+            ServiceException: For other processing errors
         """
-        logger.info(f"Starting summarization up to chat item ID: {chat_item_id}")
+        try:
+            logger.info(f"Starting summarization up to chat item ID: {chat_item_id}")
 
-        # Determine character_id if not provided
-        if not self.character_id:
-            characters = await self.character_dao.get_characters()
-            if not characters:
-                raise ValueError(f"No characters found in story {self.story_id}")
-            self.character_id = characters[0].id
+            # Determine character_id if not provided
+            if not self.character_id:
+                characters = await self.character_dao.get_characters()
+                if not characters:
+                    raise BusinessLogicException(
+                        f"No characters found in story for summarization",
+                        details={"story_id": self.story_id, "chat_item_id": chat_item_id}
+                    )
+                self.character_id = characters[0].id
 
-        character, chat_history = await asyncio.gather(
-            self.character_dao.get_character(self.character_id),
-            self.chat_history_dao.load_history()
-        )
-        
-        chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
-        dialogue_items = self._format_chat_as_dialogue(chat_slice)
+            character, chat_history = await asyncio.gather(
+                self.character_dao.get_character(self.character_id),
+                self.chat_history_dao.load_history()
+            )
+            
+            chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
+            if not chat_slice:
+                raise BusinessLogicException(
+                    "No messages found to summarize",
+                    details={
+                        "story_id": self.story_id,
+                        "chat_item_id": chat_item_id,
+                        "character_id": self.character_id
+                    }
+                )
+                
+            dialogue_items = self._format_chat_as_dialogue(chat_slice)
 
-        new_summary = await self._generate_summary(dialogue_items, character)
+            new_summary = await self._generate_summary(dialogue_items, character)
 
-        logger.info(f"Generated {len(new_summary.memory_items)} new memory items")
-        for i, item in enumerate(new_summary.memory_items, 1):
-            logger.debug(f"Memory {i}: {item.event_description[:50]}...")
+            logger.info(f"Generated {len(new_summary.memory_items)} new memory items")
+            for i, item in enumerate(new_summary.memory_items, 1):
+                logger.debug(f"Memory {i}: {item.event_description[:50]}...")
 
-        character.add_items_to_memory(
-            [
-                {
-                    "event_description": item.event_description,
-                    "in_character_reflection": item.in_character_reflection
+            character.add_items_to_memory(
+                [
+                    {
+                        "event_description": item.event_description,
+                        "in_character_reflection": item.in_character_reflection
+                    }
+                    for item in new_summary.memory_items
+                ]
+            )
+
+            chat_history.trim_messages_up_to_id(chat_item_id)
+            
+            await asyncio.gather(
+                self.character_dao.store_character(self.character_id, character),
+                self.chat_history_dao.save(chat_history)
+            )
+            
+        except (EntityNotFoundException, BusinessLogicException):
+            # Re-raise business logic and entity not found errors
+            raise
+            
+        except (ExternalServiceException, DataValidationException):
+            # Re-raise LLM communication errors with context
+            logger.error(f"LLM operation failed during dialogue summarization for story {self.story_id}")
+            raise
+            
+        except Exception as e:
+            logger.error(f"Unexpected error during dialogue summarization for story {self.story_id}: {e}", exc_info=True)
+            raise ServiceException(
+                "Failed to summarize dialogue due to unexpected error",
+                details={
+                    "story_id": self.story_id,
+                    "chat_item_id": chat_item_id,
+                    "character_id": self.character_id,
+                    "original_error": str(e)
                 }
-                for item in new_summary.memory_items
-            ]
-        )
-
-        chat_history.trim_messages_up_to_id(chat_item_id)
-        
-        await asyncio.gather(
-            self.character_dao.store_character(self.character_id, character),
-            self.chat_history_dao.save(chat_history)
-        )
+            )
     
     def _format_chat_as_dialogue(self, chat_slice: List[ChatItem]) -> list[str]:
         """
