@@ -9,6 +9,7 @@ from typing import List
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, validator
 
+
 # Load environment variables once at module level
 load_dotenv()
 
@@ -21,10 +22,50 @@ class Settings(BaseModel):
         description="Allowed CORS origins"
     )
     
+    # Server Configuration
+    SERVER_HOST: str = Field(
+        default="0.0.0.0",
+        description="Server host address"
+    )
+    SERVER_PORT: int = Field(
+        default=8000,
+        description="Server port number"
+    )
+    SERVER_RELOAD: bool = Field(
+        default=True,
+        description="Enable auto-reload for development"
+    )
+    
     # Venice AI Configuration - The only external dependency we need to configure
     VENICE_API_KEY: str = Field(
         default_factory=lambda: os.getenv("VENICE_API_KEY", ""),
         description="Venice AI API key (required)"
+    )
+    
+    # LLM Model Configuration
+    DEFAULT_STORY_MODEL: str = Field(
+        default_factory=lambda: os.getenv("DEFAULT_STORY_MODEL", "venice-uncensored"),
+        description="Default model for story generation"
+    )
+    DEFAULT_SUMMARY_MODEL: str = Field(
+        default_factory=lambda: os.getenv("DEFAULT_SUMMARY_MODEL", "mistral-31-24b"),
+        description="Default model for dialogue summaries"
+    )
+    DEFAULT_STORY_CONTEXT_MODEL: str = Field(
+        default_factory=lambda: os.getenv("DEFAULT_STORY_CONTEXT_MODEL", "mistral-31-24b"),
+        description="Default model for story context generation"
+    )
+    DEFAULT_STORY_TEMPERATURE: float = Field(
+        default_factory=lambda: float(os.getenv("DEFAULT_STORY_TEMPERATURE", "0.7")),
+        description="Default temperature for story generation (0.0-2.0)"
+    )
+    DEFAULT_SUMMARY_TEMPERATURE: float = Field(
+        default_factory=lambda: float(os.getenv("DEFAULT_SUMMARY_TEMPERATURE", "0.3")),
+        description="Default temperature for dialogue summaries (0.0-2.0)"
+    )
+    DEFAULT_STORY_CONTEXT_TEMPERATURE: float = Field(
+        default_factory=lambda: float(os.getenv("DEFAULT_STORY_CONTEXT_TEMPERATURE", "0.7")),
+        description="Default temperature for story context generation (0.0-2.0)"
     )
     
     # Logging Configuration
@@ -33,30 +74,8 @@ class Settings(BaseModel):
         description="Application log level"
     )
     
-    # Data Paths - Centralized path management
+    # Data Paths - Base directory only
     DATA_BASE_DIR: str = Field(default="data", description="Base directory for all application data")
-    
-    @property
-    def stories_base_dir(self) -> str:
-        """Base directory for story data."""
-        return f"{self.DATA_BASE_DIR}/stories"
-    
-    @property  
-    def characters_base_dir(self) -> str:
-        """Base directory for character data."""
-        return f"{self.DATA_BASE_DIR}/characters"
-    
-    def get_story_characters_dir(self, story_id: str) -> str:
-        """Get characters directory for a specific story."""
-        return f"{self.stories_base_dir}/{story_id}/characters"
-    
-    def get_story_history_file(self, story_id: str) -> str:
-        """Get history file path for a specific story."""
-        return f"{self.stories_base_dir}/{story_id}/history.yaml"
-    
-    def get_story_meta_dir(self, story_id: str) -> str:
-        """Get meta directory for a specific story."""
-        return f"{self.stories_base_dir}/{story_id}"
     
     @validator('VENICE_API_KEY')
     def validate_venice_api_key(cls, v: str) -> str:
@@ -76,6 +95,20 @@ class Settings(BaseModel):
         if v_upper not in valid_levels:
             raise ValueError(f"LOG_LEVEL must be one of: {', '.join(valid_levels)}")
         return v_upper
+    
+    @validator('DEFAULT_STORY_TEMPERATURE', 'DEFAULT_SUMMARY_TEMPERATURE', 'DEFAULT_STORY_CONTEXT_TEMPERATURE')
+    def validate_temperature(cls, v: float) -> float:
+        """Ensure temperature values are within valid range."""
+        if not 0.0 <= v <= 2.0:
+            raise ValueError("Temperature must be between 0.0 and 2.0")
+        return v
+    
+    @validator('DEFAULT_STORY_MODEL', 'DEFAULT_SUMMARY_MODEL', 'DEFAULT_STORY_CONTEXT_MODEL')
+    def validate_model_name(cls, v: str) -> str:
+        """Ensure model names are not empty."""
+        if not v or not v.strip():
+            raise ValueError("Model name cannot be empty")
+        return v.strip()
     
     class Config:
         """Pydantic config."""

@@ -3,8 +3,8 @@ Story API endpoints for interactive story application.
 """
 
 from fastapi import APIRouter, HTTPException
+from http import HTTPStatus
 import logging
-
 
 from app.models.requests import SendMessageRequest, CreateStoryRequest
 from app.models.responses import (
@@ -59,35 +59,35 @@ async def process_user_message(story_id: str, request: SendMessageRequest):
     except EntityNotFoundException as e:
         logger.warning(f"Story or related entity not found for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail=f"Story not found: {e.message}"
         )
     
     except DataValidationException as e:
         logger.error(f"Data validation error processing message for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Invalid request data: {e.message}"
         )
     
     except ExternalServiceException as e:
         logger.error(f"External service error processing message for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=502,
+            status_code=HTTPStatus.BAD_GATEWAY,
             detail="AI service temporarily unavailable. Please try again."
         )
     
     except (InitializationException, ServiceException) as e:
         logger.error(f"Service error processing message for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error processing message for story {story_id}: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )
 
@@ -118,28 +118,28 @@ async def get_story_history(story_id: str):
     except EntityNotFoundException as e:
         logger.warning(f"Story history not found for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail=f"Story not found: {e.message}"
         )
     
     except DataValidationException as e:
         logger.error(f"Data validation error getting history for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Invalid story data: {e.message}"
         )
     
     except (InitializationException, ServiceException) as e:
         logger.error(f"Service error getting history for story {story_id}: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error getting story history for {story_id}: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )
 
@@ -156,35 +156,35 @@ async def summarize_story(story_id: str, message_id: str):
     except EntityNotFoundException as e:
         logger.warning(f"Story or message not found for summarization: {e.message}")
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail=f"Story or message not found: {e.message}"
         )
     
     except BusinessLogicException as e:
         logger.warning(f"Business logic error during summarization: {e.message}")
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=f"Cannot summarize: {e.message}"
         )
     
     except ExternalServiceException as e:
         logger.error(f"External service error during summarization: {e.message}")
         raise HTTPException(
-            status_code=502,
+            status_code=HTTPStatus.BAD_GATEWAY,
             detail="AI service temporarily unavailable. Please try again."
         )
     
     except (InitializationException, ServiceException) as e:
         logger.error(f"Service error during summarization: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error summarizing story {story_id}: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )
 
@@ -203,42 +203,42 @@ async def create_story(request: CreateStoryRequest):
     except BusinessLogicException as e:
         logger.warning(f"Business logic error during story creation: {e.message}")
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=f"Cannot create story: {e.message}"
         )
     
     except DataValidationException as e:
         logger.error(f"Data validation error during story creation: {e.message}")
         raise HTTPException(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Invalid story data: {e.message}"
         )
     
     except ExternalServiceException as e:
         logger.error(f"External service error during story creation: {e.message}")
         raise HTTPException(
-            status_code=502,
+            status_code=HTTPStatus.BAD_GATEWAY,
             detail="AI service temporarily unavailable. Please try again."
         )
     
     except InitializationException as e:
         logger.error(f"Initialization error during story creation: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Service initialization failed. Please try again."
         )
     
     except ServiceException as e:
         logger.error(f"Service error during story creation: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error creating story: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )
 
@@ -255,27 +255,27 @@ async def get_stories_summary():
     except EntityNotFoundException as e:
         logger.warning(f"Stories data not found: {e.message}")
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail="No stories found"
         )
     
     except DataValidationException as e:
         logger.error(f"Data validation error fetching stories: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Story data validation failed. Please contact support."
         )
     
     except (InitializationException, ServiceException) as e:
         logger.error(f"Service error fetching stories: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error fetching stories summary: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )

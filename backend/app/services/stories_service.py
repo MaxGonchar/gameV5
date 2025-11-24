@@ -51,16 +51,17 @@ class StoriesService:
         try:
             self.venice_model = VeniceAIChatModel(
                 api_key=venice_api_key,
-                model="mistral-31-24b",
-                temperature=0.7
+                model=settings.DEFAULT_STORY_CONTEXT_MODEL,
+                temperature=settings.DEFAULT_STORY_CONTEXT_TEMPERATURE
             )
-            logger.info("✅ VeniceAI integration enabled for story context generation")
+            logger.info(f"✅ VeniceAI integration enabled for story context generation - Model: {settings.DEFAULT_STORY_CONTEXT_MODEL}, Temperature: {settings.DEFAULT_STORY_CONTEXT_TEMPERATURE}")
         except Exception as e:
             logger.error(f"Failed to initialize VeniceAI model: {e}")
             raise InitializationException(
                 "Failed to initialize VeniceAI model for story service",
                 details={
-                    "model": "mistral-31-24b", 
+                    "model": settings.DEFAULT_STORY_CONTEXT_MODEL,
+                    "temperature": settings.DEFAULT_STORY_CONTEXT_TEMPERATURE,
                     "original_error": str(e)
                 }
             )

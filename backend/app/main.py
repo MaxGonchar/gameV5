@@ -12,6 +12,7 @@ import os
 # Add the app directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
+from http import HTTPStatus
 from app.core.config import settings, get_logger
 from app.api.routes import story, health, characters, locations
 from app.exceptions import (
@@ -63,7 +64,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle EntityNotFoundException globally."""
         logger.warning(f"Entity not found on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             content={
                 "error": "Not Found",
                 "message": "The requested resource was not found",
@@ -76,7 +77,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle DataValidationException globally."""
         logger.error(f"Data validation error on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=400,
+            status_code=HTTPStatus.BAD_REQUEST,
             content={
                 "error": "Bad Request",
                 "message": "Invalid request data",
@@ -90,7 +91,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle ExternalServiceException globally."""
         logger.error(f"External service error on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=502,
+            status_code=HTTPStatus.BAD_GATEWAY,
             content={
                 "error": "Service Unavailable",
                 "message": "External service temporarily unavailable. Please try again.",
@@ -103,7 +104,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle BusinessLogicException globally."""
         logger.warning(f"Business logic error on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             content={
                 "error": "Unprocessable Entity",
                 "message": exc.message,
@@ -116,7 +117,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle InitializationException globally."""
         logger.error(f"Initialization error on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={
                 "error": "Service Initialization Error",
                 "message": "Service initialization failed. Please try again.",
@@ -129,7 +130,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle ServiceException globally."""
         logger.error(f"Service error on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={
                 "error": "Internal Server Error",
                 "message": "Internal service error. Please try again.",
@@ -142,7 +143,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle any CoreException that wasn't caught by specific handlers."""
         logger.error(f"Unhandled CoreException on {request.method} {request.url}: {exc.message}")
         return JSONResponse(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={
                 "error": "Internal Server Error",
                 "message": "An unexpected error occurred. Please try again.",
@@ -155,7 +156,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
         """Handle any unexpected exceptions as a safety net."""
         logger.exception(f"Unexpected error on {request.method} {request.url}: {str(exc)}")
         return JSONResponse(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={
                 "error": "Internal Server Error",
                 "message": "An unexpected error occurred. Please try again.",
@@ -167,4 +168,10 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    from app.core.config import settings
+    uvicorn.run(
+        app, 
+        host=settings.SERVER_HOST, 
+        port=settings.SERVER_PORT, 
+        reload=settings.SERVER_RELOAD
+    )

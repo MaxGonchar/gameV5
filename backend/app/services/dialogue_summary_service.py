@@ -8,15 +8,15 @@ while keeping chat history manageable by removing summarized portions.
 import asyncio
 from typing import List
 
-from app.core.config import settings
+from app.core.config import settings, get_logger
 from app.objects.character import Character
 from app.dao.character_dao import CharacterDAO
 from app.dao.history_dao import HistoryDAO
+from app.dao.path_manager import path_manager
 from app.chat_types import ChatItem
 from app.llm.venice_ai import VeniceAIChatModel
 from app.models.dialogue_memory_summary import DialogueMemorySummaryResponse, build_memory_summary_prompt
 from app.services.llm_communicator import LLMCommunicator
-from app.core.config import get_logger
 from app.exceptions import (
     InitializationException,
     EntityNotFoundException,
@@ -55,18 +55,18 @@ class DialogueSummaryService:
         self.character_id = character_id
         
         # Initialize DAOs with story-specific paths
-        self.character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
-        self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
+        self.character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
+        self.chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
         
         # Initialize centralized LLM components
         try:
             self.venice_model = VeniceAIChatModel(
                 api_key=settings.VENICE_API_KEY,
-                model="mistral-31-24b",
-                temperature=0.3  # Lower temperature for more consistent summaries
+                model=settings.DEFAULT_SUMMARY_MODEL,
+                temperature=settings.DEFAULT_SUMMARY_TEMPERATURE
             )
             self.llm_communicator = LLMCommunicator(llm_model=self.venice_model)
-            logger.info("✅ VeniceAI integration enabled for dialogue summary service")
+            logger.info(f"✅ VeniceAI integration enabled for dialogue summary service - Model: {settings.DEFAULT_SUMMARY_MODEL}, Temperature: {settings.DEFAULT_SUMMARY_TEMPERATURE}")
             
         except Exception as e:
             logger.error(f"Failed to initialize VeniceAI model for dialogue summary: {e}")
@@ -74,7 +74,8 @@ class DialogueSummaryService:
                 "Failed to initialize VeniceAI model for dialogue summary service",
                 details={
                     "story_id": story_id,
-                    "model": "mistral-31-24b",
+                    "model": settings.DEFAULT_SUMMARY_MODEL,
+                    "temperature": settings.DEFAULT_SUMMARY_TEMPERATURE,
                     "api_key_present": bool(settings.VENICE_API_KEY),
                     "original_error": str(e)
                 }

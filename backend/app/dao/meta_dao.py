@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any, Optional
 from .yaml_file_handler import YamlFileHandler
 from app.exceptions import DataValidationException
-from app.core.config import get_logger
+from app.core.config import get_logger, settings
+from app.core.constants import META_FILE_NAME
 
 logger = get_logger(__name__)
 
@@ -21,17 +22,17 @@ class MetaDAO:
     
     def __init__(
         self,
-        meta_dir: str = "data",
+        meta_dir: str | None = None,
         yaml_handler: Optional[YamlFileHandler] = None,
     ):
         """
         Initialize the meta DAO.
         
         Args:
-            meta_dir: Directory containing meta.yaml file (default: "data")
+            meta_dir: Directory containing meta.yaml file (default: from settings)
             yaml_handler: YAML file handler dependency
         """
-        self.meta_dir = Path(meta_dir)
+        self.meta_dir = Path(meta_dir or path_manager.get_base_data_dir())
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
     async def get_meta(self) -> MetaData:
@@ -45,7 +46,7 @@ class MetaDAO:
             FileOperationException, YamlException: From yaml_handler (bubbled up)
             DataValidationException: If meta data is invalid
         """
-        path = self.meta_dir / "meta.yaml"
+        path = Path(path_manager.get_meta_file())
         data = await self._read_yaml(path)
         return MetaData(data)
 

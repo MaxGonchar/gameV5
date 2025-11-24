@@ -3,6 +3,7 @@ Characters API endpoints.
 """
 
 from fastapi import APIRouter, HTTPException
+from http import HTTPStatus
 import logging
 
 from app.models.responses import CharactersResponse
@@ -48,27 +49,27 @@ async def get_characters():
     except EntityNotFoundException as e:
         logger.warning(f"Characters data not found: {e.message}")
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail="No characters found"
         )
     
     except DataValidationException as e:
         logger.error(f"Character data validation error: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Character data validation failed. Please contact support."
         )
     
     except ServiceException as e:
         logger.error(f"Service error getting characters: {e.message}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="Internal service error. Please try again."
         )
     
     except Exception as e:
         logger.exception(f"Unexpected error getting characters: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred. Please try again."
         )

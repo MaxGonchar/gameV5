@@ -2,7 +2,6 @@ import asyncio
 from typing import Any
 from enum import Enum
 
-from app.core.config import settings
 from app.objects.character import Character
 from app.objects.location import Location
 from app.objects.chat_history import ChatHistory
@@ -11,6 +10,7 @@ from app.dao.character_dao import CharacterDAO
 # from app.dao.location_dao import LocationDAO
 from app.dao.history_dao import HistoryDAO
 from app.dao.meta_dao import MetaDAO
+from app.dao.path_manager import path_manager
 from app.chat_types import ChatItem
 
 
@@ -72,9 +72,9 @@ class StoryState:
         self.character_id = character.id
 
         # Initialize DAOs with story-specific paths (for saving operations)
-        self.character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
-        self.chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
-        self.meta_dao = MetaDAO(meta_dir=settings.get_story_meta_dir(story_id))
+        self.character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
+        self.chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
+        self.meta_dao = MetaDAO(meta_dir=path_manager.get_story_dir(story_id))
 
     @classmethod
     async def create(cls, story_id: str) -> 'StoryState':
@@ -112,9 +112,9 @@ class StoryState:
             ValueError: If story data is missing or invalid
         """
         # Initialize DAOs for loading
-        character_dao = CharacterDAO(characters_dir=settings.get_story_characters_dir(story_id))
-        chat_history_dao = HistoryDAO(history_file=settings.get_story_history_file(story_id))
-        meta_dao = MetaDAO(meta_dir=settings.get_story_meta_dir(story_id))
+        character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
+        chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
+        meta_dao = MetaDAO(meta_dir=path_manager.get_story_dir(story_id))
         
         # Load all data concurrently
         meta, chat_history, characters = await asyncio.gather(

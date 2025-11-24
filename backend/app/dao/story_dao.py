@@ -18,7 +18,7 @@ class StorySummary(TypedDict):
 
 class StoryDAO:
     def __init__(self, stories_dir: str | None = None):
-        self.stories_dir = Path(stories_dir or settings.stories_base_dir)
+        self.stories_dir = Path(stories_dir or path_manager.get_stories_base_dir())
         self.fs_ops = FileSystemOperations()
 
     async def _create_story_dir(self, story_dir_path: Path) -> None:
@@ -37,7 +37,8 @@ class StoryDAO:
 
     async def _create_story_meta(self, story_dir_path: Path, story_meta: MetaData) -> None:
         """Create the meta.yaml file for the story."""
-        meta_file = story_dir_path / "meta.yaml"
+        story_id = story_dir_path.name
+        meta_file = Path(path_manager.get_story_meta_file(story_id))
         await self.fs_ops.create_yaml_file(meta_file, story_meta.to_dict())
 
     async def _delete_story_dir(self, story_dir_path: Path) -> None:
@@ -129,7 +130,7 @@ class StoryDAO:
             logger.debug("Processing story %s", story_id)
             
             try:
-                metadata_file = story_dir / "meta.yaml"
+                metadata_file = Path(path_manager.get_story_meta_file(story_id))
                 if metadata_file.exists():
                     meta_data = await yaml_handler.read_yaml_file(metadata_file)
                     if isinstance(meta_data, dict) and "title" in meta_data:

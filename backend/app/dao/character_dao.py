@@ -2,7 +2,8 @@ from typing import Optional
 import asyncio
 from pathlib import Path
 
-from app.core.config import settings, get_logger
+from app.core.config import get_logger
+from .path_manager import path_manager
 from .yaml_file_handler import YamlFileHandler
 from app.objects import Character
 from app.exceptions import EntityNotFoundException, DataValidationException
@@ -33,7 +34,7 @@ class CharacterDAO:
             characters_dir: Directory containing character subdirectories (default: from settings)
             yaml_handler: Optional YAML file handler (for testing)
         """
-        self.characters_dir = Path(characters_dir or settings.characters_base_dir)
+        self.characters_dir = Path(characters_dir or path_manager.get_characters_base_dir())
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
     async def get_characters(self) -> list[Character]:
@@ -55,7 +56,7 @@ class CharacterDAO:
         character_files = []
         for character_dir in self.characters_dir.iterdir():
             if character_dir.is_dir():
-                character_file = character_dir / "character.yaml"
+                character_file = Path(path_manager.get_character_file(character_dir.name))
                 if character_file.exists():
                     character_files.append(character_file)
                 else:
@@ -118,7 +119,7 @@ class CharacterDAO:
             DataValidationException: If character data is invalid
             YamlException, FileOperationException: From yaml_handler (bubbled up)
         """
-        character_file = self.characters_dir / character_id / "character.yaml"
+        character_file = Path(path_manager.get_character_file(character_id))
         
         if not character_file.exists():
             raise EntityNotFoundException(
@@ -157,8 +158,8 @@ class CharacterDAO:
             YamlException: If YAML serialization fails
             FileOperationException: If file writing fails
         """
-        character_dir = self.characters_dir / character_id
-        character_file = character_dir / "character.yaml"
+        character_dir = Path(path_manager.get_character_dir(character_id))
+        character_file = Path(path_manager.get_character_file(character_id))
         
         # Ensure the directory exists
         character_dir.mkdir(parents=True, exist_ok=True)

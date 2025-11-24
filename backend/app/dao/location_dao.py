@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 import asyncio
 from app.objects.location import Location
-
+from .path_manager import path_manager
 from .yaml_file_handler import YamlFileHandler
 
 
@@ -16,17 +16,17 @@ class LocationDAO:
     
     def __init__(
         self, 
-        locations_dir: str = "data/locations",
+        locations_dir: str | None = None,
         yaml_handler: Optional[YamlFileHandler] = None
     ) -> None:
         """
         Initialize the location DAO.
         
         Args:
-            locations_dir: Directory containing location subdirectories (default: "data/locations")
+            locations_dir: Directory containing location subdirectories (default: from settings)
             yaml_handler: YAML file handler dependency
         """
-        self.locations_dir = Path(locations_dir)
+        self.locations_dir = Path(locations_dir or path_manager.get_locations_base_dir())
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
     async def get_location(self, id: str) -> Location:

@@ -7,16 +7,17 @@ import os
 from typing import List
 from .chat_repository_interface import ChatRepositoryInterface
 from ..chat_types import ChatItem
+from ..core.constants import CHAT_HISTORY_FILE_NAME
 
 class YamlChatRepository(ChatRepositoryInterface):
     """YAML file-based chat repository implementation."""
     
-    def __init__(self, file_path: str = "chat_history.yaml"):
+    def __init__(self, file_path: str = CHAT_HISTORY_FILE_NAME):
         """
         Initialize the YAML chat repository.
         
         Args:
-            file_path (str): Path to the YAML file
+            file_path (str): Path to the YAML file (default: from constants)
         """
         self.file_path = file_path
         self._ensure_file_exists()

@@ -1,5 +1,6 @@
 import httpx
 from app.core.config import get_logger
+from app.core.constants import ERROR_RESPONSE_LIMIT
 from app.exceptions import ExternalServiceException, DataValidationException
 
 logger = get_logger(__name__)
@@ -89,7 +90,7 @@ class VeniceClient:
                 f"Venice AI embeddings request failed with status {e.response.status_code}",
                 details={
                     "status_code": e.response.status_code,
-                    "response_text": e.response.text[:500],  # Limit response size
+                    "response_text": e.response.text[:ERROR_RESPONSE_LIMIT],  # Limit response size
                     "url": url,
                     "text_count": len(text),
                     "dimensions": dimensions
@@ -170,7 +171,7 @@ class VeniceClient:
                 f"Venice AI chat request failed with status {e.response.status_code}",
                 details={
                     "status_code": e.response.status_code,
-                    "response_text": e.response.text[:500],  # Limit response size
+                    "response_text": e.response.text[:ERROR_RESPONSE_LIMIT],  # Limit response size
                     "url": url,
                     "model": payload.get('model', 'unknown'),
                     "message_count": len(payload.get('messages', []))

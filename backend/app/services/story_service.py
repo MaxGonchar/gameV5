@@ -85,16 +85,17 @@ class StoryService:
         try:
             self.venice_model = VeniceAIChatModel(
                 api_key=venice_api_key,
-                model="venice-uncensored",
-                temperature=0.7
+                model=settings.DEFAULT_STORY_MODEL,
+                temperature=settings.DEFAULT_STORY_TEMPERATURE
             )
-            logger.info("✅ VeniceAI integration enabled")
+            logger.info(f"✅ VeniceAI integration enabled - Model: {settings.DEFAULT_STORY_MODEL}, Temperature: {settings.DEFAULT_STORY_TEMPERATURE}")
         except Exception as e:
             logger.error(f"Failed to initialize VeniceAI model: {e}")
             raise InitializationException(
                 "Failed to initialize VeniceAI model for story service",
                 details={
-                    "model": "venice-uncensored",
+                    "model": settings.DEFAULT_STORY_MODEL,
+                    "temperature": settings.DEFAULT_STORY_TEMPERATURE,
                     "api_key_present": bool(venice_api_key),
                     "original_error": str(e)
                 }

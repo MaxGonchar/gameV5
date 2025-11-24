@@ -3,6 +3,7 @@ Locations API endpoints.
 """
 
 from fastapi import APIRouter, HTTPException
+from http import HTTPStatus
 import logging
 
 from app.models.responses import LocationsResponse
@@ -43,6 +44,6 @@ async def get_locations():
     except Exception as e:
         logger.error(f"Error getting locations: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )

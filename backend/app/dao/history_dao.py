@@ -7,6 +7,7 @@ history data from/to a single YAML file.
 
 from typing import List, cast
 from pathlib import Path
+from .path_manager import path_manager
 
 from .yaml_file_handler import YamlFileHandler
 from app.chat_types import ChatItem
@@ -35,17 +36,17 @@ class HistoryDAO:
 
     def __init__(
         self,
-        history_file: str = "data/chat_history/chat_history.yaml",
+        history_file: str | None = None,
         yaml_handler: YamlFileHandler | None = None,
     ):
         """
         Initialize the history DAO.
 
         Args:
-            history_file: Path to the history YAML file (default: "data/chat_history/chat_history.yaml")
+            history_file: Path to the history YAML file (default: from settings)
             yaml_handler: YAML file handler dependency
         """
-        self.history_file = Path(history_file)
+        self.history_file = Path(history_file or path_manager.get_chat_history_file())
         self.history_file.parent.mkdir(parents=True, exist_ok=True)
         self.yaml_handler = yaml_handler or YamlFileHandler()
 
