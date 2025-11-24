@@ -6,7 +6,7 @@ logger = get_logger(__name__)
 
 
 class MoveSceneDescriptionResponse(BaseModel):
-    """Response model for move scene description generation."""
+    """Response model for move scene description generation with goal evaluation."""
     companion_side: str = Field(
         ...,
         description="Scene description from the companion (user) point of view - objective narrative"
@@ -18,6 +18,10 @@ class MoveSceneDescriptionResponse(BaseModel):
     environmental_context: str = Field(
         ...,
         description="Pure environmental context for character situational awareness - no character actions described"
+    )
+    goal_status: str = Field(
+        ...,
+        description="Character's goal status after this interaction: 'reached', 'in_progress', or 'unreachable'"
     )
 
 
@@ -95,6 +99,26 @@ You will receive:
 - character_side: "Cold steel settles against my hip as I walk toward the ancient one's embrace. Each step brings whispers from root-deep memories, and I feel the tree's patience like a heartbeat in the earth."
 - environmental_context: "The ancient oak towers overhead, its massive trunk scarred by centuries of storms. Frost covers the ground in crystalline patches that crunch underfoot. Moonlight filters through bare branches, creating a lattice of silver shadows. The air smells of winter earth and old wood, with a hint of approaching snow on the wind."
 
+## Goal Evaluation (Additional Task)
+
+After generating the scene descriptions, evaluate the character's current goal status from their subjective perspective:
+
+### goal_status
+**Purpose**: Determine if the character believes their goal has been achieved, should continue, or is impossible
+**Requirements**:
+- Evaluate ONLY from character's subjective viewpoint
+- Consider character's validation criteria for goal achievement
+- Consider character's unreachability criteria for goal abandonment
+- Base evaluation on the action/interaction that just occurred
+- Must be exactly one of: "reached", "in_progress", "unreachable"
+
+**Evaluation Logic**:
+- "reached": Character would believe their desired state has been achieved based on the interaction
+- "in_progress": Character would continue pursuing the goal after this interaction  
+- "unreachable": Character would believe the goal is impossible or no longer desirable after this interaction
+
+**Conservative Approach**: Only mark goals as "reached" with clear evidence of achievement from character's perspective. When in doubt, use "in_progress".
+
 ## Remember:
 - Maintain established character voice and world rules
 - Create vivid, immersive descriptions from both perspectives
@@ -143,23 +167,39 @@ MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 {% for pattern in speech_patterns %}
 - {{pattern}}
 {% endfor %}
+
+{% if current_goal %}
+## Current Goal (for evaluation)
+**Desired State:** {{current_goal.desired_state}}
+
+**Character believes goal is achieved when:**
+{% for criterion in current_goal.validation_criteria %}
+- {{criterion}}
+{% endfor %}
+
+**Character would give up if:**
+{% for criterion in current_goal.unreachability_criteria %}
+- {{criterion}}
+{% endfor %}
+{% endif %}
 """
 
 
 def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
-    """Build system and user prompts for scene description.
+    """Build system and user prompts for scene description with goal evaluation.
     
     Args:
-        input_data: Dict containing story_state, actor, message
+        input_data: Dict containing story_state, actor, message, and optional current_goal
         
     Returns:
         Tuple of (system_prompt, user_prompt)
     """
-    logger.debug("Building scene description prompt")
+    logger.debug("Building scene description prompt with goal evaluation")
     
     story_state = input_data["story_state"]
     actor = input_data["actor"]
     message = input_data["message"]
+    current_goal = story_state.character.current_goal
     
     # Template rendering logic
     prompt_template = Template(MOVE_SCENE_DESCRIPTION_USER_PROMPT)
@@ -174,12 +214,13 @@ def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
         "in_universe_self_description": story_state.character.base_personality["in-universe_self_description"],
         "sensory_origin_memory": story_state.character.base_personality["sensory_origin_memory"],
         "character_native_deflection": story_state.character.base_personality["character_native_deflection"],
-        "traits": story_state.character.base_personality["traits"],
+        "traits": story_state.character.traits,
         "core_principles": story_state.character.base_personality.get("core_principles", []),
-        "physical_tells": story_state.character.base_personality["physical_tells"],
-        "speech_patterns": story_state.character.base_personality["speech_patterns"]
+        "physical_tells": story_state.character.physical_tells,
+        "speech_patterns": story_state.character.speech_patterns,
+        "current_goal": current_goal
     })
     
-    logger.debug("Scene description prompt built successfully")
+    logger.debug("Scene description prompt with goal evaluation built successfully")
     
     return MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, user_prompt

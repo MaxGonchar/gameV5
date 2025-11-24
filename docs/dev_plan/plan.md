@@ -51,3 +51,8 @@ I want to find a form of instructions for coding AI assistant to store general i
 
 ## Keep chat history when create summary
 I want to keep chat history when creating summary. To decrease the history passed to the model I can mark the messages as summarized and filter them out when passing the history to the model.
+
+
+- similar goals
+- character doing nothing to acheive the goal
+- user initiatives destruct the character's plans

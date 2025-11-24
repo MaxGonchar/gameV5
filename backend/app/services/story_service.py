@@ -203,6 +203,10 @@ class StoryService:
             user_prompt=user_prompt,
             response_model=MoveSceneDescriptionResponse
         )
+
+        print("*" * 100)
+        print("Goal:", scene_description.goal_status)
+        print("*" * 100)
         
         return {
             "companion_side": scene_description.companion_side,
