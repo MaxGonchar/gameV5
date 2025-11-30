@@ -25,6 +25,7 @@ from app.exceptions import (
     ServiceException,
     BusinessLogicException
 )
+from app.objects.story_state import StoryState
 
 logger = get_logger(__name__)
 
@@ -55,8 +56,8 @@ class DialogueSummaryService:
         self.character_id = character_id
         
         # Initialize DAOs with story-specific paths
-        self.character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
-        self.chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
+        self.character_dao = CharacterDAO(story_id=story_id)
+        self.chat_history_dao = HistoryDAO(story_id=story_id)
         
         # Initialize centralized LLM components
         try:
@@ -81,6 +82,7 @@ class DialogueSummaryService:
                 }
             )
     
+    # TODO: refactor to work with story state
     async def summarize_chat_up_to_item(self, chat_item_id: str) -> None:
         """
         Summarize chat history up to and including the specified chat item.
@@ -97,22 +99,9 @@ class DialogueSummaryService:
         try:
             logger.info(f"Starting summarization up to chat item ID: {chat_item_id}")
 
-            # Determine character_id if not provided
-            if not self.character_id:
-                characters = await self.character_dao.get_characters()
-                if not characters:
-                    raise BusinessLogicException(
-                        f"No characters found in story for summarization",
-                        details={"story_id": self.story_id, "chat_item_id": chat_item_id}
-                    )
-                self.character_id = characters[0].id
-
-            character, chat_history = await asyncio.gather(
-                self.character_dao.get_character(self.character_id),
-                self.chat_history_dao.load_history()
-            )
+            story_state = await StoryState.create(self.story_id)
             
-            chat_slice = chat_history.get_messages_up_to_id(chat_item_id)
+            chat_slice = story_state.chat_history.get_messages_up_to_id(chat_item_id)
             if not chat_slice:
                 raise BusinessLogicException(
                     "No messages found to summarize",
@@ -125,13 +114,14 @@ class DialogueSummaryService:
                 
             dialogue_items = self._format_chat_as_dialogue(chat_slice)
 
-            new_summary = await self._generate_summary(dialogue_items, character)
+            new_summary = await self._generate_summary(dialogue_items, story_state)
 
             logger.info(f"Generated {len(new_summary.memory_items)} new memory items")
+
             for i, item in enumerate(new_summary.memory_items, 1):
                 logger.debug(f"Memory {i}: {item.event_description[:50]}...")
 
-            character.add_items_to_memory(
+            story_state.character.add_items_to_memory(
                 [
                     {
                         "event_description": item.event_description,
@@ -141,12 +131,9 @@ class DialogueSummaryService:
                 ]
             )
 
-            chat_history.trim_messages_up_to_id(chat_item_id)
-            
-            await asyncio.gather(
-                self.character_dao.store_character(self.character_id, character),
-                self.chat_history_dao.save(chat_history)
-            )
+            story_state.chat_history.trim_messages_up_to_id(chat_item_id)
+
+            await story_state.save_state()
             
         except (EntityNotFoundException, BusinessLogicException):
             # Re-raise business logic and entity not found errors
@@ -187,7 +174,7 @@ class DialogueSummaryService:
 
         return dialogue_lines
 
-    async def _generate_summary(self, dialogue_items: list[str], character: Character) -> DialogueMemorySummaryResponse:
+    async def _generate_summary(self, dialogue_items: list[str], story_state: StoryState) -> DialogueMemorySummaryResponse:
         """
         Generate a new summary using the LLM.
         
@@ -202,7 +189,7 @@ class DialogueSummaryService:
 
         # Build input data dict for prompt builder
         input_data = {
-            "character": character,
+            "character": story_state.character,
             "dialogue_items": dialogue_items
         }
         

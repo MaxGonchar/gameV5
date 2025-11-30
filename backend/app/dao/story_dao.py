@@ -7,6 +7,7 @@ from app.objects.meta import MetaData
 from .yaml_file_handler import YamlFileHandler
 from .file_system_operations import FileSystemOperations
 from app.exceptions import ServiceException, FileOperationException
+from .path_manager import path_manager
 
 logger = get_logger(__name__)
 

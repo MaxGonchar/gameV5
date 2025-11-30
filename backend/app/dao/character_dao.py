@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 
 from app.core.config import get_logger
-from .path_manager import path_manager
+from .path_manager import PathManager
 from .yaml_file_handler import YamlFileHandler
 from app.objects import Character
 from app.exceptions import EntityNotFoundException, DataValidationException
@@ -24,8 +24,9 @@ class CharacterDAO:
     
     def __init__(
         self,
-        characters_dir: str | None = None,
-        yaml_handler: Optional[YamlFileHandler] = None
+        story_id: str | None = None,
+        yaml_handler: YamlFileHandler | None = None,
+        path_manager: PathManager | None = None
     ) -> None:
         """
         Initialize the character DAO.
@@ -34,8 +35,12 @@ class CharacterDAO:
             characters_dir: Directory containing character subdirectories (default: from settings)
             yaml_handler: Optional YAML file handler (for testing)
         """
-        self.characters_dir = Path(characters_dir or path_manager.get_characters_base_dir())
         self.yaml_handler = yaml_handler or YamlFileHandler()
+        self.path_manager = path_manager or PathManager()
+        self.characters_dir = Path(
+            self.path_manager.get_story_characters_dir(story_id)
+            if story_id else self.path_manager.get_characters_base_dir()
+        )
 
     async def get_characters(self) -> list[Character]:
         """
@@ -56,7 +61,7 @@ class CharacterDAO:
         character_files = []
         for character_dir in self.characters_dir.iterdir():
             if character_dir.is_dir():
-                character_file = Path(path_manager.get_character_file(character_dir.name))
+                character_file = Path(self.path_manager.get_character_file(character_dir.name))
                 if character_file.exists():
                     character_files.append(character_file)
                 else:
@@ -119,7 +124,7 @@ class CharacterDAO:
             DataValidationException: If character data is invalid
             YamlException, FileOperationException: From yaml_handler (bubbled up)
         """
-        character_file = Path(path_manager.get_character_file(character_id))
+        character_file = Path(self.path_manager.get_character_file(character_id, str(self.characters_dir)))
         
         if not character_file.exists():
             raise EntityNotFoundException(
@@ -158,8 +163,8 @@ class CharacterDAO:
             YamlException: If YAML serialization fails
             FileOperationException: If file writing fails
         """
-        character_dir = Path(path_manager.get_character_dir(character_id))
-        character_file = Path(path_manager.get_character_file(character_id))
+        character_dir = Path(self.path_manager.get_character_dir(character_id, str(self.characters_dir)))
+        character_file = Path(self.path_manager.get_character_file(character_id, str(self.characters_dir)))
         
         # Ensure the directory exists
         character_dir.mkdir(parents=True, exist_ok=True)

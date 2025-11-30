@@ -205,9 +205,7 @@ class StoryService:
             response_model=MoveSceneDescriptionResponse
         )
 
-        print("*" * 100)
-        print("Goal:", scene_description.goal_status)
-        print("*" * 100)
+        logger.debug(f"Goal: {self.story_state.character.current_goal.get('desired_state')}, Status: {scene_description.goal_status}")
         
         return {
             "companion_side": scene_description.companion_side,

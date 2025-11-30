@@ -20,8 +20,8 @@ class Character:
         return deepcopy(self.data)
     
     @property
-    def current_goal(self) -> dict[str, Any] | None:
-        return self.data.get("goal")
+    def current_goal(self) -> dict[str, Any]:
+        return self.data.get("goal", {})
     
     @property
     def traits(self) -> list[str]:

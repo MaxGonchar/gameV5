@@ -72,9 +72,9 @@ class StoryState:
         self.character_id = character.id
 
         # Initialize DAOs with story-specific paths (for saving operations)
-        self.character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
-        self.chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
-        self.meta_dao = MetaDAO(meta_dir=path_manager.get_story_dir(story_id))
+        self.character_dao = CharacterDAO(story_id=story_id)
+        self.chat_history_dao = HistoryDAO(story_id=story_id)
+        self.meta_dao = MetaDAO(story_id=story_id)
 
     @classmethod
     async def create(cls, story_id: str) -> 'StoryState':
@@ -112,9 +112,9 @@ class StoryState:
             ValueError: If story data is missing or invalid
         """
         # Initialize DAOs for loading
-        character_dao = CharacterDAO(characters_dir=path_manager.get_story_characters_dir(story_id))
-        chat_history_dao = HistoryDAO(history_file=path_manager.get_story_history_file(story_id))
-        meta_dao = MetaDAO(meta_dir=path_manager.get_story_dir(story_id))
+        character_dao = CharacterDAO(story_id=story_id)
+        chat_history_dao = HistoryDAO(story_id=story_id)
+        meta_dao = MetaDAO(story_id=story_id)
         
         # Load all data concurrently
         meta, chat_history, characters = await asyncio.gather(
