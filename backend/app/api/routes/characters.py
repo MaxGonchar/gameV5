@@ -7,8 +7,8 @@ from http import HTTPStatus
 import logging
 
 from app.models.responses import CharactersResponse
-from app.services.character_service import CharacterService
 from app.core.config import get_logger
+from app.dependencies import CharacterServiceDep
 from app.exceptions import (
     EntityNotFoundException,
     DataValidationException,
@@ -19,18 +19,8 @@ logger = get_logger(__name__)
 
 router = APIRouter()
 
-# Character service will be initialized lazily on first use
-character_service = None
-
-async def get_character_service():
-    """Get or create the character service instance."""
-    global character_service
-    if character_service is None:
-        character_service = CharacterService()
-    return character_service
-
 @router.get("/characters", response_model=CharactersResponse)
-async def get_characters():
+async def get_characters(character_service: CharacterServiceDep):
     """
     Get list of all available characters.
     
@@ -40,8 +30,7 @@ async def get_characters():
     try:
         logger.info("Processing get characters request")
         
-        service = await get_character_service()
-        characters_response = await service.get_characters_list()
+        characters_response = await character_service.get_characters_list()
         
         logger.info(f"Successfully returned {len(characters_response.characters)} characters")
         return characters_response

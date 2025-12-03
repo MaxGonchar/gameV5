@@ -13,10 +13,8 @@ from app.models.responses import (
     BotResponse,
     StoriesResponse,
 )
-from app.services.story_service import StoryService
-from app.services.stories_service import StoriesService
-from app.services.dialogue_summary_service import DialogueSummaryService
 from app.core.config import get_logger
+from app.dependencies import StoryServiceDep, DialogueServiceDep, StoriesServiceDep
 from app.exceptions import (
     EntityNotFoundException,
     DataValidationException,
@@ -30,20 +28,15 @@ logger = get_logger(__name__)
 
 router = APIRouter()
 
-async def get_story_service(story_id: str) -> StoryService:
-    """Create a story service instance for the given story."""
-    return await StoryService.create(story_id)
-
-async def get_dialogue_summary_service(story_id: str) -> DialogueSummaryService:
-    """Create a dialogue summary service instance for the given story."""
-    return DialogueSummaryService(story_id)
-
 @router.post("/stories/{story_id}/message", response_model=BotResponse)
-async def process_user_message(story_id: str, request: SendMessageRequest):
+async def process_user_message(
+    story_id: str, 
+    request: SendMessageRequest,
+    story_service: StoryServiceDep
+):
     try:
         logger.info(f"Processing message for story {story_id}: {request.message[:50]}...")
         
-        story_service = await get_story_service(story_id)
         await story_service.process_user_message(request.message)
         
         chat_history = story_service.get_chat_history()
@@ -92,10 +85,12 @@ async def process_user_message(story_id: str, request: SendMessageRequest):
         )
 
 @router.get("/stories/{story_id}/history", response_model=ChatHistoryResponse)
-async def get_story_history(story_id: str):
+async def get_story_history(
+    story_id: str,
+    story_service: StoryServiceDep
+):
     logger.info(f"Fetching story history for story {story_id}")
     try:
-        story_service = await get_story_service(story_id)
         chat_history = story_service.get_chat_history()
         
         messages = [
@@ -144,11 +139,14 @@ async def get_story_history(story_id: str):
         )
 
 @router.post("/stories/{story_id}/summarize/{message_id}")
-async def summarize_story(story_id: str, message_id: str):
+async def summarize_story(
+    story_id: str, 
+    message_id: str,
+    dialogue_service: DialogueServiceDep
+):
     try:
         logger.info(f"Summarizing story {story_id} up to message {message_id}")
         
-        dialogue_service = await get_dialogue_summary_service(story_id)
         await dialogue_service.summarize_chat_up_to_item(message_id)
         # TODO: return proper response model
         return {"message": "success", "story_id": story_id}
@@ -190,11 +188,13 @@ async def summarize_story(story_id: str, message_id: str):
 
 
 @router.post("/stories")
-async def create_story(request: CreateStoryRequest):
+async def create_story(
+    request: CreateStoryRequest,
+    stories_service: StoriesServiceDep
+):
     try:
         logger.info("Creating a new story via API")
         
-        stories_service = StoriesService()
         new_story_id = await stories_service.create_story(request)
         
         # TODO: return proper response model
@@ -244,11 +244,9 @@ async def create_story(request: CreateStoryRequest):
 
 
 @router.get("/stories", response_model=StoriesResponse)
-async def get_stories_summary():
+async def get_stories_summary(stories_service: StoriesServiceDep):
     try:
         logger.info("Fetching stories summary via API")
-
-        stories_service = StoriesService()
 
         return await stories_service.get_stories_summary()
         

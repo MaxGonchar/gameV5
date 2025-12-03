@@ -134,7 +134,7 @@ def get_logger(name: str) -> logging.Logger:
 
 ---
 
-### 6. Hard-Coded Magic Strings and Values
+### 6. ✅ Hard-Coded Magic Strings and Values
 **Severity:** Medium  
 **Files:** Multiple  
 
@@ -153,7 +153,7 @@ temperature=0.7
 
 ---
 
-### 7. Tight Coupling Between Layers
+### 7. ✅ Tight Coupling Between Layers
 **Severity:** Medium  
 **Files:** API routes directly instantiate services  
 
