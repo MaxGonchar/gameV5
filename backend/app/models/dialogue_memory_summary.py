@@ -5,29 +5,34 @@ This module contains the system prompts and Pydantic models for summarizing
 dialogue segments into character memory items using the DIALOGUE MEMORY SUMMARIZATION ASSISTANT.
 """
 
+# # Standard library imports
 from typing import List
+
+# # Third-party imports
 from pydantic import BaseModel, Field
 
 
 class MemoryItem(BaseModel):
     """Model for a single memory item generated from dialogue."""
+
     event_description: str = Field(
-        ..., 
-        description="General description of what happened during the dialogue - objective event summary"
+        ...,
+        description="General description of what happened during the dialogue - objective event summary",
     )
     in_character_reflection: str = Field(
-        ..., 
-        description="Character's internal reflection/interpretation of the event in their voice and perspective"
+        ...,
+        description="Character's internal reflection/interpretation of the event in their voice and perspective",
     )
 
 
 class DialogueMemorySummaryResponse(BaseModel):
     """Response model for dialogue memory summarization."""
+
     memory_items: List[MemoryItem] = Field(
-        ..., 
+        ...,
         description="1-3 memory items extracted from the dialogue segment",
         min_items=1,
-        max_items=3
+        max_items=3,
     )
 
 
@@ -191,35 +196,46 @@ DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT = """
 
 def build_memory_summary_prompt(input_data: dict) -> tuple[str, str]:
     """Build system and user prompts for memory summary generation.
-    
+
     Args:
         input_data: Dict containing character and dialogue_items data
-        
+
     Returns:
         Tuple of (system_prompt, user_prompt)
     """
+    # # Third-party imports
     from jinja2 import Template
+
+    # # Local application imports
     from app.core.config import get_logger
-    
+
     logger = get_logger(__name__)
     logger.debug("Building memory summary prompt")
-    
+
     character = input_data["character"]
     dialogue_items = input_data["dialogue_items"]
-    
+
     # Template rendering logic
     prompt_template = Template(DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT)
-    user_prompt = prompt_template.render({
-        "character_name": character.base_personality["name"],
-        "in_universe_self_description": character.base_personality["in-universe_self_description"],
-        "sensory_origin_memory": character.base_personality["sensory_origin_memory"],
-        "character_native_deflection": character.base_personality["character_native_deflection"],
-        "personality": character.general["personality"],
-        "traits": character.base_personality["traits"],
-        "core_principles": character.base_personality["core_principles"],
-        "physical_tells": character.base_personality["physical_tells"],
-        "speech_patterns": character.base_personality["speech_patterns"],
-        "dialogue_segments": dialogue_items
-    })
-    
+    user_prompt = prompt_template.render(
+        {
+            "character_name": character.base_personality["name"],
+            "in_universe_self_description": character.base_personality[
+                "in-universe_self_description"
+            ],
+            "sensory_origin_memory": character.base_personality[
+                "sensory_origin_memory"
+            ],
+            "character_native_deflection": character.base_personality[
+                "character_native_deflection"
+            ],
+            "personality": character.general["personality"],
+            "traits": character.base_personality["traits"],
+            "core_principles": character.base_personality["core_principles"],
+            "physical_tells": character.base_personality["physical_tells"],
+            "speech_patterns": character.base_personality["speech_patterns"],
+            "dialogue_segments": dialogue_items,
+        }
+    )
+
     return DIALOGUE_MEMORY_SUMMARIZATION_SYSTEM_PROMPT, user_prompt

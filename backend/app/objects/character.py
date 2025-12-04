@@ -1,7 +1,11 @@
+# # Standard library imports
 from copy import deepcopy
 from typing import Any, TypedDict
+
+# # Third-party imports
 import numpy as np
 
+# # Local application imports
 from app.core.config import get_logger
 
 logger = get_logger(__name__)
@@ -15,22 +19,22 @@ class MemoryItemType(TypedDict):
 class Character:
     def __init__(self, character_data: dict[str, Any]):
         self.data = deepcopy(character_data)
-    
+
     def to_dict(self) -> dict[str, Any]:
         return deepcopy(self.data)
-    
+
     @property
     def current_goal(self) -> dict[str, Any]:
         return self.data.get("goal", {})
-    
+
     @property
     def traits(self) -> list[str]:
         return self._get_from_goal_first("traits", list)
-    
+
     @property
     def speech_patterns(self) -> list[str]:
         return self._get_from_goal_first("speech_patterns", list)
-    
+
     @property
     def physical_tells(self) -> list[str]:
         return self._get_from_goal_first("physical_tells", list)
@@ -46,19 +50,19 @@ class Character:
             logger.warning(f"Character '{self.name}' has no '{key}' defined.")
 
         return value
-    
+
     @property
     def id(self) -> str:
         return self.data["id"]
-    
+
     @property
     def name(self) -> str:
         return self.data["base_personality"]["name"]
-    
+
     @property
     def base_personality(self) -> dict[str, Any]:
         return self.data["base_personality"]
-    
+
     @property
     def general(self) -> dict[str, Any]:
         return self.data["general"]
@@ -66,7 +70,7 @@ class Character:
     @property
     def memories(self) -> list[str]:
         return self.data.get("memories", [])
-    
+
     def add_items_to_memory(self, items: list[MemoryItemType]) -> None:
         if "memories" not in self.data:
             self.data["memories"] = []
@@ -75,14 +79,14 @@ class Character:
             self.data["memories"].append(
                 {
                     "event_description": item["event_description"],
-                    "in_character_reflection": item["in_character_reflection"]
+                    "in_character_reflection": item["in_character_reflection"],
                 }
             )
 
     @property
     def story_context(self) -> dict[str, Any]:
         return self.data.get("story_context", {})
-    
+
     @story_context.setter
     def story_context(self, value: dict[str, Any]) -> None:
         self.data["story_context"] = value

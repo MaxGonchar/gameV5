@@ -5,15 +5,19 @@ This module provides a HistoryDAO class that handles loading and saving
 history data from/to a single YAML file.
 """
 
-from typing import List, cast
+# # Standard library imports
 from pathlib import Path
-from .path_manager import PathManager
+from typing import List, cast
 
-from .yaml_file_handler import YamlFileHandler
+# # Local application imports
 from app.chat_types import ChatItem
-from app.objects import ChatHistory
-from app.exceptions import DataValidationException
 from app.core.config import get_logger
+from app.exceptions import DataValidationException
+from app.objects import ChatHistory
+
+# # Relative imports
+from .path_manager import PathManager
+from .yaml_file_handler import YamlFileHandler
 
 logger = get_logger(__name__)
 
@@ -38,7 +42,7 @@ class HistoryDAO:
         self,
         story_id: str,
         yaml_handler: YamlFileHandler | None = None,
-        path_manager: PathManager | None = None
+        path_manager: PathManager | None = None,
     ):
         """
         Initialize the history DAO.
@@ -65,7 +69,7 @@ class HistoryDAO:
             DataValidationException: If history data format is invalid
         """
         return ChatHistory(await self._read_yaml())
-    
+
     async def _read_yaml(self) -> list[ChatItem]:
         """
         Read history from the YAML file and return as a list of ChatItem.
@@ -78,15 +82,19 @@ class HistoryDAO:
             DataValidationException: If history data format is invalid
         """
         if not self.history_file.exists():
-            logger.debug(f"History file does not exist, returning empty history: {self.history_file}")
+            logger.debug(
+                f"History file does not exist, returning empty history: {self.history_file}"
+            )
             return []
-        
+
         data = await self.yaml_handler.read_yaml_file(self.history_file)
-        
+
         if not data:
-            logger.debug(f"History file is empty, returning empty history: {self.history_file}")
+            logger.debug(
+                f"History file is empty, returning empty history: {self.history_file}"
+            )
             return []
-        
+
         # History must be a list of chat items
         if not isinstance(data, list):
             raise DataValidationException(
@@ -94,10 +102,10 @@ class HistoryDAO:
                 details={
                     "file_path": str(self.history_file),
                     "expected_type": "list",
-                    "actual_type": type(data).__name__
-                }
+                    "actual_type": type(data).__name__,
+                },
             )
-        
+
         try:
             # Process list of chat items - all must be valid
             chat_items = []
@@ -109,21 +117,20 @@ class HistoryDAO:
                             "file_path": str(self.history_file),
                             "item_index": i,
                             "expected_type": "dict",
-                            "actual_type": type(item).__name__
-                        }
+                            "actual_type": type(item).__name__,
+                        },
                     )
                 chat_items.append(ChatItem(**item))
-            
-            logger.debug(f"Successfully loaded {len(chat_items)} chat items from {self.history_file}")
+
+            logger.debug(
+                f"Successfully loaded {len(chat_items)} chat items from {self.history_file}"
+            )
             return chat_items
         except TypeError as e:
             # ChatItem construction failed
             raise DataValidationException(
                 f"Invalid chat item data structure in {self.history_file}",
-                details={
-                    "file_path": str(self.history_file),
-                    "original_error": str(e)
-                }
+                details={"file_path": str(self.history_file), "original_error": str(e)},
             )
 
     async def save(self, history: ChatHistory) -> None:

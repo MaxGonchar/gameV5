@@ -5,9 +5,14 @@ This module contains the system prompts and Pydantic models for generating
 session-specific character configurations using the SESSION CONTEXT GENERATION ASSISTANT.
 """
 
+# # Standard library imports
 from typing import List
-from pydantic import BaseModel, Field
+
+# # Third-party imports
 from jinja2 import Template
+from pydantic import BaseModel, Field
+
+# # Local application imports
 from app.core.config import get_logger
 
 logger = get_logger(__name__)
@@ -15,63 +20,65 @@ logger = get_logger(__name__)
 
 class SessionMemory(BaseModel):
     """Model for a single session memory entry."""
+
     event_description: str = Field(
-        ..., 
-        description="General meeting event description - what happened during the meeting"
+        ...,
+        description="General meeting event description - what happened during the meeting",
     )
     in_character_reflection: str = Field(
-        ..., 
-        description="How it reflects in character memory - character's internal reflection/interpretation"
+        ...,
+        description="How it reflects in character memory - character's internal reflection/interpretation",
     )
 
 
 class MeetingSceneDescription(BaseModel):
     """Model for meeting scene description from different perspectives."""
+
     companion_side: str = Field(
         ...,
-        description="Scene description from the companion (user) point of view - objective narrative"
+        description="Scene description from the companion (user) point of view - objective narrative",
     )
     character_side: str = Field(
         ...,
-        description="Scene description from the character's point of view in character's voice"
+        description="Scene description from the character's point of view in character's voice",
     )
     environmental_context: str = Field(
         ...,
-        description="Pure environmental context for character situational awareness - no character actions described"
+        description="Pure environmental context for character situational awareness - no character actions described",
     )
 
 
 class SessionContextResponse(BaseModel):
     """Response model for session context generation."""
+
     companion: str = Field(
-        ..., 
-        description="Term character uses for the user (e.g., 'bright-heart', 'traveler', 'friend')"
+        ...,
+        description="Term character uses for the user (e.g., 'bright-heart', 'traveler', 'friend')",
     )
     forbidden_concepts: List[str] = Field(
-        ..., 
-        description="Concepts outside character's world they shouldn't know about (3-5 items)"
+        ...,
+        description="Concepts outside character's world they shouldn't know about (3-5 items)",
     )
     current_reality: str = Field(
-        ..., 
-        description="Location with sensory details in format: 'Location → sensory1 → sensory2'"
+        ...,
+        description="Location with sensory details in format: 'Location → sensory1 → sensory2'",
     )
     goal: str = Field(
-        ..., 
-        description="Immediate character goal requiring physical action"
+        ..., description="Immediate character goal requiring physical action"
     )
     memories: List[SessionMemory] = Field(
-        ..., 
+        ...,
         description="2-3 memory entries based on the meeting scenario",
         min_items=2,
-        max_items=3
+        max_items=3,
     )
     confused_phrase: str = Field(
-        ..., 
-        description="Character's deflection phrase for forbidden concepts (in character's voice)"
+        ...,
+        description="Character's deflection phrase for forbidden concepts (in character's voice)",
     )
     meeting_scene_description: MeetingSceneDescription = Field(
         ...,
-        description="Meeting scene description from both companion and character perspectives"
+        description="Meeting scene description from both companion and character perspectives",
     )
 
 
@@ -321,41 +328,49 @@ SESSION_CONTEXT_GENERATION_USER_PROMPT = """
 
 def build_session_context_prompt(input_data: dict) -> tuple[str, str]:
     """Build system and user prompts for session context generation.
-    
+
     Args:
         input_data: Dict containing character, request data, and other context
-        
+
     Returns:
         Tuple of (system_prompt, user_prompt)
     """
     logger.debug("Building session context prompt")
-    
+
     character = input_data["character"]
     request = input_data["request"]
-    
+
     # Template rendering logic
     prompt_template = Template(SESSION_CONTEXT_GENERATION_USER_PROMPT)
-    
-    user_prompt = prompt_template.render({
-        "character_name": character.base_personality["name"],
-        "in_universe_self_description": character.base_personality["in-universe_self_description"],
-        "sensory_origin_memory": character.base_personality["sensory_origin_memory"],
-        "character_native_deflection": character.base_personality["character_native_deflection"],
-        "traits": character.base_personality["traits"],
-        "core_principles": character.base_personality["core_principles"],
-        "physical_tells": character.base_personality["physical_tells"],
-        "speech_patterns": character.base_personality["speech_patterns"],
-        "general_demeanor": character.general["personality"],
-        "character_home_world_description": character.general["home_world"],
-        "character_appearance_description": character.general["appearance"],
-        "character_background_history": character.general["background"],
-        "companion_name": request.companion_name,
-        "companion_description": request.companion_description,
-        "companion_context": request.companion_context,
-        "meeting_location_description": request.meeting_location_description,
-        "meeting_description": request.meeting_description
-    })
-    
+
+    user_prompt = prompt_template.render(
+        {
+            "character_name": character.base_personality["name"],
+            "in_universe_self_description": character.base_personality[
+                "in-universe_self_description"
+            ],
+            "sensory_origin_memory": character.base_personality[
+                "sensory_origin_memory"
+            ],
+            "character_native_deflection": character.base_personality[
+                "character_native_deflection"
+            ],
+            "traits": character.base_personality["traits"],
+            "core_principles": character.base_personality["core_principles"],
+            "physical_tells": character.base_personality["physical_tells"],
+            "speech_patterns": character.base_personality["speech_patterns"],
+            "general_demeanor": character.general["personality"],
+            "character_home_world_description": character.general["home_world"],
+            "character_appearance_description": character.general["appearance"],
+            "character_background_history": character.general["background"],
+            "companion_name": request.companion_name,
+            "companion_description": request.companion_description,
+            "companion_context": request.companion_context,
+            "meeting_location_description": request.meeting_location_description,
+            "meeting_description": request.meeting_description,
+        }
+    )
+
     logger.debug("Session context prompt built successfully")
-    
+
     return SESSION_CONTEXT_GENERATION_PROMPT, user_prompt

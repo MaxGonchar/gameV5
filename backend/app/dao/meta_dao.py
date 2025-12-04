@@ -1,11 +1,16 @@
-from app.objects.meta import MetaData
+# # Standard library imports
 from pathlib import Path
 from typing import Any, Optional
-from .yaml_file_handler import YamlFileHandler
-from app.exceptions import DataValidationException
+
+# # Local application imports
 from app.core.config import get_logger, settings
 from app.core.constants import META_FILE_NAME
+from app.exceptions import DataValidationException
+from app.objects.meta import MetaData
+
+# # Relative imports
 from .path_manager import PathManager
+from .yaml_file_handler import YamlFileHandler
 
 logger = get_logger(__name__)
 
@@ -16,20 +21,20 @@ logger = get_logger(__name__)
 class MetaDAO:
     """
     Data Access Object for meta configurations.
-    
+
     Handles loading meta data from YAML files.
     Structure: {meta_dir}/meta.yaml
     """
-    
+
     def __init__(
         self,
         story_id: str,
         yaml_handler: YamlFileHandler | None = None,
-        path_manager: PathManager | None = None
+        path_manager: PathManager | None = None,
     ):
         """
         Initialize the meta DAO.
-        
+
         Args:
             meta_dir: Directory containing meta.yaml file (default: from settings)
             yaml_handler: YAML file handler dependency
@@ -41,10 +46,10 @@ class MetaDAO:
     async def get_meta(self) -> MetaData:
         """
         Load meta data from meta.yaml file.
-        
+
         Returns:
             MetaData object
-            
+
         Raises:
             FileOperationException, YamlException: From yaml_handler (bubbled up)
             DataValidationException: If meta data is invalid
@@ -55,24 +60,26 @@ class MetaDAO:
     async def _read_yaml(self, file_path: Path) -> dict[str, Any]:
         """Read and validate YAML data from file."""
         data = await self.yaml_handler.read_yaml_file(file_path)
-        
+
         if not data:
             logger.warning(f"Meta file is empty: {file_path}")
             raise DataValidationException(
                 f"Meta data file is empty: {file_path}",
-                details={"file_path": str(file_path)}
+                details={"file_path": str(file_path)},
             )
-            
+
         if not isinstance(data, dict):
-            logger.error(f"Invalid meta data format in {file_path}, expected dict but got {type(data).__name__}")
+            logger.error(
+                f"Invalid meta data format in {file_path}, expected dict but got {type(data).__name__}"
+            )
             raise DataValidationException(
                 f"Invalid meta data format in {file_path}",
                 details={
                     "file_path": str(file_path),
                     "expected_type": "dict",
-                    "actual_type": type(data).__name__
-                }
+                    "actual_type": type(data).__name__,
+                },
             )
-            
+
         logger.debug(f"Successfully loaded meta data from {file_path}")
         return data

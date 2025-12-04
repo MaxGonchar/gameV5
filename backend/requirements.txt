@@ -14,3 +14,8 @@ aioshutil==1.6
 pytest==7.4.0
 pytest-cov==4.1.0
 pytest-asyncio==1.2.0
+
+# Code Quality Tools
+isort==7.0.0
+black==25.11.0
+pre-commit==4.5.0

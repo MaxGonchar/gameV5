@@ -1,9 +1,9 @@
 # Features
 
 ## Goal-oriented character behavior
-- [ ] add current_goal to character
-- [ ] adjust character move prompt to include current_goal
-- [ ] add goal achievement validation
+- [X] add current_goal to character
+- [X] adjust character move prompt to include current_goal
+- [X] add goal achievement validation
 - [ ] add initial goal generation
 - [ ] add goal updating mechanism (summarize dialogue when goal updates)
 
@@ -18,6 +18,7 @@
 - PROBLEM: confuses with character's sex.
 - consider moving speech pattern to RESPONSE RULES
 - restrict amount of characters' active memory (memory items going to prompt)
+- create dock with detailed flow of the game process
 
 ### post implementation:
 - [ ] delete story functionality

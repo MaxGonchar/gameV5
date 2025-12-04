@@ -5,14 +5,19 @@ This module contains all the dependency providers that create and configure
 service instances for use in API endpoints through FastAPI's dependency injection system.
 """
 
+# # Standard library imports
 from typing import Annotated
+
+# # Third-party imports
 from fastapi import Depends, Path
+
+# # Local application imports
+from app.services.character_service import CharacterService
+from app.services.dialogue_summary_service import DialogueSummaryService
+from app.services.stories_service import StoriesService
 
 # Import all service classes that will be used as dependencies
 from app.services.story_service import StoryService
-from app.services.dialogue_summary_service import DialogueSummaryService
-from app.services.character_service import CharacterService
-from app.services.stories_service import StoriesService
 
 
 # Story-related dependency providers
@@ -39,6 +44,8 @@ def get_stories_service() -> StoriesService:
 
 # Type aliases for cleaner dependency injection in route functions
 StoryServiceDep = Annotated[StoryService, Depends(get_story_service)]
-DialogueServiceDep = Annotated[DialogueSummaryService, Depends(get_dialogue_summary_service)]
+DialogueServiceDep = Annotated[
+    DialogueSummaryService, Depends(get_dialogue_summary_service)
+]
 CharacterServiceDep = Annotated[CharacterService, Depends(get_character_service)]
 StoriesServiceDep = Annotated[StoriesService, Depends(get_stories_service)]

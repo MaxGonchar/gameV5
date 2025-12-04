@@ -1,5 +1,8 @@
-from pydantic import BaseModel, Field
+# # Third-party imports
 from jinja2 import Template
+from pydantic import BaseModel, Field
+
+# # Local application imports
 from app.core.config import get_logger
 
 logger = get_logger(__name__)
@@ -7,21 +10,22 @@ logger = get_logger(__name__)
 
 class MoveSceneDescriptionResponse(BaseModel):
     """Response model for move scene description generation with goal evaluation."""
+
     companion_side: str = Field(
         ...,
-        description="Scene description from the companion (user) point of view - objective narrative"
+        description="Scene description from the companion (user) point of view - objective narrative",
     )
     character_side: str = Field(
         ...,
-        description="Scene description from the character's point of view in character's voice"
+        description="Scene description from the character's point of view in character's voice",
     )
     environmental_context: str = Field(
         ...,
-        description="Pure environmental context for character situational awareness - no character actions described"
+        description="Pure environmental context for character situational awareness - no character actions described",
     )
     goal_status: str = Field(
         ...,
-        description="Character's goal status after this interaction: 'reached', 'in_progress', or 'unreachable'"
+        description="Character's goal status after this interaction: 'reached', 'in_progress', or 'unreachable'",
     )
 
 
@@ -187,40 +191,50 @@ MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 
 def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
     """Build system and user prompts for scene description with goal evaluation.
-    
+
     Args:
         input_data: Dict containing story_state, actor, message, and optional current_goal
-        
+
     Returns:
         Tuple of (system_prompt, user_prompt)
     """
     logger.debug("Building scene description prompt with goal evaluation")
-    
+
     story_state = input_data["story_state"]
     actor = input_data["actor"]
     message = input_data["message"]
     current_goal = story_state.character.current_goal
-    
+
     # Template rendering logic
     prompt_template = Template(MOVE_SCENE_DESCRIPTION_USER_PROMPT)
     last_description = story_state.get_last_scene_description()
-    
-    user_prompt = prompt_template.render({
-        "companion_side": last_description["companion_side"],
-        "character_side": last_description["character_side"],
-        "actor": actor,
-        "message": message,
-        "character_name": story_state.character.base_personality["name"],
-        "in_universe_self_description": story_state.character.base_personality["in-universe_self_description"],
-        "sensory_origin_memory": story_state.character.base_personality["sensory_origin_memory"],
-        "character_native_deflection": story_state.character.base_personality["character_native_deflection"],
-        "traits": story_state.character.traits,
-        "core_principles": story_state.character.base_personality.get("core_principles", []),
-        "physical_tells": story_state.character.physical_tells,
-        "speech_patterns": story_state.character.speech_patterns,
-        "current_goal": current_goal
-    })
-    
+
+    user_prompt = prompt_template.render(
+        {
+            "companion_side": last_description["companion_side"],
+            "character_side": last_description["character_side"],
+            "actor": actor,
+            "message": message,
+            "character_name": story_state.character.base_personality["name"],
+            "in_universe_self_description": story_state.character.base_personality[
+                "in-universe_self_description"
+            ],
+            "sensory_origin_memory": story_state.character.base_personality[
+                "sensory_origin_memory"
+            ],
+            "character_native_deflection": story_state.character.base_personality[
+                "character_native_deflection"
+            ],
+            "traits": story_state.character.traits,
+            "core_principles": story_state.character.base_personality.get(
+                "core_principles", []
+            ),
+            "physical_tells": story_state.character.physical_tells,
+            "speech_patterns": story_state.character.speech_patterns,
+            "current_goal": current_goal,
+        }
+    )
+
     logger.debug("Scene description prompt with goal evaluation built successfully")
-    
+
     return MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, user_prompt
