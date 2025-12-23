@@ -1,5 +1,7 @@
-# Third-party imports
+# Standard library imports
 from typing import Dict, List
+
+# Third-party imports
 from jinja2 import Template
 from pydantic import BaseModel, Field
 
@@ -199,11 +201,13 @@ def build_emotional_impact_prompt(input_data: dict) -> tuple[str, str]:
     # Format history entries
     history_entries = []
     for entry in recent_history:
-        history_entries.append({
-            "author_name": entry.get("author_name", "Unknown"),
-            "author_type": entry.get("author_type", "unknown"),
-            "content": entry.get("content", ""),
-        })
+        history_entries.append(
+            {
+                "author_name": entry.get("author_name", "Unknown"),
+                "author_type": entry.get("author_type", "unknown"),
+                "content": entry.get("content", ""),
+            }
+        )
 
     # Render user prompt
     prompt_template = Template(EMOTIONAL_IMPACT_ANALYSIS_USER_PROMPT)

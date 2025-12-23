@@ -226,7 +226,7 @@ class StoryService:
             "character_side": scene_description.character_side,
             "environmental_context": scene_description.environmental_context,
         }
-    
+
     async def _calculate_emotional_impact(self, user_message: str) -> None:
         system_Prompt, user_prompt = build_emotional_impact_prompt(
             {
@@ -247,7 +247,9 @@ class StoryService:
 
         logger.debug(f"Emotional Impact Result: {emotional_impact}")
         # Update character mental states based on analysis
-        self.story_state.character.update_mental_state(emotional_impact.model_dump()["mental_state_impacts"])
+        self.story_state.character.update_mental_state(
+            emotional_impact.model_dump()["mental_state_impacts"]
+        )
 
     async def process_user_message(self, message: str) -> None:
         """Process user message and generate bot response.

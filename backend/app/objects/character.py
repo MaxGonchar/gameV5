@@ -18,46 +18,46 @@ class MemoryItemType(TypedDict):
 
 class RangeDict:
     """A dict-like class that maps integer values to levels based on ranges."""
-    
+
     def __init__(self, levels):
         """
         Initialize with a list of level definitions.
-        
+
         Args:
             levels: List of dicts with 'level' (str) and 'range' ([min, max]) keys
         """
         self.levels = levels
-    
+
     def __getitem__(self, key):
         """
         Get the level name for a given integer value.
-        
+
         Args:
             key: Integer value to look up
-            
+
         Returns:
             The level name (str) if found
-            
+
         Raises:
             KeyError: If the value doesn't fall within any range
         """
         if not isinstance(key, int):
             raise TypeError(f"Key must be an integer, got {type(key).__name__}")
-        
+
         for level_def in self.levels:
-            min_val, max_val = level_def['range']
+            min_val, max_val = level_def["range"]
             if min_val <= key <= max_val:
-                return level_def['level']
-        
+                return level_def["level"]
+
         raise KeyError(f"No level found for value {key}")
-    
+
     def get(self, key, default=None):
         """Get the level for a key, returning default if not found."""
         try:
             return self[key]
         except KeyError:
             return default
-    
+
     def __contains__(self, key):
         """Check if a value falls within any range."""
         try:
@@ -65,7 +65,7 @@ class RangeDict:
             return True
         except KeyError:
             return False
-    
+
     def __repr__(self):
         return f"RangeDict({self.levels})"
 
@@ -77,15 +77,17 @@ class MentalStates:
             "increase": 1,
             "decrease": -1,
         }
-    
+
     def marshal(self) -> list[dict[str, Any]]:
         return deepcopy(self.data)
 
     def update_state(self, state_name: str, change: str) -> None:
         for state in self.data:
             if state["type"].lower() == state_name.lower():
-                logger.debug(f"Updating mental state '{state_name}' with change '{change}'")
-                level, direction = change.split('_')
+                logger.debug(
+                    f"Updating mental state '{state_name}' with change '{change}'"
+                )
+                level, direction = change.split("_")
 
                 # handle case "no_change"
                 if level == "no" and direction == "change":
@@ -100,14 +102,12 @@ class MentalStates:
 
     def _calculate_numeric_level(self, state: dict[str, Any], impact: int) -> int:
         current = state["current_numeric"]
-        return (
-            min(
-                max(
-                    state["change_mechanics"]["min"],
-                    current + impact,
-                ),
-                state["change_mechanics"]["max"],
-            )
+        return min(
+            max(
+                state["change_mechanics"]["min"],
+                current + impact,
+            ),
+            state["change_mechanics"]["max"],
         )
 
     def _set_current_level(self, state: dict[str, Any]) -> None:
@@ -119,7 +119,9 @@ class Character:
     def __init__(self, character_data: dict[str, Any]):
         self.data = deepcopy(character_data)
         # TODO: Remove mental_states data from character to not copy it twice
-        self._mental_states: MentalStates = MentalStates(self.data.get("mental_states", []))
+        self._mental_states: MentalStates = MentalStates(
+            self.data.get("mental_states", [])
+        )
 
     def to_dict(self) -> dict[str, Any]:
         data = deepcopy(self.data)
@@ -203,11 +205,11 @@ class Character:
             story_context_data.pop("memories")
 
         self.data["story_context"] = story_context_data
-    
+
     @property
     def mental_states(self) -> list[dict[str, Any]]:
         return self._mental_states.marshal()
-    
+
     def update_mental_state(self, impact: dict[str, Any]) -> None:
 
         for state, impact in impact.items():
@@ -215,4 +217,3 @@ class Character:
             logger.debug(f"Impact: {impact['change']}")
             logger.debug(f"Impact: {impact['reasoning']}")
             self._mental_states.update_state(state, impact["change"])
-
