@@ -1,5 +1,12 @@
 # Features
 
+
+## Character emotional state
+- [x] add emotional states to the character configs
+- [x] implement emotional tracking
+- [ ] change behavior based on emotional state
+
+
 ## Goal-oriented character behavior
 - [X] add current_goal to character
 - [X] adjust character move prompt to include current_goal

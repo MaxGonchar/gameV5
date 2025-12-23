@@ -27,6 +27,10 @@ from app.exceptions import (
 from app.llm.venice_ai import VeniceAIChatModel
 from app.llm.venice_client import VeniceClient
 from app.models.assistant_response import AssistantResponse
+from app.models.emotional_impact import (
+    EmotionalImpactAnalysisResponse,
+    build_emotional_impact_prompt,
+)
 from app.models.scene_description import (
     MoveSceneDescriptionResponse,
     build_scene_description_prompt,
@@ -222,6 +226,28 @@ class StoryService:
             "character_side": scene_description.character_side,
             "environmental_context": scene_description.environmental_context,
         }
+    
+    async def _calculate_emotional_impact(self, user_message: str) -> None:
+        system_Prompt, user_prompt = build_emotional_impact_prompt(
+            {
+                "character": self.story_state.character,
+                "recent_history": self.story_state.get_chat_history(),
+                "user_message": user_message,
+            }
+        )
+        logger.debug("Calculating emotional impact...")
+        logger.debug(f"System Prompt: {system_Prompt}")
+        logger.debug(f"User Prompt: {user_prompt}")
+
+        emotional_impact = await self.llm_communicator.generate_structured_response(
+            system_prompt=system_Prompt,
+            user_prompt=user_prompt,
+            response_model=EmotionalImpactAnalysisResponse,
+        )
+
+        logger.debug(f"Emotional Impact Result: {emotional_impact}")
+        # Update character mental states based on analysis
+        self.story_state.character.update_mental_state(emotional_impact.model_dump()["mental_state_impacts"])
 
     async def process_user_message(self, message: str) -> None:
         """Process user message and generate bot response.
@@ -238,6 +264,9 @@ class StoryService:
 
             # Add user message with scene description
             await self._update_chat_history(message, author_user=True)
+
+            # Calculate character emotional impact
+            await self._calculate_emotional_impact(message)
 
             # Generate and add bot response
             bot_response = await self._generate_bot_response()
