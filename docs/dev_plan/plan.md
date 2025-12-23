@@ -28,7 +28,7 @@
 - create dock with detailed flow of the game process
 
 ### post implementation:
-- [ ] delete story functionality
+- [ ] during formatting fix adding extra comments in imports
 - [ ] solve todos
 - [ ] sanitize the code
   - [ ] remove unused imports

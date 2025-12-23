@@ -54,14 +54,18 @@ mental_states: # A list of emotional and psychological states the character can 
         range: # The numerical range for this level [min, max]
       - level: 
         range: 
-    impact_multipliers: # How this character's sensitivity affects the base impact levels from LLM analysis
-      slight: # Multiplier for "slight_increase" or "slight_decrease" impacts
-      moderate: # Multiplier for "moderate_increase" or "moderate_decrease" impacts  
-      major: # Multiplier for "major_increase" or "major_decrease" impacts
-      extreme: # Multiplier for "extreme_increase" or "extreme_decrease" impacts
+    impact_rate: # Numerical values defining how different trigger impacts affect this mental state
+      slight: # Value for "slight_increase" or "slight_decrease" impacts
+      moderate: # Value for "moderate_increase" or "moderate_decrease" impacts  
+      major: # Value for "major_increase" or "major_decrease" impacts
+      extreme: # Value for "extreme_increase" or "extreme_decrease" impacts
     default: # The character's baseline level for this mental state
     current: # The character's current level for this mental state (updated during gameplay)
+    current_numeric: # The character's current numeric value for this mental state (updated during gameplay)
+     # 0-100 scale representing intensity within the defined levels
     change_mechanics:
+      min: # Minimum possible numeric value for this state
+      max: # Maximum possible numeric value for this state
       decay_rate: # Natural change in this state per exchange (negative for decrease, positive for increase)
       max_change: # Maximum change that can occur from a single trigger
       momentum_factor: # How previous levels affect sensitivity to new triggers (0.0-1.0)
@@ -74,6 +78,33 @@ mental_states: # A list of emotional and psychological states the character can 
           base_impact: 
           reasoning: 
       manifestation: # How this character specifically shows this mental state - their unique physical and behavioral responses
+
+behavioral_modes: # A list of character-specific behavioral modes that represent different emotional shades of the base personality. Each mode emerges from specific mental state combinations and defines how the character pursues goals under those emotional conditions.
+  - mode_name: # A character-specific, evocative name for this behavioral mode (e.g., "survival_edge", "cautious_hope", "overwhelmed_shutdown")
+    description: # Brief description of the emotional state this mode represents and when it activates
+    
+    trigger_conditions: # Mental state combinations that activate this mode. Use mental state type names and their level names.
+      # mental_state_type: [level_name, level_name]  # e.g., stress: [high, overwhelming], trust: [low, fragile]
+    
+    traits: # Complete list of traits for this mode, using standard "Action/Behavior → Motivation/Rationale" syntax. These are shades of base personality, not replacements.
+      - "Action/Behavior → Motivation/Rationale"
+      - "Action/Behavior → Motivation/Rationale"
+    
+    speech_patterns: # How character's speech shifts in this mode - amplifications or constraints on base patterns
+      - 
+      - 
+    
+    physical_tells: # Additional physical behaviors specific to this emotional mode
+      - 
+      - 
+    
+    behavioral_effects: # High-level description of proactive behaviors character exhibits in this mode (metadata for understanding/future goal generation)
+      - 
+      - 
+    
+    strategy_priorities: # Which approaches character prioritizes in this mode (metadata for understanding/future goal generation)
+      - 
+      - 
 
 general: # A block for general world-building and descriptive information about the character.
   home_world: # A description of the setting the character originates from or currently inhabits. It should explain the nature of the world and how the character perceives it—is it a source of wonder, terror, indifference, or opportunity?

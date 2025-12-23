@@ -8,7 +8,13 @@ Each user message triggers a complete interaction cycle:
 - **LLM generates scene description** showing impact of user's action on the environment
 - Add user message to chat history with environmental context
 
-### Phase 2: Character Response Generation  
+### Phase 2: Character Mental State Analysis
+- **LLM analyzes emotional impact** of user's message on character
+- Evaluate message through character's unique psychological lens (fears, needs, sensitivities)
+- Update character's mental state levels based on emotional impact assessment
+- Track how character interprets and responds emotionally to interactions
+
+### Phase 3: Character Response Generation  
 - Build conversation context from:
   - Character profile (personality, goals, background)
   - Full chat history
@@ -16,17 +22,18 @@ Each user message triggers a complete interaction cycle:
 - **Generate character response via LLM**
 - Character acts according to their goals and personality
 
-### Phase 3: World State Evolution
+### Phase 4: World State Evolution
 - **LLM generates scene description** showing character's action impact on the environment
 - Update environmental context based on character's response
 - Add character response to chat history
 
-### Phase 4: State Persistence
+### Phase 5: State Persistence
 - Save all changes to persistent storage
 - Maintain conversation continuity for future interactions
 
 ## Key Design Principles
 - **Dual Perspective**: Each action updates the scene from both user and character viewpoints
+- **Psychological Depth**: Character mental states dynamically respond to interactions through LLM analysis
 - **Goal-Driven Character**: Character responses align with their defined objectives
 - **Environmental Continuity**: Scene descriptions maintain world state consistency through LLM analysis
 - **Conversation Memory**: Full chat history informs all character responses
@@ -34,7 +41,7 @@ Each user message triggers a complete interaction cycle:
 
 ## Core Game Loop
 ```
-User Input → LLM Scene Update → LLM Character Response → LLM Scene Update → Save State
+User Input → LLM Scene Update → Mental State Analysis → LLM Character Response → LLM Scene Update → Save State
 ```
 
 ## Scene Description Structure
