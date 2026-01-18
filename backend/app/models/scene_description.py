@@ -235,6 +235,4 @@ def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
         }
     )
 
-    logger.debug("Scene description prompt with goal evaluation built successfully")
-
     return MOVE_SCENE_DESCRIPTION_SYSTEM_PROMPT, user_prompt

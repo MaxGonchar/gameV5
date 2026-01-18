@@ -7,6 +7,17 @@
 - [ ] change behavior based on emotional state
 
 
+## Memory system
+- [ ] add to the history "is_summarized" flag to messages
+- [ ] add to the history emotional shift tracking
+- [ ] create summary logic to summarize only non-summarized messages
+- [ ] create logic to get not summarized messages for the prompt
+- [ ] create logic to track emotional shifts
+- [ ] create logic to summarize history into character memory
+- [ ] create trigger for summarization based on number of non-summarized messages and emotional shifts
+- [ ] create memory structure in the character 
+
+
 ## Goal-oriented character behavior
 - [X] add current_goal to character
 - [X] adjust character move prompt to include current_goal

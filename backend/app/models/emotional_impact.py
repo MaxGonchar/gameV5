@@ -193,7 +193,7 @@ def build_emotional_impact_prompt(input_data: dict) -> tuple[str, str]:
         state_data = {
             "type": state["type"],
             "current": state["default"],
-            "triggers": state["character_interpretation"]["triggers"],
+            "triggers": state["triggers"],
             "manifestation": state["manifestation"],
         }
         mental_states_data.append(state_data)
@@ -222,5 +222,6 @@ def build_emotional_impact_prompt(input_data: dict) -> tuple[str, str]:
     )
 
     logger.debug("Emotional impact analysis prompt built successfully")
+    logger.debug(f"User Prompt: {user_prompt}")
 
     return EMOTIONAL_IMPACT_ANALYSIS_SYSTEM_PROMPT, user_prompt

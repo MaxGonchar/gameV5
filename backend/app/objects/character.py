@@ -100,6 +100,11 @@ class MentalStates:
                 state["current_numeric"] = new_numeric_level
                 self._set_current_level(state)
 
+    def get_current_mental_states(self) -> dict[str, str]:
+        return {
+            state["type"]: state["current"] for state in self.data
+        }
+
     def _calculate_numeric_level(self, state: dict[str, Any], impact: int) -> int:
         current = state["current_numeric"]
         return min(
@@ -115,6 +120,48 @@ class MentalStates:
         state["current"] = range_dict.get(state["current_numeric"], "Unknown")
 
 
+class BehavioralModes:
+    def __init__(self, modes_data: list[dict[str, Any]]):
+        self.modes_data = deepcopy(modes_data)
+    
+    def marshal(self) -> list[dict[str, Any]]:
+        return deepcopy(self.modes_data)
+    
+    def get_behavior(self, mental_states: dict[str, str]) -> dict[str, Any] | None:
+        for mode in self.modes_data:
+            if self._chesk_mode_match(mode, mental_states):
+                return {
+                    "traits": mode.get("traits", []),
+                    "speech_patterns": mode.get("speech_patterns", []),
+                    "physical_tells": mode.get("physical_tells", []),
+                }
+        return None
+
+    def _chesk_mode_match(self, mode: dict[str, Any], current_state_levels: dict[str, str]) -> bool:
+        """
+        mode: {
+            "mode_name": "survival_edge",
+            "trigger_conditions": {
+                "stress": ["high", "overwhelming"],
+                "trust": ["low", "fragile"]
+            }
+        }
+        current_state_levels: {"stress": "high", "trust": "low", "hope": "diminishing"}
+        """
+        for state_name, required_levels in mode["trigger_conditions"].items():
+            # Check if this mental state exists in current state
+            if state_name not in current_state_levels:
+                return False
+            
+            # Check if current level is in the list of required levels
+            current_level = current_state_levels[state_name]
+            if current_level not in required_levels:
+                return False
+        
+        # All conditions satisfied
+        return True
+
+
 class Character:
     def __init__(self, character_data: dict[str, Any]):
         self.data = deepcopy(character_data)
@@ -122,10 +169,14 @@ class Character:
         self._mental_states: MentalStates = MentalStates(
             self.data.get("mental_states", [])
         )
+        self._behavioral_modes: BehavioralModes = BehavioralModes(
+            self.data.get("behavioral_modes", [])
+        )
 
     def to_dict(self) -> dict[str, Any]:
         data = deepcopy(self.data)
         data["mental_states"] = self._mental_states.marshal()
+        data["behavioral_modes"] = self._behavioral_modes.marshal()
         return data
 
     @property
@@ -134,15 +185,32 @@ class Character:
 
     @property
     def traits(self) -> list[str]:
-        return self._get_from_goal_first("traits", list)
+        # return self._get_from_goal_first("traits", list)
+        return self._get_from_behavioral_mode_first("traits")
 
     @property
     def speech_patterns(self) -> list[str]:
-        return self._get_from_goal_first("speech_patterns", list)
+        # return self._get_from_goal_first("speech_patterns", list)
+        return self._get_from_behavioral_mode_first("speech_patterns")
 
     @property
     def physical_tells(self) -> list[str]:
-        return self._get_from_goal_first("physical_tells", list)
+        # return self._get_from_goal_first("physical_tells", list)
+        return self._get_from_behavioral_mode_first("physical_tells")
+    
+    def _get_from_behavioral_mode_first(self, key: str) -> Any:
+        current_states = self._mental_states.get_current_mental_states()
+        behavior = self._behavioral_modes.get_behavior(current_states)
+
+        logger.debug(f"Getting '{key}' for character '{self.name}' from behavioral modes")
+        logger.debug(f"Current mental states: {current_states}")
+        logger.debug(f"Matched behavior: {behavior}")
+
+        if behavior:
+            return behavior[key]
+        
+        return self.data["base_personality"][key]
+
 
     def _get_from_goal_first(self, key: str, none_type: type) -> Any:
         value = (
