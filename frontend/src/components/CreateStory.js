@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getCharacters, getLocations } from '../services/catalogService';
+import { getCharacters } from '../services/catalogService';
 import { createStory } from '../services/storyService';
 import CharacterSelector from './CharacterSelector';
-import LocationSelector from './LocationSelector';
 
 function CreateStory() {
   const navigate = useNavigate();
   
   // Form state
   const [selectedCharacter, setSelectedCharacter] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
-  const [sceneDescription, setSceneDescription] = useState('');
+  const [storyTitle, setStoryTitle] = useState('');
+  const [companionName, setCompanionName] = useState('');
+  const [companionDescription, setCompanionDescription] = useState('');
+  const [companionContext, setCompanionContext] = useState('');
+  const [meetingLocationDescription, setMeetingLocationDescription] = useState('');
+  const [meetingDescription, setMeetingDescription] = useState('');
   
   // Data state
   const [characters, setCharacters] = useState([]);
-  const [locations, setLocations] = useState([]);
   
   // UI state
-  const [loading, setLoading] = useState({ characters: true, locations: true });
+  const [loading, setLoading] = useState({ characters: true });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,20 +32,14 @@ function CreateStory() {
     try {
       setError(null);
       
-      // Load characters and locations in parallel
-      const [charactersResponse, locationsResponse] = await Promise.all([
-        getCharacters(),
-        getLocations()
-      ]);
-      
+      const charactersResponse = await getCharacters();
       setCharacters(charactersResponse.characters || []);
-      setLocations(locationsResponse.locations || []);
       
     } catch (err) {
       console.error('Error loading catalog data:', err);
-      setError('Failed to load characters and locations. Please try again.');
+      setError('Failed to load characters. Please try again.');
     } finally {
-      setLoading({ characters: false, locations: false });
+      setLoading({ characters: false });
     }
   };
 
@@ -51,7 +47,9 @@ function CreateStory() {
     e.preventDefault();
     
     // Validate form
-    if (!selectedCharacter || !selectedLocation || !sceneDescription.trim()) {
+    if (!selectedCharacter || !storyTitle.trim() || !companionName.trim() || 
+        !companionDescription.trim() || !companionContext.trim() || 
+        !meetingLocationDescription.trim() || !meetingDescription.trim()) {
       setError('Please fill in all fields before creating the story.');
       return;
     }
@@ -60,11 +58,15 @@ function CreateStory() {
     setError(null);
 
     try {
-      const response = await createStory(
-        selectedCharacter,
-        selectedLocation,
-        sceneDescription.trim()
-      );
+      const response = await createStory({
+        character_id: selectedCharacter,
+        story_title: storyTitle.trim(),
+        companion_name: companionName.trim(),
+        companion_description: companionDescription.trim(),
+        companion_context: companionContext.trim(),
+        meeting_location_description: meetingLocationDescription.trim(),
+        meeting_description: meetingDescription.trim()
+      });
       
       // Navigate to the new story
       navigate(`/story/${response.story_id}`);
@@ -81,12 +83,14 @@ function CreateStory() {
     }
   };
 
-  const isFormValid = selectedCharacter && selectedLocation && sceneDescription.trim();
+  const isFormValid = selectedCharacter && storyTitle.trim() && companionName.trim() && 
+                      companionDescription.trim() && companionContext.trim() && 
+                      meetingLocationDescription.trim() && meetingDescription.trim();
 
   return (
     <div className="create-story">
       <form onSubmit={handleCreateStory} className="create-story__form">
-        {/* Side-by-side dropdowns */}
+        {/* Character selector */}
         <div className="create-story__selectors">
           <CharacterSelector
             characters={characters}
@@ -94,32 +98,121 @@ function CreateStory() {
             onCharacterSelect={setSelectedCharacter}
             loading={loading.characters}
           />
-          
-          <LocationSelector
-            locations={locations}
-            selectedLocation={selectedLocation}
-            onLocationSelect={setSelectedLocation}
-            loading={loading.locations}
+        </div>
+
+        {/* Story title */}
+        <div className="create-story__scene-section">
+          <label htmlFor="story-title" className="create-story__scene-label">
+            Story Title:
+          </label>
+          <input
+            id="story-title"
+            type="text"
+            className="create-story__scene-textarea"
+            style={{minHeight: 'auto', height: '48px', resize: 'none'}}
+            value={storyTitle}
+            onChange={(e) => setStoryTitle(e.target.value)}
+            placeholder="Enter the title of your story..."
+            disabled={creating}
+            required
           />
         </div>
 
-        {/* Scene description */}
+        {/* Companion name */}
         <div className="create-story__scene-section">
-          <label htmlFor="scene-description" className="create-story__scene-label">
-            Initial Scene Description:
+          <label htmlFor="companion-name" className="create-story__scene-label">
+            Your Character Name:
+          </label>
+          <input
+            id="companion-name"
+            type="text"
+            className="create-story__scene-textarea"
+            style={{minHeight: 'auto', height: '48px', resize: 'none'}}
+            value={companionName}
+            onChange={(e) => setCompanionName(e.target.value)}
+            placeholder="What should you be called in the story?"
+            disabled={creating}
+            required
+          />
+        </div>
+
+        {/* Companion description */}
+        <div className="create-story__scene-section">
+          <label htmlFor="companion-description" className="create-story__scene-label">
+            Your Character Description:
           </label>
           <textarea
-            id="scene-description"
+            id="companion-description"
             className="create-story__scene-textarea"
-            value={sceneDescription}
-            onChange={(e) => setSceneDescription(e.target.value)}
-            placeholder="Describe the opening scene of your story..."
-            rows={6}
+            value={companionDescription}
+            onChange={(e) => setCompanionDescription(e.target.value)}
+            placeholder="Describe your character's appearance, personality, background..."
+            rows={4}
             disabled={creating}
             required
           />
           <div className="create-story__char-count">
-            {sceneDescription.length} characters
+            {companionDescription.length} characters
+          </div>
+        </div>
+
+        {/* Companion context */}
+        <div className="create-story__scene-section">
+          <label htmlFor="companion-context" className="create-story__scene-label">
+            Background Context:
+          </label>
+          <textarea
+            id="companion-context"
+            className="create-story__scene-textarea"
+            value={companionContext}
+            onChange={(e) => setCompanionContext(e.target.value)}
+            placeholder="Provide your background context about the world, setting, or situation..."
+            rows={4}
+            disabled={creating}
+            required
+          />
+          <div className="create-story__char-count">
+            {companionContext.length} characters
+          </div>
+        </div>
+
+        {/* Meeting location description */}
+        <div className="create-story__scene-section">
+          <label htmlFor="meeting-location" className="create-story__scene-label">
+            Meeting Location:
+          </label>
+          <textarea
+            id="meeting-location"
+            className="create-story__scene-textarea"
+            value={meetingLocationDescription}
+            onChange={(e) => setMeetingLocationDescription(e.target.value)}
+            placeholder="Describe where you and the character will meet..."
+            rows={3}
+            disabled={creating}
+            required
+          />
+          <div className="create-story__char-count">
+            {meetingLocationDescription.length} characters
+          </div>
+        </div>
+
+        {/* Meeting description */}
+        <div className="create-story__scene-section">
+          <label htmlFor="meeting-description" className="create-story__scene-label">
+            How You Meet:
+          </label>
+          <textarea
+            id="meeting-description"
+            className="create-story__scene-textarea"
+            value={meetingDescription}
+            onChange={(e) => setMeetingDescription(e.target.value)}
+            placeholder="Describe how the meeting happens and the initial scenario..."
+            rows={4}
+            disabled={creating}
+            required
+          />
+          <div className="create-story__char-count">
+            {meetingDescription.length} characters
           </div>
         </div>
 

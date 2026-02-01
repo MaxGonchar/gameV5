@@ -2,49 +2,69 @@
 Characters API endpoints.
 """
 
-from fastapi import APIRouter, HTTPException
+# # Standard library imports
 import logging
+from http import HTTPStatus
 
+# # Third-party imports
+from fastapi import APIRouter, HTTPException
+
+# # Local application imports
+from app.core.config import get_logger
+from app.dependencies import CharacterServiceDep
+from app.exceptions import (
+    DataValidationException,
+    EntityNotFoundException,
+    ServiceException,
+)
 from app.models.responses import CharactersResponse
-from app.services.character_service import CharacterService
 
-# TODO: move logger configuration to main.py
-# check other files for similar logger setups
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 
-# Character service will be initialized lazily on first use
-character_service = None
-
-async def get_character_service():
-    """Get or create the character service instance."""
-    global character_service
-    if character_service is None:
-        character_service = CharacterService()
-    return character_service
 
 @router.get("/characters", response_model=CharactersResponse)
-async def get_characters():
+async def get_characters(character_service: CharacterServiceDep):
     """
     Get list of all available characters.
-    
+
     Returns:
         CharactersResponse: List of characters with their basic information
     """
     try:
         logger.info("Processing get characters request")
-        
-        service = await get_character_service()
-        characters_response = await service.get_characters_list()
-        
-        logger.info(f"Successfully returned {len(characters_response.characters)} characters")
+
+        characters_response = await character_service.get_characters_list()
+
+        logger.info(
+            f"Successfully returned {len(characters_response.characters)} characters"
+        )
         return characters_response
-        
-    except Exception as e:
-        logger.error(f"Error getting characters: {e}")
+
+    except EntityNotFoundException as e:
+        logger.warning(f"Characters data not found: {e.message}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
+            status_code=HTTPStatus.NOT_FOUND, detail="No characters found"
+        )
+
+    except DataValidationException as e:
+        logger.error(f"Character data validation error: {e.message}")
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Character data validation failed. Please contact support.",
+        )
+
+    except ServiceException as e:
+        logger.error(f"Service error getting characters: {e.message}")
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Internal service error. Please try again.",
+        )
+
+    except Exception as e:
+        logger.exception(f"Unexpected error getting characters: {str(e)}")
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again.",
         )

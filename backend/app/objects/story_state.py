@@ -1,16 +1,20 @@
+# # Standard library imports
 import asyncio
-from typing import Any
 from enum import Enum
+from typing import Any
 
-from app.objects.character import Character
-from app.objects.location import Location
-from app.objects.chat_history import ChatHistory
-from app.objects.meta import MetaData
+# # Local application imports
+from app.chat_types import ChatItem
 from app.dao.character_dao import CharacterDAO
-from app.dao.location_dao import LocationDAO
+
+# from app.dao.location_dao import LocationDAO
 from app.dao.history_dao import HistoryDAO
 from app.dao.meta_dao import MetaDAO
-from app.chat_types import ChatItem
+from app.dao.path_manager import path_manager
+from app.objects.character import Character
+from app.objects.chat_history import ChatHistory
+from app.objects.location import Location
+from app.objects.meta import MetaData
 
 
 class AuthorType(Enum):
@@ -21,130 +25,156 @@ class AuthorType(Enum):
 class StoryState:
     """
     Manages the state for a specific story.
-    
+
     Handles loading and saving of story-specific data including:
     - Characters
-    - Locations  
+    - Locations
     - History
     - Meta data
-    """
-    
-    # TODO: Using async __new__ is an anti-pattern and can cause issues with object initialization.
-    # Consider using a factory method or async context manager instead.
-    async def __new__(cls, *a, **kw):
-        instance = super().__new__(cls)
-        await instance.__init__(*a, **kw)
-        return instance
 
-    async def __init__(self, story_id: str, character_id: str | None = None, user_id: str = "user", user_name: str = "User"):
+    Use StoryState.create() factory method for async initialization.
+    """
+
+    # Class constants for user identification
+    USER_ID = "user"
+    USER_NAME = "User"
+
+    def __init__(
+        self,
+        story_id: str,
+        *,  # Force keyword-only parameters
+        character: Character | None = None,
+        chat_history: ChatHistory | None = None,
+        meta: MetaData | None = None,
+    ):
         """
-        Initialize the story state.
-        
+        Initialize the story state with required data.
+
         Args:
             story_id: UUID of the story
-            character_id: UUID of the character (will be determined from story data if None)
-            user_id: ID of the user (default: "user")
-            user_name: Name of the user (default: "User")
+            character: Character instance (required)
+            chat_history: ChatHistory instance (required)
+            meta: MetaData instance (required)
+
+        Raises:
+            ValueError: If any required parameter is None
+
+        Note: Use StoryState.create(story_id) for proper initialization.
+        Direct instantiation requires all parameters.
         """
+        if character is None or chat_history is None or meta is None:
+            raise ValueError(
+                "StoryState requires character, chat_history, and meta parameters. "
+                "Use StoryState.create(story_id) for proper async initialization."
+            )
+
         self.story_id = story_id
-        self.character_id = character_id
-        self.user_id = user_id
-        self.user_name = user_name
-
-        # Initialize DAOs with story-specific paths
-        self.character_dao = CharacterDAO(characters_dir=f"data/stories/{story_id}/characters")
-        self.location_dao = LocationDAO(locations_dir=f"data/stories/{story_id}/locations")
-        self.chat_history_dao = HistoryDAO(history_file=f"data/stories/{story_id}/history.yaml")
-        self.meta_dao = MetaDAO(meta_dir=f"data/stories/{story_id}")
-
-        self.character: Character
-        self.location: Location
-        self.chat_history: ChatHistory
-        self.meta: MetaData
-
-        await self._get_init_state()
-
-    async def _get_init_state(self):
-        """Load initial state from story data files."""
-        # Load meta and history first
-        meta, chat_history = await asyncio.gather(
-            self.meta_dao.get_meta(),
-            self.chat_history_dao.load_history()
-        )
-
-        # Determine character_id if not provided
-        if not self.character_id:
-            # Get the first available character from the story
-            characters = await self.character_dao.get_characters()
-            if not characters:
-                raise ValueError(f"No characters found in story {self.story_id}")
-            self.character_id = characters[0].id
-
-        # Determine location_id from the first available location
-        locations = await self.location_dao.get_locations()
-        if not locations:
-            raise ValueError(f"No locations found in story {self.story_id}")
-        location_id = locations[0].id
-
-        # Load character and location
-        character, location = await asyncio.gather(
-            self.character_dao.get_character(self.character_id),
-            self.location_dao.get_location(location_id)
-        )
-
-        if not character or not location or not meta:
-            raise ValueError(f"Failed to initialize story state for story {self.story_id}: missing data")
-
         self.character = character
         self.chat_history = chat_history
-        self.location = location
         self.meta = meta
+        self.character_id = character.id
 
-    def add_user_message(self, message: str, scene_description: str) -> None:
-        """Add a user message to the chat history."""
-        self.chat_history.add_message(
-            author_id=self.user_id,
-            author_type=AuthorType.USER.value,
-            author_name=self.user_name,
-            content=message,
-            scene_description=scene_description
+        # Initialize DAOs with story-specific paths (for saving operations)
+        self.character_dao = CharacterDAO(story_id=story_id)
+        self.chat_history_dao = HistoryDAO(story_id=story_id)
+        self.meta_dao = MetaDAO(story_id=story_id)
+
+    @classmethod
+    async def create(cls, story_id: str) -> "StoryState":
+        """
+        Factory method for creating a fully initialized StoryState.
+
+        Args:
+            story_id: UUID of the story
+
+        Returns:
+            Fully initialized StoryState instance
+
+        Raises:
+            ValueError: If story data is missing or invalid
+        """
+        character, chat_history, meta = await cls._load_async_data(story_id)
+        return cls(story_id, character=character, chat_history=chat_history, meta=meta)
+
+    @classmethod
+    async def _load_async_data(
+        cls, story_id: str
+    ) -> tuple[Character, ChatHistory, MetaData]:
+        """Load async data from story files. Called by factory method.
+
+        Args:
+            story_id: UUID of the story
+
+        Returns:
+            Tuple of (character, chat_history, meta)
+
+        Raises:
+            ValueError: If story data is missing or invalid
+        """
+        # Initialize DAOs for loading
+        character_dao = CharacterDAO(story_id=story_id)
+        chat_history_dao = HistoryDAO(story_id=story_id)
+        meta_dao = MetaDAO(story_id=story_id)
+
+        # Load all data concurrently
+        meta, chat_history, characters = await asyncio.gather(
+            meta_dao.get_meta(),
+            chat_history_dao.load_history(),
+            character_dao.get_characters(),
         )
 
-    def add_character_message(self, message: str, scene_description: str) -> None:
+        # Validate all loaded data at once
+        if not characters:
+            raise ValueError(f"No characters found in story {story_id}")
+        if not meta:
+            raise ValueError(f"No meta data found in story {story_id}")
+
+        # Load the first character
+        character = await character_dao.get_character(characters[0].id)
+        if not character:
+            raise ValueError(
+                f"Failed to load character {characters[0].id} in story {story_id}"
+            )
+
+        return character, chat_history, meta
+
+    def add_user_message(self, message: str, scene_description: dict[str, str]) -> None:
+        """Add a user message to the chat history."""
+        self.chat_history.add_message(
+            author_id=self.USER_ID,
+            author_type=AuthorType.USER.value,
+            author_name=self.USER_NAME,
+            content=message,
+            scene_description=scene_description,
+        )
+
+    def add_character_message(
+        self, message: str,
+        scene_description: dict[str, str],
+        emotional_shift: dict[str, Any] | None = None
+    ) -> None:
         """Add a character message to the chat history."""
         self.chat_history.add_message(
             author_id=self.character.id,
             author_type=AuthorType.BOT.value,
             author_name=self.character.name,
             content=message,
-            scene_description=scene_description
+            scene_description=scene_description,
+            emotional_shift=emotional_shift,
         )
-    
-    def update_character_configs(self, user_message_embeddings: list[float]) -> None:
-        """Update character configurations based on user message embeddings."""
-        self.character.update_dynamic_configs_according_to_message_embeddings(user_message_embeddings)
 
-    def get_character_prompt_configs(self) -> list[dict[str, Any]]:
-        """Get character prompt configurations."""
-        return self.character.to_prompt_dict()["character"]
-    
-    def get_character_assistant_configs(self) -> list[dict[str, Any]]:
-        """Get character assistant configurations."""
-        return self.character.to_prompt_dict()["assistant"]
-
-    def get_location_description(self) -> dict[str, Any]:
-        """Get location description."""
-        return self.location.description
-    
-    def get_chat_history(self) -> list[ChatItem]:
+    def get_chat_history(self, after_message_id: str | None = None) -> list[ChatItem]:
         """Get chat history data."""
-        return self.chat_history.get_data()
+        return self.chat_history.get_data() if after_message_id is None else self.chat_history.get_messages_after_id(after_message_id)
 
-    def get_last_scene_description(self) -> str:
+    def get_last_scene_description(self) -> dict[str, str]:
         """Get the last scene description from history or meta initial scene."""
         if description := self.chat_history.get_last_scene_description():
             return description
-        return self.meta.initial_scene_description
+        return self.meta.to_dict().get(
+            "initial_scene_description",
+            {"companion_side": "", "character_side": "", "environmental_context": ""},
+        )
 
     async def save_state(self) -> None:
         """Save the current state to files."""
@@ -153,6 +183,6 @@ class StoryState:
             self.character_dao.store_character(self.character.id, self.character),
         )
 
-
-# Backward compatibility alias
-GlobalState = StoryState
+    def add_story_context_character_data(self, data: dict[str, Any]) -> None:
+        """Add story context data to character."""
+        self.character.add_story_context_data(data)

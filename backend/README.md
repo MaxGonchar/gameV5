@@ -40,6 +40,51 @@ The backend will be available at: `http://localhost:8000`
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+## Code Quality and Formatting
+
+### Automatic Code Formatting
+
+This project uses `isort` and `black` for consistent code formatting and import organization.
+
+#### Quick Format (Recommended)
+```bash
+# Format all code automatically
+./format_code.sh
+```
+
+#### Manual Commands
+```bash
+# Activate virtual environment first
+source venv/bin/activate
+
+# Check and fix import organization
+isort app/ tests/ --check-only  # Check only
+isort app/ tests/               # Fix imports
+
+# Check and fix code formatting
+black app/ tests/ --check --diff # Check only
+black app/ tests/                # Fix formatting
+```
+
+#### Pre-commit Hooks (Optional)
+Set up automatic formatting on every commit:
+```bash
+source venv/bin/activate
+pre-commit install
+```
+
+After setup, code will be automatically formatted when you commit changes.
+
+### Import Organization Standards
+
+All imports are organized into these sections:
+1. **Standard library imports** - Python built-in modules
+2. **Third-party imports** - External packages (FastAPI, Pydantic, etc.)
+3. **Local application imports** - Your `app.*` modules
+4. **Relative imports** - Same-directory imports using `from .module`
+
+Each section is separated by blank lines and sorted alphabetically.
+
 ## API Documentation
 
 Once the backend is running, you can access the interactive API documentation:

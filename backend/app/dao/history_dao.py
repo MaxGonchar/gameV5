@@ -5,14 +5,26 @@ This module provides a HistoryDAO class that handles loading and saving
 history data from/to a single YAML file.
 """
 
-from typing import List, cast
+# # Standard library imports
 from pathlib import Path
+from typing import List, cast
 
-from .yaml_file_handler import YamlFileHandler
+# # Local application imports
 from app.chat_types import ChatItem
+from app.core.config import get_logger
+from app.exceptions import DataValidationException
 from app.objects import ChatHistory
 
+# # Relative imports
+from .path_manager import PathManager
+from .yaml_file_handler import YamlFileHandler
 
+logger = get_logger(__name__)
+
+
+# TODO: refactor:
+# make methods smaller, focused on single tasks
+# consider reusing "FileSystemOperations" where applicable
 class HistoryDAO:
     """
     Data Access Object for history management.
@@ -28,19 +40,22 @@ class HistoryDAO:
 
     def __init__(
         self,
-        history_file: str = "data/chat_history/chat_history.yaml",
+        story_id: str,
         yaml_handler: YamlFileHandler | None = None,
+        path_manager: PathManager | None = None,
     ):
         """
         Initialize the history DAO.
 
         Args:
-            history_file: Path to the history YAML file (default: "data/chat_history/chat_history.yaml")
+            history_file: Path to the history YAML file (default: from settings)
             yaml_handler: YAML file handler dependency
         """
-        self.history_file = Path(history_file)
-        self.history_file.parent.mkdir(parents=True, exist_ok=True)
         self.yaml_handler = yaml_handler or YamlFileHandler()
+        self.path_manager = path_manager or PathManager()
+        self.history_file = Path(self.path_manager.get_story_history_file(story_id))
+        # TODO: make creation logic to "create_story" responsibility
+        self.history_file.parent.mkdir(parents=True, exist_ok=True)
 
     async def load_history(self) -> ChatHistory:
         """
@@ -50,10 +65,11 @@ class HistoryDAO:
             ChatHistory object containing all history messages
 
         Raises:
-            yaml.YAMLError: If YAML parsing fails
+            YamlException, FileOperationException: From yaml_handler (bubbled up)
+            DataValidationException: If history data format is invalid
         """
         return ChatHistory(await self._read_yaml())
-    
+
     async def _read_yaml(self) -> list[ChatItem]:
         """
         Read history from the YAML file and return as a list of ChatItem.
@@ -62,18 +78,60 @@ class HistoryDAO:
             List of ChatItem objects
 
         Raises:
-            yaml.YAMLError: If YAML parsing fails
+            YamlException, FileOperationException: From yaml_handler (bubbled up)
+            DataValidationException: If history data format is invalid
         """
         if not self.history_file.exists():
-            # Return empty history for new files
+            logger.debug(
+                f"History file does not exist, returning empty history: {self.history_file}"
+            )
             return []
+
         data = await self.yaml_handler.read_yaml_file(self.history_file)
+
         if not data:
+            logger.debug(
+                f"History file is empty, returning empty history: {self.history_file}"
+            )
             return []
-        elif isinstance(data, list):
-            return [ChatItem(**item) if isinstance(item, dict) else item for item in data]
-        else:
-            return [ChatItem(**data) if isinstance(data, dict) else data]
+
+        # History must be a list of chat items
+        if not isinstance(data, list):
+            raise DataValidationException(
+                f"Invalid history data format in {self.history_file}",
+                details={
+                    "file_path": str(self.history_file),
+                    "expected_type": "list",
+                    "actual_type": type(data).__name__,
+                },
+            )
+
+        try:
+            # Process list of chat items - all must be valid
+            chat_items = []
+            for i, item in enumerate(data):
+                if not isinstance(item, dict):
+                    raise DataValidationException(
+                        f"Invalid chat item at index {i} in {self.history_file}",
+                        details={
+                            "file_path": str(self.history_file),
+                            "item_index": i,
+                            "expected_type": "dict",
+                            "actual_type": type(item).__name__,
+                        },
+                    )
+                chat_items.append(ChatItem(**item))
+
+            logger.debug(
+                f"Successfully loaded {len(chat_items)} chat items from {self.history_file}"
+            )
+            return chat_items
+        except TypeError as e:
+            # ChatItem construction failed
+            raise DataValidationException(
+                f"Invalid chat item data structure in {self.history_file}",
+                details={"file_path": str(self.history_file), "original_error": str(e)},
+            )
 
     async def save(self, history: ChatHistory) -> None:
         """
@@ -83,12 +141,13 @@ class HistoryDAO:
             history: ChatHistory object containing messages to save
 
         Raises:
-            yaml.YAMLError: If YAML serialization fails
-            OSError: If file writing fails
+            YamlException, FileOperationException: From yaml_handler (bubbled up)
         """
         # ChatItem is a TypedDict, so it's compatible with Dict[str, Any]
         data = cast(List[dict], history.get_data())
+        logger.debug(f"Saving {len(data)} chat items to {self.history_file}")
         await self.yaml_handler.write_yaml_file(self.history_file, data)
+        logger.info(f"Successfully saved chat history to {self.history_file}")
 
 
 # Backward compatibility alias

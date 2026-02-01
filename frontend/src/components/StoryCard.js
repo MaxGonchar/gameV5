@@ -30,11 +30,7 @@ function StoryCard({ type, story, onClick }) {
   return (
     <div className="story-card story-card--existing">
       <div className="story-card__icon">📖</div>
-      <div className="story-card__title">Story</div>
-      <div className="story-card__details">
-        <div className="story-card__character">{story.character}</div>
-        <div className="story-card__location">{story.location}</div>
-      </div>
+      <div className="story-card__title">{story.title}</div>
       <button 
         className="story-card__button"
         onClick={() => navigate(`/story/${story.id}`)}

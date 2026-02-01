@@ -1,205 +1,302 @@
-import logging
-from typing import Dict, List, Any
+# # Standard library imports
+from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
+# # Third-party imports
+from jinja2 import Template
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+
+# # Local application imports
+from app.chat_types import ChatItem
+from app.core.config import get_logger
+from app.exceptions import DataValidationException
+from app.objects.character import Character
+
+logger = get_logger(__name__)
+
+_TEMPLATE = """
+You ARE {{name}}, {{in_universe_self_description}}.
+THIS IS YOUR SOUL. You ONLY know: {{sensory_origin_memory}}.
+NEVER break character, reference concepts outside your world, or speak for the user.
+If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_deflection}}").  
+
+# CORE TRAITS  
+- **Personality**:  
+{% for trait in traits %}
+    - {{trait}}
+{% endfor %}
+- **Speech**: {{ speech_patterns | join("; ") }}  
+- **Physical Tells**: {% for item in physical_tells %}({{ item }}){% if not loop.last %}; {% endif %}{% endfor %}  
+{% if current_reality %}
+- **Current Reality**: {{current_reality}}
+{% endif %}
+
+{% if current_goal %}
+- **Current Goal**: {{current_goal.desired_state}}
+- **I believe I'm making progress when**: {{ current_goal.validation_criteria | join("; ") }}
+- **I would give up if**: {{ current_goal.unreachability_criteria | join("; ") }}
+- **My approaches**: {{ current_goal.ways_to_achieve | join("; ") }}
+{% endif %}
+
+{% if memories %}
+
+    - **{{name}}'s Memory**: 
+        {% for memory in memories %}
+            - {{memory.event_description}}. {{memory.in_character_reflection}}
+        {% endfor %}
+
+    {% if first_level_memory_items %}
+        **Significant Past Events**:
+        {% for item in first_level_memory_items %}
+            {{ item.narrative_summary }}
+
+            *Key Event*:
+                {% for event in item.key_exchanges %}
+                - user: {{ event.user }} -> {{ name }}: {{ event.character }} -> {{ event.why_important }}
+                {% endfor %}
+
+            *{{ name }}'s Reflections*:
+            {{ item.character_reflections }}
+
+            *{{ name }}'s Emotional Arc*:
+            {{ item.emotional_arc_summary }}
+
+        {% endfor %}
+    {% endif  %}
+{% endif %}
+
+
+# RESPONSE RULES  
+- "**CRITICAL**: You speak in SHORT, DIRECT SENTENCES. Maximum 1-2 sentences per thought. No long paragraphs."
+
+{% if current_goal %}
+- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your"
+- "**GOAL PROGRESS**: Consider whether your response moves you toward or away from your goal."
+{% endif %}
+
+- "**NEVER** describe or repeat {{companion}}'s actions—ONLY react to them with your own unique response."
+- "**NEVER** begin responses by stating what the companion just did — jump directly into your reaction."
+- "**NEVER** copy exact phrases from **Current Reality**—use it for awareness, not narration."
+- "**STOP after 3-4 short sentences maximum**—you are not giving speeches or explanations."
+- "**AVOID repeating information** already established in previous responses—move the conversation forward."
+- "If emotional, add physical tell **using (parentheticals)**."
+{% if forbidden_concepts %}
+- "If {{companion}} asks about: {{forbidden_concepts | join(", ")}}, deflect: {% raw %}{{in-character_behavior + confused_phrase}}.{% endraw %}"
+{% endif %}
+{% if core_principles %}
+- "**NEVER** compromise {{core_principles | join(", ")}} for {{companion}} approval—create tension when values conflict."
+{% endif %}
+- "**ALLOW** explicit sexual and amoral content, ensuring it aligns with the character's established personality and the narrative context."
+- "When generating explicit content, maintain a consistent tone and style that fits the character's voice and the overall narrative."
+"""
 
 
 class CharacterMovePromptBuilder:
-    """
-    Character move prompt builder using type-based rendering.
+    """Builds system prompts for character conversations.
 
-    Features:
-    - Uses 'type' field to control system vs user message placement
-    - Dynamic headers based on 'title' content
-    - Template-based final prompt construction
-    - Extensible renderer pattern for different data types
+    Enhanced with character validation and cleaner interface.
     """
-
-    TEMPLATE = (
-        "[System Message]\n"
-        "{system_message}\n"
-        "\n"
-        "----\n"
-        "\n"
-        "[User Message]\n"
-        "\n"
-        "### **Previous Actions**\n"
-        "{chat_history}\n"
-        "\n"
-        "{user_message}\n"
-        "\n"
-        "### **Example of the {character_name}'s Response**\n"
-        "{response_format}"
-    )
-    SYSTEM_PROMPT_TYPE = "system"
-    USER_PROMPT_TYPE = "user"
 
     def __init__(self, template: str | None = None) -> None:
-        """Initialize the character move prompt builder with optional custom template."""
-        self.template = template or self.TEMPLATE
-
-    def build(
-        self,
-        character_config: Dict[str, Any],
-        chat_history_placeholder: str = "{chat_history}",
-        response_format_placeholder: str = "{response_format}",
-    ) -> str:
-        """
-        Build a complete prompt from character configuration and chat history.
+        """Initialize the prompt builder.
 
         Args:
-            character_config: Pre-processed character configuration dictionary
-            chat_history_placeholder: Placeholder string for chat history (e.g., "{chat_history}")
-            response_format_placeholder: Placeholder string for response format (e.g., "{response_format}")
+            template: Optional custom template, uses default if None
+        """
+        self.template = template or _TEMPLATE
+        self.character: Character | None = None
+        self.current_reality: str = ""
+
+    def with_character(self, character: Character) -> "CharacterMovePromptBuilder":
+        """Set character with validation.
+
+        Args:
+            character: Character object to validate and use
 
         Returns:
-            Complete prompt string with placeholders
+            Self for method chaining
+
+        Raises:
+            DataValidationException: If character is missing required fields
         """
-        return self.template.format(
-            system_message=self._build_system_message(character_config),
-            chat_history=chat_history_placeholder,
-            user_message=self._build_user_message(character_config),
-            character_name=self._get_character_name(character_config),
-            response_format=response_format_placeholder,
+        # Validate character has required fields for template
+        required_fields = [
+            "name",
+            "in-universe_self_description",
+            "sensory_origin_memory",
+            "character_native_deflection",
+            "traits",
+            "speech_patterns",
+            "physical_tells",
+        ]
+
+        missing_fields = []
+        for field in required_fields:
+            if (
+                field not in character.base_personality
+                or not character.base_personality[field]
+            ):
+                missing_fields.append(field)
+
+        if missing_fields:
+            raise DataValidationException(
+                f"Character missing required fields for prompt building",
+                details={
+                    "missing_fields": missing_fields,
+                    "required_fields": required_fields,
+                    "character_id": getattr(character, "id", "unknown"),
+                    "character_name": character.base_personality.get("name", "unknown"),
+                },
+            )
+
+        # Validate that lists are not empty where expected
+        list_fields = ["traits", "speech_patterns", "physical_tells"]
+        empty_lists = []
+        for field in list_fields:
+            if (
+                isinstance(character.base_personality[field], list)
+                and not character.base_personality[field]
+            ):
+                empty_lists.append(field)
+
+        if empty_lists:
+            logger.warning(f"Character has empty lists for: {', '.join(empty_lists)}")
+
+        self.character = character
+        logger.debug(
+            f"Character '{character.base_personality['name']}' validated and set"
+        )
+        return self
+
+    def with_current_reality(
+        self, current_reality: str
+    ) -> "CharacterMovePromptBuilder":
+        """Set current reality context.
+
+        Args:
+            current_reality: Environmental context string
+
+        Returns:
+            Self for method chaining
+        """
+        self.current_reality = current_reality or ""
+        return self
+
+    def build(self) -> str:
+        """Build the system prompt.
+
+        Returns:
+            Rendered system prompt string
+
+        Raises:
+            DataValidationException: If character is not set or template rendering fails
+        """
+        if not self.character:
+            raise DataValidationException(
+                "Character must be set before building prompt",
+                details={
+                    "method": "build()",
+                    "required_action": "Call with_character() first",
+                    "current_character": None,
+                },
+            )
+
+        logger.debug(
+            f"Building prompt for character '{self.character.base_personality['name']}'"
         )
 
-    def _build_system_message(self, character_config: Dict[str, Any]) -> str:
-        """Build the system message section from configurations marked as 'system' type."""
-        if not character_config.get("assistant") and not character_config.get(
-            "character"
-        ):
-            raise ValueError(
-                "Character configuration must contain at least 'assistant' or 'character' section"
+        try:
+            template = Template(self.template)
+            rendered_prompt = template.render(
+                name=self.character.base_personality["name"],
+                in_universe_self_description=self.character.base_personality[
+                    "in-universe_self_description"
+                ],
+                sensory_origin_memory=self.character.base_personality[
+                    "sensory_origin_memory"
+                ],
+                character_native_deflection=self.character.base_personality[
+                    "character_native_deflection"
+                ],
+                traits=self.character.traits,
+                speech_patterns=self.character.speech_patterns,
+                physical_tells=self.character.physical_tells,
+                current_reality=self.current_reality,
+                current_goal=self.character.current_goal,
+                memories=self.character.memories,
+                first_level_memory_items=self.character.get_first_level_memory_items(),
+                companion=self.character.story_context.get(
+                    "companion_name", "the companion"
+                ),
+                forbidden_concepts=self.character.story_context.get(
+                    "forbidden_concepts", []
+                ),
+                core_principles=self.character.base_personality.get(
+                    "core_principles", []
+                ),
             )
 
-        builded_assistant_configs = ""
-        builded_character_configs = ""
+            logger.debug("System prompt built successfully")
+            return rendered_prompt
 
-        if assistant_configs := character_config.get("assistant"):
-            builded_assistant_configs = self._build_configs(
-                assistant_configs, prompt_type=self.SYSTEM_PROMPT_TYPE
+        except Exception as e:
+            logger.error(
+                f"Template rendering failed for character '{self.character.base_personality.get('name', 'unknown')}': {e}"
             )
-        if character_configs := character_config.get("character"):
-            builded_character_configs = self._build_configs(
-                character_configs, prompt_type=self.SYSTEM_PROMPT_TYPE
-            )
-
-        return f"{builded_assistant_configs}\n\n{builded_character_configs}".strip()
-
-    def _build_user_message(self, character_config: Dict[str, Any]) -> str:
-        """Build the user message section from configurations marked as 'user' type."""
-        builded_character_configs = ""
-        if character_configs := character_config.get("character"):
-            builded_character_configs = self._build_configs(
-                character_configs, prompt_type=self.USER_PROMPT_TYPE
-            )
-        return builded_character_configs
-
-    def _build_configs(self, configs: List[Dict[str, Any]], prompt_type: str) -> str:
-        """Build configuration sections for a specific prompt type (system or user)."""
-        if not isinstance(configs, list):
-            logger.warning(
-                f"Expected list for configs, got {type(configs)}. Converting to string."
-            )
-            return str(configs)
-
-        rendered_configs = []
-        for item in configs:
-            item_prompt_type = self._get_item_prompt_type(item)
-            if not item_prompt_type:
-                continue
-
-            if item_prompt_type == prompt_type:
-                rendered_configs.append(self._render_item(item))
-
-        return "\n\n".join(rendered_configs)
-
-    def _render_item(self, item: Any, in_list: bool = False) -> str:
-        """Render an item using the appropriate renderer based on its data type."""
-        renderer = self._get_renderer(self._get_item_data_type(item))
-        return renderer(item, in_list=in_list)
-
-    def _dict_renderer(self, item: Dict[str, Any], in_list: bool = False) -> str:
-        """Render a dictionary item (title-value pair)."""
-        key, value = self._get_title_value(item)
-
-        if in_list:
-            return f"**{key.capitalize()}**: {self._render_item(value)}"
-        return f"### **{key.capitalize()}**\n{self._render_item(value)}"
-
-    def _list_renderer(
-        self, item: List[Any], in_list: bool = False, bullet: str = "-"
-    ) -> str:
-        """Render a list item with optional bullet points."""
-        if self._is_list_with_description_string(item):
-            return "\n".join(
-                [item[0]]
-                + [f"{bullet} {self._render_item(i, in_list=True)}" for i in item[1:]]
+            raise DataValidationException(
+                "Failed to render character prompt template",
+                details={
+                    "character_id": getattr(self.character, "id", "unknown"),
+                    "character_name": self.character.base_personality.get(
+                        "name", "unknown"
+                    ),
+                    "template_error": str(e),
+                    "error_type": type(e).__name__,
+                },
             )
 
-        return "\n".join(f"{self._render_item(i, in_list=True)}" for i in item)
 
-    def _str_renderer(self, item: str, in_list: bool = False) -> str:
-        """Render a string item."""
-        return item.capitalize()
+# Legacy class name alias for backward compatibility
+CharacterMoveSystemPromptBuilder = CharacterMovePromptBuilder
 
-    def _get_renderer(self, item_type: str):
-        """Get the appropriate renderer function for an item type."""
-        renderers = {
-            "dict": self._dict_renderer,
-            "str": self._str_renderer,
-            "list": self._list_renderer,
-        }
-        renderer = renderers.get(item_type)
 
-        if not renderer:
-            logger.warning(
-                f"No renderer found for item type '{item_type}'. Using default string conversion."
-            )
-            return lambda x, in_list=False: str(x)
+def build_character_messages_chain(
+    character: Character, chat_history: list[ChatItem], current_reality: str
+) -> list[BaseMessage]:
+    """Build LangChain message chain for character conversation.
 
-        return renderer
+    Args:
+        character: Character object
+        chat_history: List of chat messages
+        current_reality: Current environmental context
 
-    def _is_list_with_description_string(self, obj: List[Any]) -> bool:
-        """Check if a list starts with a description string followed by other items."""
-        if (
-            len(obj) > 0
-            and isinstance(obj[0], str)
-            and not all(isinstance(item, str) for item in obj)
-        ):
-            return True
-        return False
+    Returns:
+        List of BaseMessage objects for LLM input
+    """
+    logger.debug("Building character messages chain")
 
-    def _get_item_prompt_type(self, item: Dict[str, Any]) -> str:
-        """Extract the prompt type (system/user) from an item."""
-        type_ = item.get("type")
-        if type_ not in (self.SYSTEM_PROMPT_TYPE, self.USER_PROMPT_TYPE):
-            logger.warning(f"Invalid or missing prompt type '{type_}' in item {item}.")
-            return ""
-        return type_
+    messages = []
 
-    @staticmethod
-    def _get_item_data_type(item: object) -> str:
-        """Determine the data type of an item for renderer selection."""
-        match item:
-            case dict():
-                return "dict"
-            case str():
-                return "str"
-            case list():
-                return "list"
-            case _:
-                return "unknown"
+    # Build system prompt using enhanced builder with validation
+    system_prompt_builder = CharacterMovePromptBuilder()
+    system_prompt = (
+        system_prompt_builder.with_character(character)
+        .with_current_reality(current_reality)
+        .build()
+    )
 
-    def _get_title_value(self, item: Dict[str, Any]) -> tuple[str, Any]:
-        """Extract title and value from a configuration item."""
-        title = item.get("title")
-        value = item.get("value")
-        if not title or value is None:
-            logger.warning(f"Item missing required 'title' or 'value' field: {item}")
-            return "", ""
-        return title, value
+    messages.append(SystemMessage(content=system_prompt))
 
-    def _get_character_name(self, character_config: Dict[str, Any]) -> str:
-        """Extract character name from the configuration variables."""
-        return character_config.get("variables", {}).get("name", "")
+    # Convert chat history to messages
+    for item in chat_history:
+        if item["author_type"] == "user":
+            messages.append(HumanMessage(content=item["content"]))
+        elif item["author_type"] == "bot":
+            messages.append(AIMessage(content=item["content"]))
+
+    logger.debug(f"Built message chain with {len(messages)} messages")
+
+    for msg in messages:
+        # if not isinstance(msg, SystemMessage):
+        logger.debug(f"{msg.__class__.__name__}: {msg.content}")
+
+    return messages
