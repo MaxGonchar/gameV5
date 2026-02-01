@@ -31,6 +31,7 @@ from app.models.emotional_impact import (
     EmotionalImpactAnalysisResponse,
     build_emotional_impact_prompt,
 )
+from app.models.first_level_memory import build_first_level_memory_prompt, FirstLevelMemoryResponse
 from app.models.scene_description import (
     MoveSceneDescriptionResponse,
     build_scene_description_prompt,
@@ -163,7 +164,7 @@ class StoryService:
         """Generate LangChain messages using the dedicated function."""
         return build_character_messages_chain(
             character=self.story_state.character,
-            chat_history=self.story_state.get_chat_history(),
+            chat_history=self.story_state.get_chat_history(after_message_id=self.story_state.character.get_last_remembered_message_id()),
             current_reality=self.story_state.get_last_scene_description()[
                 "environmental_context"
             ],
@@ -227,7 +228,7 @@ class StoryService:
             "environmental_context": scene_description.environmental_context,
         }
 
-    async def _calculate_emotional_impact(self, user_message: str) -> None:
+    async def _calculate_emotional_impact(self, user_message: str) -> EmotionalImpactAnalysisResponse:
         system_Prompt, user_prompt = build_emotional_impact_prompt(
             {
                 "character": self.story_state.character,
@@ -244,35 +245,143 @@ class StoryService:
             user_prompt=user_prompt,
             response_model=EmotionalImpactAnalysisResponse,
         )
+        return emotional_impact
 
-        logger.debug(f"Emotional Impact Result: {emotional_impact}")
-        # Update character mental states based on analysis
-        self.story_state.character.update_mental_state(
-            emotional_impact.model_dump()["mental_state_impacts"]
+    def _get_character_mental_state_snapshot(self) -> dict[str, Any]:
+        """Get a snapshot of the character's current mental state."""
+
+        mental_state_snapshot = {
+            "behavioral_mode": self.story_state.character.current_behavioral_mode,
+            "mental_states": {
+            state["type"]: {
+                "numeric": state["current_numeric"],
+                "level": state["current"]
+            }
+         for state in self.story_state.character.mental_states}
+        }
+
+        return mental_state_snapshot
+    
+    def _get_emotional_shift(
+            self,
+            initial_snapshot: dict[str, Any],
+            updated_snapshot: dict[str, Any],
+            impact_data: dict[str, Any],
+        ) -> dict[str, Any]:
+        """Calculate emotional shifts based on mental state snapshots."""
+        mental_states = {}
+        for before, after, impact in zip(
+            sorted(list(initial_snapshot["mental_states"].items()), key=lambda x: x[0]),
+            sorted(list(updated_snapshot["mental_states"].items()), key=lambda x: x[0]),
+            sorted(list(impact_data["mental_state_impacts"].items()), key=lambda x: x[0]),
+        ):
+            mental_states[before[0]] = {
+                "change": impact[1]["change"],
+                "reasoning": impact[1]["reasoning"],
+                "before_level": before[1]["level"],
+                "after_level": after[1]["level"],
+                "before_numeric": before[1]["numeric"],
+                "after_numeric": after[1]["numeric"],
+            }
+
+        emotional_snapshot = {
+            "behavioral_mode_before": initial_snapshot["behavioral_mode"],
+            "behavioral_mode_after": updated_snapshot["behavioral_mode"],
+            "mental_states": mental_states,
+        }
+        return emotional_snapshot
+
+
+    async def _create_first_level_memory_item(self, behavioral_mode_before: str, behavioral_mode_after: str) -> None:
+        # get last not summarized chat history items
+        last_memory_message_id = self.story_state.character.get_last_remembered_message_id()
+        if last_memory_message_id is not None:
+            history_items_to_summarize = self.story_state.chat_history.get_messages_after_id(
+                last_memory_message_id)
+        else:
+            history_items_to_summarize = self.story_state.chat_history.get_data()
+
+        # Build prompt for first-level memory item
+        system_prompt, user_prompt = build_first_level_memory_prompt(
+            {
+                "character": self.story_state.character,
+                "episode_messages": history_items_to_summarize,
+                "behavioral_mode_before": behavioral_mode_before,
+                "behavioral_mode_after": behavioral_mode_after,
+            }
+        )
+        logger.debug("Creating first-level memory item...")
+        logger.debug(f"System Prompt: {system_prompt}")
+        logger.debug(f"User Prompt: {user_prompt}")
+
+        # call LLM to generate first-level memory item
+        memory_item = await self.llm_communicator.generate_structured_response(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_model=FirstLevelMemoryResponse,
+        )
+
+        # add memory item to character
+        memory_item_dict = memory_item.model_dump()
+        self.story_state.character.add_first_level_memory_item(
+            {
+                "behavioral_mode": behavioral_mode_before,
+                "next_behavioral_mode": behavioral_mode_after,
+                "start_message_id": history_items_to_summarize[0]["id"],
+                "end_message_id": history_items_to_summarize[-1]["id"],
+                "episode_title": memory_item_dict["episode_title"],
+                "emotional_arc_summary": memory_item_dict["emotional_arc_summary"],
+                "narrative_summary": memory_item_dict["narrative_summary"],
+                "character_reflections": memory_item_dict["character_reflection"],
+                "transition_trigger": memory_item_dict["transition_trigger"],
+                "key_exchanges": memory_item_dict["key_exchanges"],
+            }
         )
 
     async def process_user_message(self, message: str) -> None:
         """Process user message and generate bot response.
-
         Main orchestration method that coordinates the story interaction flow.
-
-        Raises:
-            ExternalServiceException: If LLM communication fails
-            DataValidationException: If response parsing fails
-            ServiceException: For other processing errors
         """
         try:
             logger.info(f"Processing user message: {message}")
 
-            # Add user message with scene description
-            await self._update_chat_history(message, author_user=True)
+            # Update scene description based on user message
+            scene_description = await self._update_scene_description(
+                actor="user", message=message
+            )
+            self.story_state.add_user_message(message, scene_description)
 
-            # Calculate character emotional impact
-            await self._calculate_emotional_impact(message)
+            # Apply character emotional impact
+            emotional_impact = await self._calculate_emotional_impact(message)
+            logger.debug(f"Emotional Impact Result: {emotional_impact}")
 
-            # Generate and add bot response
+            initial_mental_state = self._get_character_mental_state_snapshot()
+
+            self.story_state.character.update_mental_state(
+                emotional_impact.model_dump()["mental_state_impacts"]
+            )
+
+            updated_mental_state = self._get_character_mental_state_snapshot()
+
+            emotional_shift = self._get_emotional_shift(
+                initial_mental_state,
+                updated_mental_state,
+                emotional_impact.model_dump(),
+            )
+
+            if emotional_shift["behavioral_mode_before"] != emotional_shift["behavioral_mode_after"]:
+                await self._create_first_level_memory_item(
+                    emotional_shift["behavioral_mode_before"], emotional_shift["behavioral_mode_after"]
+                )
+
+            # Generate and bot response
             bot_response = await self._generate_bot_response()
-            await self._update_chat_history(bot_response, author_user=False)
+
+            # Update scene description based on bot response
+            scene_description = await self._update_scene_description(
+                actor=self.story_state.character.name, message=bot_response
+            )
+            self.story_state.add_character_message(bot_response, scene_description, emotional_shift)
 
             # Persist changes
             logger.info("Saving story state...")

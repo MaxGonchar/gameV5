@@ -15,6 +15,7 @@ class ChatItem(TypedDict):
     scene_description: dict[
         str, str
     ]  # dictionary with 'companion_side' and 'character_side' keys describing the scene after the content
+    emotional_shift: dict[str, object] | None  # optional emotional shift data
 
 
 class ProcessUserMessageResponse(TypedDict):

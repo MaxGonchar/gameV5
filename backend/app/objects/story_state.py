@@ -149,7 +149,9 @@ class StoryState:
         )
 
     def add_character_message(
-        self, message: str, scene_description: dict[str, str]
+        self, message: str,
+        scene_description: dict[str, str],
+        emotional_shift: dict[str, Any] | None = None
     ) -> None:
         """Add a character message to the chat history."""
         self.chat_history.add_message(
@@ -158,11 +160,12 @@ class StoryState:
             author_name=self.character.name,
             content=message,
             scene_description=scene_description,
+            emotional_shift=emotional_shift,
         )
 
-    def get_chat_history(self) -> list[ChatItem]:
+    def get_chat_history(self, after_message_id: str | None = None) -> list[ChatItem]:
         """Get chat history data."""
-        return self.chat_history.get_data()
+        return self.chat_history.get_data() if after_message_id is None else self.chat_history.get_messages_after_id(after_message_id)
 
     def get_last_scene_description(self) -> dict[str, str]:
         """Get the last scene description from history or meta initial scene."""

@@ -66,6 +66,7 @@ Choose EXACTLY ONE impact level per mental state:
 
 ### Reasoning
 Explain WHY this character interprets the message this way, linking to:
+- IMPORTANT: explanation MUST be in the character's voice from their unique perspective (like "I feel... because..."), NOT an objective analysis
 - Character's core fears and needs
 - Character's unique sensitivities
 - Relevant trigger patterns
@@ -179,7 +180,6 @@ def build_emotional_impact_prompt(input_data: dict) -> tuple[str, str]:
     character = input_data["character"]
     recent_history = input_data.get("recent_history", [])
     user_message = input_data["user_message"]
-    mental_states = character.mental_states
 
     # Extract character psychology
     base_personality = character.base_personality

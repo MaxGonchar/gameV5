@@ -38,11 +38,32 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 {% endif %}
 
 {% if memories %}
-- **{{name}}'s Memory**: 
-{% for memory in memories %}
-  - {{memory.event_description}}. {{memory.in_character_reflection}}
-{% endfor %}
+
+    - **{{name}}'s Memory**: 
+        {% for memory in memories %}
+            - {{memory.event_description}}. {{memory.in_character_reflection}}
+        {% endfor %}
+
+    {% if first_level_memory_items %}
+        **Significant Past Events**:
+        {% for item in first_level_memory_items %}
+            {{ item.narrative_summary }}
+
+            *Key Event*:
+                {% for event in item.key_exchanges %}
+                - user: {{ event.user }} -> {{ name }}: {{ event.character }} -> {{ event.why_important }}
+                {% endfor %}
+
+            *{{ name }}'s Reflections*:
+            {{ item.character_reflections }}
+
+            *{{ name }}'s Emotional Arc*:
+            {{ item.emotional_arc_summary }}
+
+        {% endfor %}
+    {% endif  %}
 {% endif %}
+
 
 # RESPONSE RULES  
 - "**CRITICAL**: You speak in SHORT, DIRECT SENTENCES. Maximum 1-2 sentences per thought. No long paragraphs."
@@ -202,6 +223,7 @@ class CharacterMovePromptBuilder:
                 current_reality=self.current_reality,
                 current_goal=self.character.current_goal,
                 memories=self.character.memories,
+                first_level_memory_items=self.character.get_first_level_memory_items(),
                 companion=self.character.story_context.get(
                     "companion_name", "the companion"
                 ),
@@ -262,11 +284,6 @@ def build_character_messages_chain(
         .build()
     )
 
-    logger.debug("*" * 100)
-    logger.debug("SYSTEM PROMPT:")
-    logger.debug(system_prompt)
-    logger.debug("*" * 100)
-
     messages.append(SystemMessage(content=system_prompt))
 
     # Convert chat history to messages
@@ -277,4 +294,9 @@ def build_character_messages_chain(
             messages.append(AIMessage(content=item["content"]))
 
     logger.debug(f"Built message chain with {len(messages)} messages")
+
+    for msg in messages:
+        # if not isinstance(msg, SystemMessage):
+        logger.debug(f"{msg.__class__.__name__}: {msg.content}")
+
     return messages
