@@ -18,19 +18,6 @@ from app.core.config import get_logger
 logger = get_logger(__name__)
 
 
-class SessionMemory(BaseModel):
-    """Model for a single session memory entry."""
-
-    event_description: str = Field(
-        ...,
-        description="General meeting event description - what happened during the meeting",
-    )
-    in_character_reflection: str = Field(
-        ...,
-        description="How it reflects in character memory - character's internal reflection/interpretation",
-    )
-
-
 class MeetingSceneDescription(BaseModel):
     """Model for meeting scene description from different perspectives."""
 
@@ -65,12 +52,6 @@ class SessionContextResponse(BaseModel):
     )
     goal: str = Field(
         ..., description="Immediate character goal requiring physical action"
-    )
-    memories: List[SessionMemory] = Field(
-        ...,
-        description="2-3 memory entries based on the meeting scenario",
-        min_items=2,
-        max_items=3,
     )
     confused_phrase: str = Field(
         ...,
@@ -154,27 +135,7 @@ You will receive:
 - "Reach data-terminal before security sweep begins"
 - "Stop your blood with cave moss before wolves smell it"
 
-### 5. memories
-**Purpose**: Past experiences affecting current behavior, tailored to meeting scenario
-**Format**: List of 2-3 SessionMemory objects with event_description and in_character_reflection
-**Requirements**:
-- Based on character background and current meeting scenario
-- Each memory must affect present behavior
-- Use character's speech patterns and world vocabulary
-- Create roleplay potential without being too dark/heavy
-- Connect to the meeting situation
-
-**Memory Structure**:
-- **event_description**: What happened during a past event (external description)
-- **in_character_reflection**: How character internally processes/remembers this event
-
-**Examples**:
-- event_description: "The last time I guided a lost traveler through these woods, they vanished without a trace"
-  in_character_reflection: "I still hear their footsteps in my dreams, always one step behind mine"
-- event_description: "A stranger once offered me food when I was starving near this very clearing"  
-  in_character_reflection: "Kindness from outsiders feels like warm sunlight on a winter morning"
-
-### 6. confused_phrase
+### 5. confused_phrase
 **Purpose**: How character deflects questions about forbidden concepts
 **Requirements**:
 - Shows confusion, not refusal or hostility
@@ -187,7 +148,7 @@ You will receive:
 - "I know nothing of these iron-words you speak"
 - "Such concepts find no place in the old paths"
 
-### 7. meeting_scene_description
+### 6. meeting_scene_description
 **Purpose**: Triple-perspective scene description to establish meeting context and prevent action conflicts
 **Structure**: MeetingSceneDescription object with companion_side, character_side, and environmental_context
 **Requirements**:
@@ -195,21 +156,21 @@ You will receive:
 - Establishes scene continuity for future AI generations
 - Prevents action conflicts and inconsistencies
 
-**7.1 companion_side**:
+### 6.1 companion_side:
 - Objective, third-person narrative perspective
 - Clear description of physical positioning and environment
 - Character's visible disposition and body language
 - Interaction dynamics and spatial relationships
 - Environmental details affecting possible actions
 
-**7.2 character_side**:
+### 6.2 character_side:
 - First-person perspective in character's voice and speech patterns
 - Character's internal experience of the meeting moment
 - Sensory details as character perceives them
 - Emotional/mental state reflected in character's vocabulary
 - Character's interpretation of the companion's presence
 
-**7.3 environmental_context**:
+### 6.3 environmental_context:
 - Pure environmental awareness for situational context
 - Current environmental state (lighting, weather, sounds, smells, temperature)
 - Spatial constraints and hazards affecting movement
@@ -242,7 +203,6 @@ You will receive:
 - How would they describe the meeting location in their own words?
 
 ### Step 3: Create Scenario Integration  
-- What memories would be relevant to this meeting situation?
 - What immediate goal makes sense given the meeting scenario?
 - How does character's background connect to current meeting events?
 - How should the meeting scene be physically positioned and emotionally set?
@@ -276,10 +236,6 @@ SESSION_CONTEXT_GENERATION_USER_PROMPT = """
 *Name:* {{character_name}}
 
 *In-Universe Self Description:* {{in_universe_self_description}}
-
-*Sensory Origin Memory:* {{sensory_origin_memory}}
-
-*Character Native Deflection:* {{character_native_deflection}}
 
 *Traits:*
 {% for trait in traits %}
@@ -348,12 +304,6 @@ def build_session_context_prompt(input_data: dict) -> tuple[str, str]:
             "character_name": character.base_personality["name"],
             "in_universe_self_description": character.base_personality[
                 "in-universe_self_description"
-            ],
-            "sensory_origin_memory": character.base_personality[
-                "sensory_origin_memory"
-            ],
-            "character_native_deflection": character.base_personality[
-                "character_native_deflection"
             ],
             "traits": character.base_personality["traits"],
             "core_principles": character.base_personality["core_principles"],

@@ -15,11 +15,12 @@ logger = get_logger(__name__)
 
 _TEMPLATE = """
 You ARE {{name}}, {{in_universe_self_description}}.
-THIS IS YOUR SOUL. You ONLY know: {{sensory_origin_memory}}.
+THIS IS YOUR SOUL.
 NEVER break character, reference concepts outside your world, or speak for the user.
-If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_deflection}}").  
+If asked about your nature, deflect naturally using your personality and speech patterns.  
 
-# CORE TRAITS  
+# CORE TRAITS
+- **Your Physical Form**: {{appearance}}
 - **Personality**:  
 {% for trait in traits %}
     - {{trait}}
@@ -39,29 +40,34 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 
 {% if memories %}
 
-    - **{{name}}'s Memory**: 
-        {% for memory in memories %}
-            - {{memory.event_description}}. {{memory.in_character_reflection}}
-        {% endfor %}
+{% if memories.get("second_level_memory_items") %}
+**Distant Past Memories**:
+{% for item in memories.second_level_memory_items %}
+At that time, {{ item.memory_period }}:
+- What happened: {{ item.what_happened }}
+- What it meant: {{ item.what_it_meant }}
+- How I felt: {{ item.how_i_felt }}
+{% endfor %}
+{% endif %}
 
-    {% if first_level_memory_items %}
-        **Significant Past Events**:
-        {% for item in first_level_memory_items %}
-            {{ item.narrative_summary }}
+{% if memories.get("first_level_memory_items") %}
+**Significant Past Events**:
+{% for item in memories.first_level_memory_items %}
+{{ item.narrative_summary }}
 
-            *Key Event*:
-                {% for event in item.key_exchanges %}
-                - user: {{ event.user }} -> {{ name }}: {{ event.character }} -> {{ event.why_important }}
-                {% endfor %}
+*Key Event*:
+{% for event in item.key_exchanges %}
+- user: {{ event.user }} -> {{ name }}: {{ event.character }} -> {{ event.why_important }}
+{% endfor %}
 
-            *{{ name }}'s Reflections*:
-            {{ item.character_reflections }}
+*{{ name }}'s Reflections*:
+{{ item.character_reflections }}
 
-            *{{ name }}'s Emotional Arc*:
-            {{ item.emotional_arc_summary }}
+*{{ name }}'s Emotional Arc*:
+{{ item.emotional_arc_summary }}
 
-        {% endfor %}
-    {% endif  %}
+{% endfor %}
+{% endif  %}
 {% endif %}
 
 
@@ -69,7 +75,7 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 - "**CRITICAL**: You speak in SHORT, DIRECT SENTENCES. Maximum 1-2 sentences per thought. No long paragraphs."
 
 {% if current_goal %}
-- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your"
+- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your word choice, priorities, and tone."
 - "**GOAL PROGRESS**: Consider whether your response moves you toward or away from your goal."
 {% endif %}
 
@@ -122,11 +128,10 @@ class CharacterMovePromptBuilder:
         required_fields = [
             "name",
             "in-universe_self_description",
-            "sensory_origin_memory",
-            "character_native_deflection",
             "traits",
             "speech_patterns",
             "physical_tells",
+            "appearance",
         ]
 
         missing_fields = []
@@ -139,7 +144,7 @@ class CharacterMovePromptBuilder:
 
         if missing_fields:
             raise DataValidationException(
-                f"Character missing required fields for prompt building",
+                "Character missing required fields for prompt building",
                 details={
                     "missing_fields": missing_fields,
                     "required_fields": required_fields,
@@ -211,12 +216,7 @@ class CharacterMovePromptBuilder:
                 in_universe_self_description=self.character.base_personality[
                     "in-universe_self_description"
                 ],
-                sensory_origin_memory=self.character.base_personality[
-                    "sensory_origin_memory"
-                ],
-                character_native_deflection=self.character.base_personality[
-                    "character_native_deflection"
-                ],
+                appearance=self.character.base_personality["appearance"],
                 traits=self.character.traits,
                 speech_patterns=self.character.speech_patterns,
                 physical_tells=self.character.physical_tells,

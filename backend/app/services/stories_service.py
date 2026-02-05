@@ -136,13 +136,6 @@ class StoriesService:
                     "forbidden_concepts": session_context.forbidden_concepts,
                     "current_reality": session_context.current_reality,
                     "goal": session_context.goal,
-                    "memories": [
-                        {
-                            "event_description": item.event_description,
-                            "in_character_reflection": item.in_character_reflection,
-                        }
-                        for item in session_context.memories
-                    ],
                     "confused_phrase": session_context.confused_phrase,
                 }
             )

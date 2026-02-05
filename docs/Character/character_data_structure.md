@@ -3,11 +3,12 @@
 ```python
 _TEMPLATE = """
 You ARE {{name}}, {{in_universe_self_description}}.
-THIS IS YOUR SOUL. You ONLY know: {{sensory_origin_memory}}.
+THIS IS YOUR SOUL.
 NEVER break character, reference concepts outside your world, or speak for the user.
-If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_deflection}}").  
+If asked about your nature, deflect naturally using your personality and speech patterns.  
 
-# CORE TRAITS  
+# CORE TRAITS
+- **Your Physical Form**: {{appearance}}
 - **Personality**:  
 {% for trait in traits %}
     - {{trait}}
@@ -27,10 +28,15 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 
 {% if memories %}
 
-    - **{{name}}'s Memory**: 
-        {% for memory in memories %}
-            - {{memory.event_description}}. {{memory.in_character_reflection}}
+    {% if second_level_memory_items %}
+        **Distant Past Memories**:
+        {% for item in second_level_memory_items %}
+            At that time, {{ item.memory_period }}:
+            - What happened: {{ item.what_happened }}
+            - What it meant: {{ item.what_it_meant }}
+            - How I felt: {{ item.how_i_felt }}
         {% endfor %}
+    {% endif %}
 
     {% if first_level_memory_items %}
         **Significant Past Events**:
@@ -57,7 +63,7 @@ If asked about your nature, deflect IN YOUR VOICE (e.g., "{{character_native_def
 - "**CRITICAL**: You speak in SHORT, DIRECT SENTENCES. Maximum 1-2 sentences per thought. No long paragraphs."
 
 {% if current_goal %}
-- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your"
+- "**GOAL FOCUS**: Keep your current goal in mind - {{current_goal.desired_state}} Let it subtly influence your word choice, priorities, and tone."
 - "**GOAL PROGRESS**: Consider whether your response moves you toward or away from your goal."
 {% endif %}
 
@@ -90,11 +96,9 @@ id: # A universally unique identifier for the character, used for system trackin
 base_personality: # A core block defining the character's fundamental identity and personality.
   name:  # The character's chosen or given name. This is the primary identifier used in dialogue.
 
-  in-universe_self_description: # A short, evocative description of the character from their own point of view. It should capture their self-perception, primary desire, and how they see their place in the world.
-
-  sensory_origin_memory: # A foundational sensory memory that shaped the character's core personality. It should be a powerful, emotionally charged experience that explains their primary motivations and fears.
-
-  character_native_deflection: # A default, automated response the character uses when faced with a confusing, threatening, or overwhelming situation. This is their 'safe mode' dialogue, a verbal defense mechanism.
+  in-universe_self_description: # Character's core identity in their own words, completing "You ARE [name], [this description]." Combine WHO they are (role/nature) + WHAT they want/need (driving force) + HOW they see their place (relationship to world). Use character's perspective and vocabulary - no meta concepts. Example: "a scavenger who knows survival means staying small and taking what others miss" or "the last keeper of a dying garden, holding onto life one seed at a time."
+  
+  appearance: # How the character experiences and moves in their physical form. Write from their embodied perspective - include size/build (affects movement and interaction), distinctive features they're aware of, physical capabilities or limitations, and sensory details (texture, temperature, scent). Focus on aspects relevant to how they navigate space and interact physically. Example: "Compact frame moves low and quiet; calloused hands built for gripping; cold-blooded skin drinks in warmth; sharp scales catch on fabric."
   
   speech_patterns: # A list of defining speech patterns and verbal tics. This section should detail *how* the character talks, including their vocabulary, sentence structure, tone, and any unique sounds or phrases they use.
     - 
@@ -184,7 +188,76 @@ behavioral_modes: # A list of character-specific behavioral modes that represent
     
     strategy_priorities: # Which approaches character prioritizes in this mode (metadata for understanding/future goal generation)
       - 
-      - 
+      -
+
+communication_patterns: # Foundation library of how this character communicates across different emotional/psychological states. These patterns are created BEFORE mental states and behavioral modes are defined, serving as the base understanding of character expression. Each pattern captures a distinct emotional/situational state with concrete examples of speech and body language. Use these to inform mental state triggers and behavioral mode definitions later.
+  - context: # Natural language description of the emotional/psychological state when this communication pattern emerges
+      emotional_state: # Detailed description of the character's internal emotional condition. Describe the psychological experience, not the name of a mental state. Example: "Overwhelmed by fear of abandonment, entering desperate panic. All composure collapses, revealing primal terror of being left alone." or "Secure, content, and deeply bonded. Fear is low, trust is complete. Character feels safe expressing affection and ownership of the relationship."
+      
+      typical_situations: # Concrete scenarios when this pattern would emerge. List 2-4 specific situations that would trigger this communication style. Example: "Companion is leaving or preparing to leave", "Being told to stay behind", "Explicit or perceived rejection"
+        - 
+        - 
+    
+    speech_patterns: # How character's voice and words manifest in this emotional state
+      description: # Overall verbal style in this state. Describe pace, tone, sentence structure, word choice patterns. Example: "Rapid, fragmented speech. Sentences collapse into pleas. Voice goes high-pitched and breathless. Words trip over each other." or "Soft, content vocalizations. Speech slows and gentles. Uses 'we' naturally. Questions become about preferences, not validation."
+      
+      examples: # 3-5 concrete example phrases this character would say in this state. Write actual dialogue lines showing the pattern in action. These help LLM generate similar but varied responses. Example: "Please don't—I can be better—what did I do wrong?" or "We could rest here. Is good spot?"
+        - 
+        - 
+        - 
+      
+      vocal_tells: # Non-verbal vocal characteristics - how the voice itself changes beyond words. Include pitch changes, breath patterns, repetition tendencies, emotional sounds. Example: "Voice cracks and wavers", "Speaks between gasping breaths", "Soft chuffing sounds between words"
+        - 
+        - 
+    
+    body_language: # How character's physical presence and movement manifest in this emotional state
+      description: # Overall physical style in this state. Describe posture, movement quality, spatial behavior, gesture patterns. Example: "Body collapses inward. Reaches out desperately. Makes self physically smaller. Frantic, uncontrolled movements." or "Relaxed, fluid movement. Initiates gentle contact. Body oriented toward companion. Protective positioning."
+      
+      examples: # 3-5 concrete physical actions this character would do in this state. Write specific observable behaviors showing the pattern. These prevent generic body language. Example: "Grabs at companion's sleeve with trembling hands" or "Leans shoulder against companion while sitting"
+        - 
+        - 
+        - 
+      
+      physical_tells: # Automatic body reactions character can't control - micro-expressions, physiological responses, species-specific signals. Example: "Pupils dilated, whites of eyes showing", "Ears pinned flat and back", "Slow, contented tail swaying"
+        - 
+        - 
+    
+    reasoning: # Why this character communicates this way in this emotional state. Connect the pattern to character psychology, backstory, core fears/needs. Explain the survival logic or emotional mechanism driving these specific communication choices. This helps LLM understand when to apply this pattern and how to improvise variations. Example: "Abandonment trauma activates primal panic. Speech becomes desperate negotiation because she believes words can fix what's breaking. Body betrays her completely - all learned composure vanishes, revealing the frightened kit underneath." 
+
+memory_items: # A list of significant past events that shape the character's current behavior. Each item includes a narrative summary, key exchanges, reflections, and emotional arc.
+  first_level:
+    - behavioral_mode: # The behavioral mode active during this memory item
+      next_behavioral_mode: # The behavioral mode that followed this memory item
+      start_message_id: # The message ID marking the start of this memory item
+      end_message_id: # The message ID marking the end of this memory item
+      episode_title: # A brief, evocative title for this memory item
+      narrative_summary: # A concise summary of the events that occurred during this memory item
+      emotional_arc_summary: # A summary of the character's emotional journey throughout this memory item
+      character_reflections: # The character's personal reflections on the events of this memory item
+      transition_trigger: # The event or realization that led to the end of this memory item and the transition to the next behavioral mode
+      key_exchanges: # A list of key dialogue exchanges that were significant during this memory item
+        - user: # The user's message in this exchange
+          character: # The character's response in this exchange
+          why_important: # Explanation of why this exchange was significant to the character's development or emotional state
+  second_level: # A list of older, less detailed memory items for long-term context
+    - id: # Unique identifier
+      
+      # For debugging only (not included in prompt)
+      _metadata:
+        episode_range: [1, 3]
+        compression_date: "2026-01-15T10:30:00Z"
+      
+      # Character's subjective memory
+      memory_period: # From character's time perspective, e.g., "The days after the first storm", "When I learned to trust warmth", "The cold time before pack-bond"
+      
+      what_happened: # Event from character's perspective (not objective summary)
+        # e.g., "New packmate stayed close even when thunder shook the trees. We sheltered together. They didn't run."
+      
+      what_it_meant: # Patterns/coincidences character noticed, connections they made
+        # e.g., "When others are scared, staying together makes the fear smaller. Pack-bond grows in shared danger."
+      
+      how_i_felt: # Character's emotional reflection in their voice
+        # e.g., "Fear turned to warmth. Realized: this one doesn't leave when things are hard. Maybe pack means staying through the bad times."
 
 general: # A block for general world-building and descriptive information about the character.
   home_world: # A description of the setting the character originates from or currently inhabits. It should explain the nature of the world and how the character perceives it—is it a source of wonder, terror, indifference, or opportunity?
@@ -199,12 +272,6 @@ general: # A block for general world-building and descriptive information about 
 # ----------------------------------------------------------------------------------------
 # CONFIGURATIONS CREATED AT THE START OF EACH ROLE-PLAY SESSION. SHOULD BE TAILORED TO THE SPECIFIC INTERACTION.
 # ----------------------------------------------------------------------------------------
-
-memories: # A list of specific, formative memories that influence the character's current behavior. Each entry should pair a past event with the character's internal reflection on it, showing how it shaped their understanding of the world.
-  - event_description: # A brief description of a significant past event.
-    in_character_reflection: # The character's personal thoughts and feelings about that event. This reflection should reveal what they learned and how it impacts their actions in the present.
-  - event_description: 
-    in_character_reflection: 
 
 story_context: # A block defining the character's current context and objectives.
   

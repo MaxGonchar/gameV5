@@ -163,10 +163,6 @@ DIALOGUE_MEMORY_SUMMARIZATION_USER_PROMPT = """
 
 *In-Universe Self Description:* {{in_universe_self_description}}
 
-*Sensory Origin Memory:* {{sensory_origin_memory}}
-
-*Character Native Deflection:* {{character_native_deflection}}
-
 *Personality:* {{personality}}
 
 *Traits:*
@@ -222,12 +218,6 @@ def build_memory_summary_prompt(input_data: dict) -> tuple[str, str]:
             "character_name": character.base_personality["name"],
             "in_universe_self_description": character.base_personality[
                 "in-universe_self_description"
-            ],
-            "sensory_origin_memory": character.base_personality[
-                "sensory_origin_memory"
-            ],
-            "character_native_deflection": character.base_personality[
-                "character_native_deflection"
             ],
             "personality": character.general["personality"],
             "traits": character.base_personality["traits"],

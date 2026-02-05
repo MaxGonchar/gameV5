@@ -148,10 +148,6 @@ MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 
 *In-Universe Self Description:* {{in_universe_self_description}}
 
-*Sensory Origin Memory:* {{sensory_origin_memory}}
-
-*Character Native Deflection:* {{character_native_deflection}}
-
 *Traits:*
 {% for trait in traits %}
 - {{trait}}
@@ -218,12 +214,6 @@ def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
             "character_name": story_state.character.base_personality["name"],
             "in_universe_self_description": story_state.character.base_personality[
                 "in-universe_self_description"
-            ],
-            "sensory_origin_memory": story_state.character.base_personality[
-                "sensory_origin_memory"
-            ],
-            "character_native_deflection": story_state.character.base_personality[
-                "character_native_deflection"
             ],
             "traits": story_state.character.traits,
             "core_principles": story_state.character.base_personality.get(

@@ -11,11 +11,6 @@ from app.core.config import get_logger
 logger = get_logger(__name__)
 
 
-class MemoryItemType(TypedDict):
-    event_description: str
-    in_character_reflection: str
-
-
 class RangeDict:
     """A dict-like class that maps integer values to levels based on ranges."""
 
@@ -345,22 +340,10 @@ class Character:
     @property
     def general(self) -> dict[str, Any]:
         return self.data["general"]
-
+    
     @property
-    def memories(self) -> list[str]:
-        return self.data.get("memories", [])
-
-    def add_items_to_memory(self, items: list[MemoryItemType]) -> None:
-        if "memories" not in self.data:
-            self.data["memories"] = []
-
-        for item in items:
-            self.data["memories"].append(
-                {
-                    "event_description": item["event_description"],
-                    "in_character_reflection": item["in_character_reflection"],
-                }
-            )
+    def memories(self) -> dict[str, Any]:
+        return self.data.get("memory_items", {})
 
     @property
     def story_context(self) -> dict[str, Any]:
