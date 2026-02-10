@@ -1,62 +1,56 @@
-## Correct current character
+# Implementation Plan: Dynamic Behavioral Instruction System
 
-### ✅ 1. correct current system prompt
-- remove less relevant information
-  - remove memory generated during session creation for sake of second level memory
-  - review items like:
-    - sensory_origin_memory
-    - character_native_deflection
-- add more specific
-  - appearance self description
+This document outlines the implementation steps for transitioning from pre-defined behavioral modes to dynamically generated, session-aware behavioral instructions.
 
-### ✅ 2. correct character data structure taking into account new system prompt
-- update fields explanations so they will reflect the meaning clearly
+---
 
-### 3. add second level memory
-- develop data structure for second level memory
-- inject second level memory into system prompt
-- remove memory generation during session creation
-- use second level memory for initial memory population
+## Phase 1: Character Configuration Updates
+According to semantic based system, we will not use numeric levels for mental states. Instead, we will define mental states with descriptive labels. During mental impact analysis, model will interpret the current mental state based on its semantic description and context, rather than relying on fixed numeric thresholds. This allows for more nuanced and flexible behavior generation that can adapt to a wider range of scenarios.
 
-### ✅ 4. correct character data structure according to new approaches
+- [ ] update mental stats data structure in character.yaml schema to remove numeric levels and add information about mental state semantics allowing model to interpret them based on context:
+  - See semantic mental state docs
 
-### ✅ 5. extend character data with general data
-- consider creation sets of speech patterns and body language patterns for wide variety of characters' mental states so it can be used for dynamically adjusting character behavior during the game play
-- add these sets to character data structure
+- [ ] add speech, body language, and action tendencies associated with each mental state. It will serve as guidance for the model to generate appropriate behaviors based on the character's current mental state and the context of the interaction.
 
-### 6. ✅ Adjust character creation flow
+- [ ] update LLM mental state impact analysis to interpret semantic mental states and their associated tendencies instead of numeric levels. (IMPORTANT: mental states shouldn't jump from one to another after each interaction if no significant event happened. Instead, model should consider the trajectory of mental states over time and the context of interactions to determine if a change in mental state is warranted.)
 
-### 7. Test:
-- ✅ second level memory appears in system prompt
-- first level memory appears in prompt when exists
-- ✅ memories are not generated during session creation
+- [ ] update character creation framework to support new mental state definitions
 
-## Migrate to semantic based mental states.
+- [ ] update character logic to handle semantic mental states instead of numeric levels
 
-### 1. define new mental states structure
-- define new mental states structure based on semantic model
-  - update character data structure accordingly
-  - update character creation flow accordingly
-- create tracking logic for new mental states
-  - new LLM call
-  - new update logic
-- test
+- [ ] update logic to detect changes in mental states based on semantic descriptions and context
+
+- [ ] TEST: Create test character with new mental state definitions and verify behavior generation reflects semantic mental states and their associated tendencies
 
 
-## Migrate to semantic based behavior model.
+## Phase 2. Add Priority & Weight System to Mental States
+Priority & Weight System should reflect the relative importance of different mental states and their levels in determining the character's overall mental state and behavior. This will allow handle cases when one less important mental state but in high level can overshadow another more important mental state but in low level. For example, if a character has a high level of longing (which is less important) but a low level of security (which is more important), the character's behavior should reflect longing more than security.
+- [ ] Add priority field to mental state types (Security=1, Trust=2, Longing=3)
+- [ ] Add weight field to mental state levels (0-100 scale per level)
+- [ ] update character creation framework to support new priority and weight fields for mental states
+- [ ] think about validation rules for priority and weight fields
+- [ ] Implement impact calculation for determining dominant states
 
-### 1. define new behavior model structure
-- define new behavior model structure based on semantic model and general guiding instead of specific rules
-- create logic to check that all behavior models covers all possible mental states and there's no potentially situations when character will have no behavior model to follow or multiple conflicting behavior models
-- review current model matching logic and update it according to new behavior model structure
-- create assistant to generate instructions for behavior model based on character mental states, environment, personality, last mental trajectory, last actions, etc.
-- test
+
+## Phase 3: Dynamic Behavioral Instruction
+
+- [ ] design new data structure for behavioral model
+
+- [ ] implement LLM assistant to generate dynamic behavioral instructions based on character's current mental state, context of interactions, and trajectory of mental states over time.
+
+- [ ] update character logic to utilize dynamic behavioral instructions for generating speech, body language, and actions
+
+- [ ] TEST: Create test character and verify that dynamic behavioral instructions are generated appropriately based on mental state, context, and trajectory of mental states over time. Ensure that behavior generation reflects the dynamic instructions accurately.
 
 
-## Final test and adjustments
-- character knows past due to second level memory
-- character mental states are tracked according to semantic model
-- character behavior is generated according to semantic based behavior model
-  - no mental state combinations where character has no behavior model to follow
-  - speech patterns and body language patterns are created for particular behavioral model according to character personality and current situation.
-- during behavioral mode change the first level memory item is created
+## Phase 4: Caching of Behavioral Instructions
+
+- [ ] update character data structure to store previous behavioral instructions and their associated mental states and contexts
+
+- [ ] implement logic for reusing previous behavioral instructions
+
+- [ ] TEST: Create test character and verify that previous behavioral instructions are reused appropriately when the character is in a similar mental state and context as before. Ensure that behavior generation reflects the reused instructions accurately while still allowing for dynamic adjustments based on any changes in mental state or context.
+
+
+## Phase 5: Define terms and conditions for reusing previous behavioral instructions
+TBD
