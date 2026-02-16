@@ -137,32 +137,78 @@ communication_patterns: # Foundation library of how this character communicates 
 ```
 
 ## 6. main mental states;
+Three mental states that are most relevant to the character's emotional life and behavior. Each mental state should have 3 descriptive levels that the LLM can interpret based on context and narrative significance. Each level should include a semantic meaning (the character's internal experience and beliefs at this level), a description of how the character experiences it, and specific conditions required to transition to and from this level. This structure allows for nuanced behavior generation that reflects the character's psychological complexity and prevents gaming through repetition.
 ### Example
-```md
-mental_states: # A list of emotional and psychological states the character can experience. Each state defines how the character responds to different triggers and how those responses manifest behaviorally.
-  - type: # The name of the mental state (e.g., stress, trust, fear, excitement, anger, sadness, confusion, hope)
-    scale: # The categorical levels and their numerical ranges for this mental state (up to 4 levels)
-      - level: # The descriptive name for this level (e.g., calm, tense, overwhelmed, breaking)
-        range: # The numerical range for this level [min, max]
-      - level: 
-        range: 
-    impact_rate: # Numerical values defining how different trigger impacts affect this mental state
-      slight: # Value for "slight_increase" or "slight_decrease" impacts
-      moderate: # Value for "moderate_increase" or "moderate_decrease" impacts  
-      major: # Value for "major_increase" or "major_decrease" impacts
-      extreme: # Value for "extreme_increase" or "extreme_decrease" impacts
-    default: # The character's baseline level for this mental state
-    current: # The character's current level for this mental state (updated during gameplay)
-    character_interpretation:
-      triggers: # Abstract patterns that affect this character's mental state, with reasoning for LLM context
-        - pattern: # Abstract description of situations that trigger this state change
-          base_impact: # Impact level: slight_increase, moderate_increase, major_increase, extreme_increase, slight_decrease, moderate_decrease, major_decrease, extreme_decrease
-          reasoning: # Why this pattern affects this character in this way, linked to their psychology
-        - pattern: 
-          base_impact: 
-          reasoning: 
-      manifestation: # How this character specifically shows this mental state - their unique physical and behavioral responses
+```yaml
+mental_states: # A list of emotional and psychological states the character can experience. Each state uses semantic descriptions rather than numeric values, allowing the LLM to interpret transitions based on context and narrative significance.
+  - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)
+    current_level: # The current descriptive level for this state (e.g., Maintained, Asserted, Compromised, Lost)
+    
+    scale: # A list of levels for this mental state, ordered from most positive to most negative (typically 3-4 levels)
+      - level: # The descriptive name for this level (e.g., Asserted, Maintained, Compromised, Lost)
+        
+        semantic_meaning: |
+          # What this level means in universal terms. Describe the character's internal state, 
+          # beliefs about their situation, and how they relate to their world at this level.
+          # Write from the character's perspective using "I" statements.
+          # This is the core definition that guides all behavior at this level.
+          # Example: "I am the guardian and strategist of this partnership. My guidance is needed, 
+          # valued, and followed. I can trust myself to keep us both safe. I am in command."
+        
+        character_experience: |
+          # How the character subjectively experiences this level. What does it feel like to be 
+          # in this state? What sensations, thoughts, and emotional qualities dominate?
+          # More concrete and immediate than semantic_meaning.
+          # Example: "Confident in my authority. Watchful but not anxious. My partner looks to me 
+          # for direction and I provide it without hesitation. This is how it should be."
+        
+        requirements_to_reach: # Conditions needed to reach this level from other levels
+          from_[level_name]: |
+            # Specific events, patterns, or conditions required to transition to this level 
+            # from [level_name]. Be explicit about what must happen (not just how much).
+            # Distinguish between single events vs. patterns, immediate triggers vs. cumulative effects.
+            # Specify whether multiple instances are needed or if one significant event suffices.
+            # Example for "from_maintained": "Partner must demonstrate that they need my guidance by:
+            # - Actively seeking my advice in a challenging situation
+            # - Following my strategic direction and it proving successful
+            # - Acknowledging that my oversight prevented a mistake
+            # Multiple instances required. One deferral is politeness, consistent pattern establishes my necessary role."
+          
+          from_[level_name]: |
+            # Additional transition paths from other levels as needed
+        
+        requirements_to_leave: # Conditions needed to leave this level
+          normal_transition: |
+            # Standard conditions for transitioning out of this level through gradual change.
+            # What must happen over time for the character to move to an adjacent level?
+            # Example: "Would need sustained evidence that partner doesn't need oversight. 
+            # Multiple successful independent decisions that I didn't guide. Pattern of good judgment without me."
+          
+          shock_event: |
+            # Emergency conditions that can force immediate transition, bypassing normal requirements.
+            # What dramatic events could instantly change the character's mental state?
+            # Example: "Being directly overruled in crisis and proven wrong, OR Partner taking action 
+            # that succeeds spectacularly despite my warnings against it."
+      
+      - level: # Another level (repeat structure for each level in the scale)
+        semantic_meaning: |
+        character_experience: |
+        requirements_to_reach:
+          from_[level_name]: |
+        requirements_to_leave:
+          normal_transition: |
+          shock_event: |
+    
+    transition_notes: |
+      # Meta-commentary on how this mental state system prevents gaming and handles plot twists.
+      # Explain why repetitive actions won't artificially inflate/deflate this state.
+      # Note how shock events and narrative significance factor into transitions.
+      # Example: "This mental state cannot be gamed through repetition because each level specifies 
+      # WHAT must happen, not just numeric change. Requirements explicitly call out need for patterns 
+      # vs single events. LLM assistant evaluates if requirements genuinely met. Plot twists work 
+      # because shock events can bypass normal transition requirements."
 ```
+TODO: validation: levels are 3 and requirements_to_reach covers all possible transitions between levels.
 
 # 7. behavioral modes;
 ### Example

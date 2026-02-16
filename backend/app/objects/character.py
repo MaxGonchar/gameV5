@@ -172,27 +172,33 @@ class MentalStates:
         return deepcopy(self.data)
 
     def update_state(self, state_name: str, change: str) -> None:
+        # for state in self.data:
+        #     if state["type"].lower() == state_name.lower():
+        #         logger.debug(
+        #             f"Updating mental state '{state_name}' with change '{change}'"
+        #         )
+        #         level, direction = change.split("_")
+
+        #         # handle case "no_change"
+        #         if level == "no" and direction == "change":
+        #             logger.debug(f"No change for mental state '{state_name}'")
+        #             continue
+
+        #         impact = state["impact_rate"][level] * self.direction_sign[direction]
+
+        #         new_numeric_level = self._calculate_numeric_level(state, impact)
+        #         state["current_numeric"] = new_numeric_level
+        #         self._set_current_level(state)
         for state in self.data:
             if state["type"].lower() == state_name.lower():
                 logger.debug(
-                    f"Updating mental state '{state_name}' with change '{change}'"
+                    f"Updating mental state '{state_name}' to level '{change}'"
                 )
-                level, direction = change.split("_")
-
-                # handle case "no_change"
-                if level == "no" and direction == "change":
-                    logger.debug(f"No change for mental state '{state_name}'")
-                    continue
-
-                impact = state["impact_rate"][level] * self.direction_sign[direction]
-
-                new_numeric_level = self._calculate_numeric_level(state, impact)
-                state["current_numeric"] = new_numeric_level
-                self._set_current_level(state)
+                state["current"] = change
 
     def get_current_mental_states(self) -> dict[str, str]:
         return {
-            state["type"]: state["current"] for state in self.data
+            state["type"]: state["current_level"] for state in self.data
         }
 
     def _calculate_numeric_level(self, state: dict[str, Any], impact: int) -> int:
@@ -208,6 +214,55 @@ class MentalStates:
     def _set_current_level(self, state: dict[str, Any]) -> None:
         range_dict = RangeDict(state["scale"])
         state["current"] = range_dict.get(state["current_numeric"], "Unknown")
+
+# class MentalStates:
+#     def __init__(self, data: list[dict[str, Any]]):
+#         self.data = deepcopy(data)
+#         self.direction_sign = {
+#             "increase": 1,
+#             "decrease": -1,
+#         }
+
+#     def marshal(self) -> list[dict[str, Any]]:
+#         return deepcopy(self.data)
+
+#     def update_state(self, state_name: str, change: str) -> None:
+#         for state in self.data:
+#             if state["type"].lower() == state_name.lower():
+#                 logger.debug(
+#                     f"Updating mental state '{state_name}' with change '{change}'"
+#                 )
+#                 level, direction = change.split("_")
+
+#                 # handle case "no_change"
+#                 if level == "no" and direction == "change":
+#                     logger.debug(f"No change for mental state '{state_name}'")
+#                     continue
+
+#                 impact = state["impact_rate"][level] * self.direction_sign[direction]
+
+#                 new_numeric_level = self._calculate_numeric_level(state, impact)
+#                 state["current_numeric"] = new_numeric_level
+#                 self._set_current_level(state)
+
+#     def get_current_mental_states(self) -> dict[str, str]:
+#         return {
+#             state["type"]: state["current"] for state in self.data
+#         }
+
+#     def _calculate_numeric_level(self, state: dict[str, Any], impact: int) -> int:
+#         current = state["current_numeric"]
+#         return min(
+#             max(
+#                 state["change_mechanics"]["min"],
+#                 current + impact,
+#             ),
+#             state["change_mechanics"]["max"],
+#         )
+
+#     def _set_current_level(self, state: dict[str, Any]) -> None:
+#         range_dict = RangeDict(state["scale"])
+#         state["current"] = range_dict.get(state["current_numeric"], "Unknown")
 
 
 class BehavioralModes:
@@ -374,11 +429,15 @@ class Character:
 
     def update_mental_state(self, impact: dict[str, Any]) -> None:
 
-        for state, impact in impact.items():
-            logger.debug(f"Updating mental state: {state}")
-            logger.debug(f"Impact: {impact['change']}")
-            logger.debug(f"Impact: {impact['reasoning']}")
-            self._mental_states.update_state(state, impact["change"])
+        # for state, impact in impact.items():
+        #     logger.debug(f"Updating mental state: {state}")
+        #     logger.debug(f"Impact: {impact['change']}")
+        #     logger.debug(f"Impact: {impact['reasoning']}")
+        #     self._mental_states.update_state(state, impact["change"])
+
+        for state, level in impact.items():
+            logger.debug(f"Updating mental state: {state} to level '{level}'")
+            self._mental_states.update_state(state, level)
 
     def get_last_remembered_message_id(self) -> str | None:
         return self._memory_items.get_last_first_level_memory_message_id()
