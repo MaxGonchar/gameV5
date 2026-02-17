@@ -35,6 +35,10 @@ from app.models.emotional_impact_semantic import (
     EmotionalImpactSemanticAnalysisResponse,
     build_semantic_emotional_impact_prompt,
 )
+from app.models.behavior_mode import (
+    build_behavioral_mode_generation_prompt,
+    BehavioralModeResponse,
+)
 from app.models.first_level_memory import build_first_level_memory_prompt, FirstLevelMemoryResponse
 from app.models.scene_description import (
     MoveSceneDescriptionResponse,
@@ -241,7 +245,7 @@ class StoryService:
             }
         )
         logger.debug("Calculating emotional impact...")
-        logger.debug(f"System Prompt: {system_Prompt}")
+        # logger.debug(f"System Prompt: {system_Prompt}")
         logger.debug(f"User Prompt: {user_prompt}")
 
         emotional_impact = await self.llm_communicator.generate_structured_response(
@@ -281,7 +285,7 @@ class StoryService:
         )
 
         logger.debug("Getting emotional state semantic analysis...")
-        logger.debug(f"System Prompt: {system_prompt}")
+        # logger.debug(f"System Prompt: {system_prompt}")
         logger.debug(f"User Prompt: {user_prompt}")
 
         emotional_state = await self.llm_communicator.generate_structured_response(
@@ -291,26 +295,12 @@ class StoryService:
         )
         return emotional_state
 
-    def _get_character_mental_state_snapshot(self) -> dict[str, Any]:
+    def _get_character_mental_state_snapshot(self) -> dict[str, str]:
         """Get a snapshot of the character's current mental state."""
 
-        # mental_state_snapshot = {
-        #     "behavioral_mode": self.story_state.character.current_behavioral_mode,
-        #     "mental_states": {
-        #     state["type"]: {
-        #         "numeric": state["current_numeric"],
-        #         "level": state["current"]
-        #     }
-        #  for state in self.story_state.character.mental_states}
-        # }
-
         mental_state_snapshot = {
-            "behavioral_mode": self.story_state.character.current_behavioral_mode,
-            "mental_states": {
-            state["type"]: {
-                "level": state["current_level"],
-            }
-         for state in self.story_state.character.mental_states}
+            state["type"]: state["current_level"]
+            for state in self.story_state.character.mental_states
         }
 
         return mental_state_snapshot
@@ -324,33 +314,28 @@ class StoryService:
         """Calculate emotional shifts based on mental state snapshots."""
         mental_states = {}
         for before, after, impact in zip(
-            sorted(list(initial_snapshot["mental_states"].items()), key=lambda x: x[0]),
-            sorted(list(updated_snapshot["mental_states"].items()), key=lambda x: x[0]),
+            sorted(list(initial_snapshot.items()), key=lambda x: x[0]),
+            sorted(list(updated_snapshot.items()), key=lambda x: x[0]),
             sorted(list(impact_data["mental_state_impacts"].items()), key=lambda x: x[0]),
         ):
-            # mental_states[before[0]] = {
-            #     "change": impact[1]["change"],
-            #     "reasoning": impact[1]["reasoning"],
-            #     "before_level": before[1]["level"],
-            #     "after_level": after[1]["level"],
-            #     "before_numeric": before[1]["numeric"],
-            #     "after_numeric": after[1]["numeric"],
-            # }
             mental_states[before[0]] = {
-                "before_level": before[1]["level"],
-                "after_level": after[1]["level"],
+                "before_level": before[1],
+                "after_level": after[1],
                 "reasoning": impact[1]["reasoning"],
             }
 
         emotional_snapshot = {
-            "behavioral_mode_before": initial_snapshot["behavioral_mode"],
-            "behavioral_mode_after": updated_snapshot["behavioral_mode"],
             "mental_states": mental_states,
         }
         return emotional_snapshot
+    
+    def _is_emotional_state_changed(self, initial_snapshot: dict[str, str], updated_snapshot: dict[str, str]) -> bool:
+        for name, level in initial_snapshot.items():
+            if level.lower() != updated_snapshot[name].lower():
+                return True
+        return False
 
-
-    async def _create_first_level_memory_item(self, behavioral_mode_before: str, behavioral_mode_after: str) -> None:
+    async def _create_first_level_memory_item(self) -> None:
         # get last not summarized chat history items
         last_memory_message_id = self.story_state.character.get_last_remembered_message_id()
         if last_memory_message_id is not None:
@@ -364,12 +349,10 @@ class StoryService:
             {
                 "character": self.story_state.character,
                 "episode_messages": history_items_to_summarize,
-                "behavioral_mode_before": behavioral_mode_before,
-                "behavioral_mode_after": behavioral_mode_after,
             }
         )
         logger.debug("Creating first-level memory item...")
-        logger.debug(f"System Prompt: {system_prompt}")
+        # logger.debug(f"System Prompt: {system_prompt}")
         logger.debug(f"User Prompt: {user_prompt}")
 
         # call LLM to generate first-level memory item
@@ -383,8 +366,6 @@ class StoryService:
         memory_item_dict = memory_item.model_dump()
         self.story_state.character.add_first_level_memory_item(
             {
-                "behavioral_mode": behavioral_mode_before,
-                "next_behavioral_mode": behavioral_mode_after,
                 "start_message_id": history_items_to_summarize[0]["id"],
                 "end_message_id": history_items_to_summarize[-1]["id"],
                 "episode_title": memory_item_dict["episode_title"],
@@ -395,6 +376,99 @@ class StoryService:
                 "key_exchanges": memory_item_dict["key_exchanges"],
             }
         )
+    
+    async def _update_behavioral_mode(self) -> None:
+        def _build_mental_states(self) -> dict[str, Any]:
+            res = {}
+            for state in self.story_state.character.mental_states:
+                type_ = state["type"]
+                current_level = state["current_level"]
+                meaning = ""
+                character_experience = ""
+                for level in state["scale"]:
+                    if level["level"].lower() == current_level.lower():
+                        meaning = level["semantic_meaning"]
+                        character_experience = level["character_experience"]
+                        break
+
+                res[type_] = {
+                    "current_level": current_level,
+                    "meaning": meaning,
+                    "character_experience": character_experience,
+                }
+
+            return res
+
+        def _build_previous_mode(self) -> dict[str, Any]:
+            mode = self.story_state.character.current_behavioral_mode
+            return {
+                "name": mode["name"],
+                "summary": " ".join(
+                    [mode["manifestation"], mode["why_here"]]
+                ),
+                "traits": mode["traits"],
+            }
+
+        def _build_recent_history(self) -> list[dict[str, Any]]:
+            history = self.story_state.get_chat_history(after_message_id=self.story_state.character.get_last_remembered_message_id())
+            return [
+                {
+                    "author_name": item["author_name"],
+                    "author_type": item["author_type"],
+                    "content": item["content"],
+                    "emotional_shift": item.get("emotional_shift", ""),
+                }
+             for item in history]
+        
+        # print("*" * 100)
+        # from pprint import pprint
+        
+        # print("*" * 100)
+
+        system_prompt, user_prompt = build_behavioral_mode_generation_prompt(
+            {
+                "character_name": self.story_state.character.name,
+                "in_universe_self_description": self.story_state.character.base_personality["in-universe_self_description"],
+                "core_principles": self.story_state.character.base_personality["core_principles"],
+                "core_fears": self.story_state.character.base_personality["core_fears"],
+                "core_needs": self.story_state.character.base_personality["core_needs"],
+                "unique_sensitivities": self.story_state.character.base_personality["unique_sensitivities"],
+                "communication_patterns": [
+                    {
+                        "context": {
+                            "emotional_state": item["emotional_state"],
+                            "typical_situations": item["typical_situations"],
+                        },
+                        "speech_pattern": {
+                            "description": item["speech_patterns"]["description"],
+                            "examples": [se for se in item["speech_patterns"]["examples"]],
+                            "vocal_tells": [vt for vt in item["speech_patterns"]["vocal_tells"]],
+                        },
+                        "body_language": {
+                            "description": item["body_language"]["description"],
+                            "examples": [be for be in item["body_language"]["examples"]],
+                            "physical_tells": [pt for pt in item["body_language"]["physical_tells"]],
+                        },
+                        "reasoning": item["reasoning"],
+                    } for item in self.story_state.character.data["communication_patterns"]
+                ],
+                "mental_states": _build_mental_states(self),
+                "previous_mode": _build_previous_mode(self),
+                "recent_history": _build_recent_history(self),
+            }
+        )
+
+        logger.debug("Updating behavioral mode...")
+        # logger.debug(f"System Prompt: {system_prompt}")
+        logger.debug(f"User Prompt: {user_prompt}")
+
+        behavioral_mode_response = await self.llm_communicator.generate_structured_response(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_model=BehavioralModeResponse,
+        )
+
+        self.story_state.character.update_behavioral_mode(behavioral_mode_response.model_dump())
 
     async def process_user_message(self, message: str) -> None:
         """Process user message and generate bot response.
@@ -408,38 +482,6 @@ class StoryService:
                 actor="user", message=message
             )
             self.story_state.add_user_message(message, scene_description)
-
-            # =================================================================================================
-            # NUMERIC BASED EMOTIONAL IMPACT CALCULATION
-            # =================================================================================================
-            # Apply character emotional impact
-            # emotional_impact = await self._calculate_emotional_impact(message)
-            # logger.debug(f"Emotional Impact Result: {emotional_impact}")
-
-            # initial_mental_state = self._get_character_mental_state_snapshot()
-
-            # self.story_state.character.update_mental_state(
-            #     emotional_impact.model_dump()["mental_state_impacts"]
-            # )
-
-            # updated_mental_state = self._get_character_mental_state_snapshot()
-
-            # emotional_shift = self._get_emotional_shift(
-            #     initial_mental_state,
-            #     updated_mental_state,
-            #     emotional_impact.model_dump(),
-            # )
-
-            # if emotional_shift["behavioral_mode_before"] != emotional_shift["behavioral_mode_after"]:
-            #     await self._create_first_level_memory_item(
-            #         emotional_shift["behavioral_mode_before"], emotional_shift["behavioral_mode_after"]
-            #     )
-            # =================================================================================================
-
-
-            # =================================================================================================
-            # SEMANTIC BASED EMOTIONAL IMPACT CALCULATION
-            # =================================================================================================
             # Detect emotional state levels
             new_emotional_state = await self._get_emotional_state_semantic(message)
             logger.debug(f"Semantic Emotional State Result: {new_emotional_state.model_dump()}")
@@ -460,13 +502,9 @@ class StoryService:
             )
 
             # create first level memory item on emotional state change
-            if emotional_shift["behavioral_mode_before"] != emotional_shift["behavioral_mode_after"]:
-                await self._create_first_level_memory_item(
-                    emotional_shift["behavioral_mode_before"], emotional_shift["behavioral_mode_after"]
-                )
-
-            # TBD: update behavioral model based on new mental state
-            # =================================================================================================
+            if self._is_emotional_state_changed(previous_mental_state, updated_mental_state):
+                await self._create_first_level_memory_item()
+                await self._update_behavioral_mode()
 
             # Generate and bot response
             bot_response = await self._generate_bot_response()

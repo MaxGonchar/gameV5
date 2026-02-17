@@ -276,8 +276,6 @@ FIRST_LEVEL_MEMORY_USER_PROMPT = """
 {% if message.emotional_shift %}
 **Emotional Impact (Following This Message):**
 
-Behavioral Mode: {{message.emotional_shift.behavioral_mode_before}} → {{message.emotional_shift.behavioral_mode_after}}
-
 Mental State Changes:
 {% for state_name, state_data in message.emotional_shift.mental_states.items() %}
 - **{{state_name}}:** {{state_data.before_level}} → {{state_data.after_level}}
@@ -368,8 +366,6 @@ def build_first_level_memory_prompt(input_data: dict[str, Any]) -> tuple[str, st
 
     character = input_data["character"]
     episode_messages = input_data["episode_messages"]
-    behavioral_mode_before = input_data["behavioral_mode_before"]
-    behavioral_mode_after = input_data["behavioral_mode_after"]
 
     # Extract character data
     base_personality = character.base_personality
@@ -395,12 +391,6 @@ def build_first_level_memory_prompt(input_data: dict[str, Any]) -> tuple[str, st
         # Add emotional shift data if present
         if emotional_shift := message.get("emotional_shift"):
             processed_shift = {
-                "behavioral_mode_before": emotional_shift.get(
-                    "behavioral_mode_before", ""
-                ),
-                "behavioral_mode_after": emotional_shift.get(
-                    "behavioral_mode_after", ""
-                ),
                 "mental_states": {},
             }
 
@@ -430,8 +420,6 @@ def build_first_level_memory_prompt(input_data: dict[str, Any]) -> tuple[str, st
         core_principles=core_principles,
         core_fears=core_fears,
         core_needs=core_needs,
-        behavioral_mode_before=behavioral_mode_before,
-        behavioral_mode_after=behavioral_mode_after,
         episode_messages=processed_messages,
         previous_memories=character.get_first_level_memory_items(),
     )

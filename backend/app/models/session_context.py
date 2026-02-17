@@ -305,10 +305,10 @@ def build_session_context_prompt(input_data: dict) -> tuple[str, str]:
             "in_universe_self_description": character.base_personality[
                 "in-universe_self_description"
             ],
-            "traits": character.base_personality["traits"],
+            "traits": character.traits,
             "core_principles": character.base_personality["core_principles"],
-            "physical_tells": character.base_personality["physical_tells"],
-            "speech_patterns": character.base_personality["speech_patterns"],
+            "physical_tells": character.physical_tells,
+            "speech_patterns": character.speech_patterns,
             "general_demeanor": character.general["personality"],
             "character_home_world_description": character.general["home_world"],
             "character_appearance_description": character.general["appearance"],

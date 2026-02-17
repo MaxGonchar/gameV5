@@ -37,6 +37,8 @@ The content should be present during the character creation process to ensure ac
 # Creation requests chain
 
 ## 1. General information;
+Extract configurations for <name> character from data in your context.
+Some general information
 
 ### Example
 ```yaml
@@ -51,7 +53,9 @@ general: # A block for general world-building and descriptive information about 
 ```
 
 ## 2. communication patterns;
+Communication patterns are the specific ways in which <name> expresses themselves verbally and non-verbally in different emotional and psychological states. These patterns should be defined before mental states and behavioral modes, as they provide the foundational understanding of how the character communicates across various conditions.
 NOTE: patterns should cover maximum variety of mental states and emotional conditions the character can experience according to character personality and background.
+All patterns should be consistent with the character's personality and background, and they should reflect the character's unique way of expressing themselves in different emotional states. These patterns will serve as a foundation for defining mental states and behavioral modes later in the character creation process.
 
 ### Example
 ```md
@@ -90,26 +94,12 @@ communication_patterns: # Foundation library of how this character communicates 
     reasoning: # Why this character communicates this way in this emotional state. Connect the pattern to character psychology, backstory, core fears/needs. Explain the survival logic or emotional mechanism driving these specific communication choices. This helps LLM understand when to apply this pattern and how to improvise variations. Example: "Abandonment trauma activates primal panic. Speech becomes desperate negotiation because she believes words can fix what's breaking. Body betrays her completely - all learned composure vanishes, revealing the frightened kit underneath." 
 ```
 
-## 3. Self description;
+## 3. Self description
 ### Example
 ```md
   in-universe_self_description: # Character's core identity in their own words, completing "You ARE [name], [this description]." Combine WHO they are (role/nature) + WHAT they want/need (driving force) + HOW they see their place (relationship to world). Use character's perspective and vocabulary - no meta concepts. Example: "a scavenger who knows survival means staying small and taking what others miss" or "the last keeper of a dying garden, holding onto life one seed at a time."
   
   appearance: # How the character experiences and moves in their physical form. Write from their embodied perspective - include size/build (affects movement and interaction), distinctive features they're aware of, physical capabilities or limitations, and sensory details (texture, temperature, scent). Focus on aspects relevant to how they navigate space and interact physically. Example: "Compact frame moves low and quiet; calloused hands built for gripping; cold-blooded skin drinks in warmth; sharp scales catch on fabric."
-```
-
-## 4. default communication patterns;
-### Example
-```md
-  speech_patterns: # A list of defining speech patterns and verbal tics. This section should detail *how* the character talks, including their vocabulary, sentence structure, tone, and any unique sounds or phrases they use.
-    - 
-
-  physical_tells: # A list of observable physical behaviors and body language cues. These are the non-verbal actions that reveal the character's emotional state, intentions, and personality.
-    - 
-
-  traits: # A list of the character's core traits, presented as "Action/Behavior → Motivation/Rationale". Each entry should define a key behavior and explain the underlying reason for it, revealing a fundamental aspect of their survival strategy or worldview.
-    - "Action/Behavior → Motivation/Rationale"
-    - "Action/Behavior → Motivation/Rationale"
 ```
 
 ## 5. core mind settings;
@@ -137,14 +127,14 @@ communication_patterns: # Foundation library of how this character communicates 
 ```
 
 ## 6. main mental states;
-Three mental states that are most relevant to the character's emotional life and behavior. Each mental state should have 3 descriptive levels that the LLM can interpret based on context and narrative significance. Each level should include a semantic meaning (the character's internal experience and beliefs at this level), a description of how the character experiences it, and specific conditions required to transition to and from this level. This structure allows for nuanced behavior generation that reflects the character's psychological complexity and prevents gaming through repetition.
+Three mental states that are most relevant to the character's emotional life and behavior. Each mental state should have 4 descriptive levels that the LLM can interpret based on context and narrative significance. Each level should include a semantic meaning (the character's internal experience and beliefs at this level), a description of how the character experiences it, and specific conditions required to transition to and from this level. This structure allows for nuanced behavior generation that reflects the character's psychological complexity and prevents gaming through repetition.
 ### Example
 ```yaml
 mental_states: # A list of emotional and psychological states the character can experience. Each state uses semantic descriptions rather than numeric values, allowing the LLM to interpret transitions based on context and narrative significance.
   - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)
     current_level: # The current descriptive level for this state (e.g., Maintained, Asserted, Compromised, Lost)
     
-    scale: # A list of levels for this mental state, ordered from most positive to most negative (typically 3-4 levels)
+    scale: # A list of levels for this mental state, ordered from most positive to most negative (4 levels)
       - level: # The descriptive name for this level (e.g., Asserted, Maintained, Compromised, Lost)
         
         semantic_meaning: |
@@ -208,40 +198,10 @@ mental_states: # A list of emotional and psychological states the character can 
       # vs single events. LLM assistant evaluates if requirements genuinely met. Plot twists work 
       # because shock events can bypass normal transition requirements."
 ```
-TODO: validation: levels are 3 and requirements_to_reach covers all possible transitions between levels.
+TODO: validation: levels are 4 and requirements_to_reach covers all possible transitions between levels.
 
-# 7. behavioral modes;
-### Example
-```md
-behavioral_modes: # A list of character-specific behavioral modes that represent different emotional shades of the base personality. Each mode emerges from specific mental state combinations and defines how the character pursues goals under those emotional conditions.
-  - mode_name: # A character-specific, evocative name for this behavioral mode (e.g., "survival_edge", "cautious_hope", "overwhelmed_shutdown")
-    description: # Brief description of the emotional state this mode represents and when it activates
-    
-    trigger_conditions: # Mental state combinations that activate this mode. Use mental state type names and their level names.
-      # mental_state_type: [level_name, level_name]  # e.g., stress: [high, overwhelming], trust: [low, fragile]
-    
-    traits: # Complete list of traits for this mode, using standard "Action/Behavior → Motivation/Rationale" syntax. These are shades of base personality, not replacements.
-      - "Action/Behavior → Motivation/Rationale"
-      - "Action/Behavior → Motivation/Rationale"
-    
-    speech_patterns: # How character's speech shifts in this mode - amplifications or constraints on base patterns
-      - 
-      - 
-    
-    physical_tells: # Additional physical behaviors specific to this emotional mode
-      - 
-      - 
-    
-    behavioral_effects: # High-level description of proactive behaviors character exhibits in this mode (metadata for understanding/future goal generation)
-      - 
-      - 
-    
-    strategy_priorities: # Which approaches character prioritizes in this mode (metadata for understanding/future goal generation)
-      - 
-      -
-```
-
-## 8. memory about the past;
+## 7. memory about the past;
+Few items of the character's subjective memory about the past, written from the character's perspective. These memories should be significant events or periods that have shaped the character's psychology and behavior. Each memory should include a description of what happened, what it meant to the character, and how it made them feel. This information provides context for the LLM to understand the character's motivations and reactions in current interactions.
 ### Example
 ```md
 # Character's subjective memory
@@ -257,4 +217,21 @@ how_i_felt: # Character's emotional reflection in their voice
   # e.g., "Fear turned to warmth. Realized: this one doesn't leave when things are hard. Maybe pack means staying through the bad times."
 ```
 
-
+## 8. initial behavioral instructions;
+Behavioral instructions associated with the character's initial mental state. These instructions should reflect the character's behavior tendencies based on their current mental state. They will serve as guidance for the model to generate appropriate behaviors during interactions, ensuring that the character's actions are consistent with their psychological profile and the narrative context.
+### Example
+```md
+behavioral_mode: # A dynamic block that evolves during the role-play, reflecting the character's current mental state and behavioral tendencies. This model is generated based on the character's mental states, communication patterns, and past experiences, and it guides the character's responses in real-time.
+  name: # A descriptive name for the current behavioral model, reflecting the character's emotional state or mode (e.g., "cautious_hope", "overwhelmed_shutdown").
+  mental_states_combination: # A specific combination of mental state types and their current levels that defines the character's emotional condition at a given moment.
+    # Example: {Control: Asserted, Security: Compromised, Trust: Maintained, Longing: Lost}
+  manifestation: # in self voice description of the state (e.g., "I feel a cautious hope, trying to stay positive but afraid of being let down again. I want to reach out but hold back just in case. My words are careful, trying to sound upbeat without giving too much away. My body is tense, ready to pull back if things go wrong.")
+  why_here: # Explanation of why this behavioral model is active based on the character's mental states and recent interactions. This connects the current emotional condition to the character's psychology and history, providing context for the LLM to generate appropriate responses.
+  traits: # A list of traits (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These traits should be drawn from the character's base personality but may be amplified or constrained by the current emotional condition.
+    - "Action/Behavior → Motivation/Rationale"
+    - "Action/Behavior → Motivation/Rationale"
+  speech_patterns: # A list of speech patterns (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These patterns should be drawn from the character's base speech patterns but may be amplified or constrained by the current emotional condition.
+    - 
+  physical_tells: # A list of physical behaviors (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These behaviors should be drawn from the character's base physical tells but may be amplified or constrained by the current emotional condition.
+    -
+```

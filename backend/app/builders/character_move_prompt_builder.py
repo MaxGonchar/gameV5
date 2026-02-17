@@ -96,6 +96,7 @@ At that time, {{ item.memory_period }}:
 """
 
 
+# TODO: transform builder to simple template rendering like others
 class CharacterMovePromptBuilder:
     """Builds system prompts for character conversations.
 
@@ -128,9 +129,6 @@ class CharacterMovePromptBuilder:
         required_fields = [
             "name",
             "in-universe_self_description",
-            "traits",
-            "speech_patterns",
-            "physical_tells",
             "appearance",
         ]
 
@@ -144,7 +142,7 @@ class CharacterMovePromptBuilder:
 
         if missing_fields:
             raise DataValidationException(
-                "Character missing required fields for prompt building",
+                f"Character missing required fields for prompt building: {', '.join(missing_fields)}",
                 details={
                     "missing_fields": missing_fields,
                     "required_fields": required_fields,
@@ -152,19 +150,6 @@ class CharacterMovePromptBuilder:
                     "character_name": character.base_personality.get("name", "unknown"),
                 },
             )
-
-        # Validate that lists are not empty where expected
-        list_fields = ["traits", "speech_patterns", "physical_tells"]
-        empty_lists = []
-        for field in list_fields:
-            if (
-                isinstance(character.base_personality[field], list)
-                and not character.base_personality[field]
-            ):
-                empty_lists.append(field)
-
-        if empty_lists:
-            logger.warning(f"Character has empty lists for: {', '.join(empty_lists)}")
 
         self.character = character
         logger.debug(

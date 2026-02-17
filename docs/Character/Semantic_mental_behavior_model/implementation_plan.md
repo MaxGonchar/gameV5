@@ -36,13 +36,15 @@ Priority & Weight System should reflect the relative importance of different men
 
 ## Phase 3: Dynamic Behavioral Instruction
 
-- [ ] design new data structure for behavioral model
+- [x] design new data structure for behavioral model
 
-- [ ] update/create character emotion related set of instruction so they will reflect the character's behavior tendencies associated with each mental state and will be used as guidance for the model to generate appropriate behaviors based on the character's current mental state and the context of the interaction.
+- [x] update/create character emotion related set of instruction so they will reflect the character's behavior tendencies associated with each mental state and will be used as guidance for the model to generate appropriate behaviors based on the character's current mental state and the context of the interaction.
 
-- [ ] implement LLM assistant to generate dynamic behavioral instructions based on character's current mental state, context of interactions, and trajectory of mental states over time.
+- [x] implement LLM assistant to generate dynamic behavioral instructions based on character's current mental state, context of interactions, and trajectory of mental states over time.
 
-- [ ] update character logic to utilize dynamic behavioral instructions for generating speech, body language, and actions
+- [ ] update story initialization and character creation process to generate initial behavioral instructions based on the character's starting mental state and context.
+
+- [x] update character logic to utilize dynamic behavioral instructions for generating speech, body language, and actions
 
 - [ ] TEST: Create test character and verify that dynamic behavioral instructions are generated appropriately based on mental state, context, and trajectory of mental states over time. Ensure that behavior generation reflects the dynamic instructions accurately.
 
