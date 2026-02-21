@@ -181,6 +181,7 @@ class StoryState:
         await asyncio.gather(
             self.chat_history_dao.save(self.chat_history),
             self.character_dao.store_character(self.character.id, self.character),
+            self.meta_dao.save_meta(self.meta),
         )
 
     def add_story_context_character_data(self, data: dict[str, Any]) -> None:

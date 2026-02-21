@@ -60,12 +60,11 @@ All patterns should be consistent with the character's personality and backgroun
 ### Example
 ```md
 communication_patterns: # Foundation library of how this character communicates across different emotional/psychological states. These patterns are created BEFORE mental states and behavioral modes are defined, serving as the base understanding of character expression. Each pattern captures a distinct emotional/situational state with concrete examples of speech and body language. Use these to inform mental state triggers and behavioral mode definitions later.
-  - context: # Natural language description of the emotional/psychological state when this communication pattern emerges
-      emotional_state: # Detailed description of the character's internal emotional condition. Describe the psychological experience, not the name of a mental state. Example: "Overwhelmed by fear of abandonment, entering desperate panic. All composure collapses, revealing primal terror of being left alone." or "Secure, content, and deeply bonded. Fear is low, trust is complete. Character feels safe expressing affection and ownership of the relationship."
-      
-      typical_situations: # Concrete scenarios when this pattern would emerge. List 2-4 specific situations that would trigger this communication style. Example: "Companion is leaving or preparing to leave", "Being told to stay behind", "Explicit or perceived rejection"
-        - 
-        - 
+  - emotional_state: # Detailed description of the character's internal emotional condition. Describe the psychological experience, not the name of a mental state. Example: "Overwhelmed by fear of abandonment, entering desperate panic. All composure collapses, revealing primal terror of being left alone." or "Secure, content, and deeply bonded. Fear is low, trust is complete. Character feels safe expressing affection and ownership of the relationship."
+    
+    typical_situations: # Concrete scenarios when this pattern would emerge. List 2-4 specific situations that would trigger this communication style. Example: "Companion is leaving or preparing to leave", "Being told to stay behind", "Explicit or perceived rejection"
+      - 
+      - 
     
     speech_patterns: # How character's voice and words manifest in this emotional state
       description: # Overall verbal style in this state. Describe pace, tone, sentence structure, word choice patterns. Example: "Rapid, fragmented speech. Sentences collapse into pleas. Voice goes high-pitched and breathless. Words trip over each other." or "Soft, content vocalizations. Speech slows and gentles. Uses 'we' naturally. Questions become about preferences, not validation."
@@ -131,9 +130,7 @@ Three mental states that are most relevant to the character's emotional life and
 ### Example
 ```yaml
 mental_states: # A list of emotional and psychological states the character can experience. Each state uses semantic descriptions rather than numeric values, allowing the LLM to interpret transitions based on context and narrative significance.
-  - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)
-    current_level: # The current descriptive level for this state (e.g., Maintained, Asserted, Compromised, Lost)
-    
+  - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)    
     scale: # A list of levels for this mental state, ordered from most positive to most negative (4 levels)
       - level: # The descriptive name for this level (e.g., Asserted, Maintained, Compromised, Lost)
         
@@ -215,23 +212,4 @@ what_it_meant: # Patterns/coincidences character noticed, connections they made
 
 how_i_felt: # Character's emotional reflection in their voice
   # e.g., "Fear turned to warmth. Realized: this one doesn't leave when things are hard. Maybe pack means staying through the bad times."
-```
-
-## 8. initial behavioral instructions;
-Behavioral instructions associated with the character's initial mental state. These instructions should reflect the character's behavior tendencies based on their current mental state. They will serve as guidance for the model to generate appropriate behaviors during interactions, ensuring that the character's actions are consistent with their psychological profile and the narrative context.
-### Example
-```md
-behavioral_mode: # A dynamic block that evolves during the role-play, reflecting the character's current mental state and behavioral tendencies. This model is generated based on the character's mental states, communication patterns, and past experiences, and it guides the character's responses in real-time.
-  name: # A descriptive name for the current behavioral model, reflecting the character's emotional state or mode (e.g., "cautious_hope", "overwhelmed_shutdown").
-  mental_states_combination: # A specific combination of mental state types and their current levels that defines the character's emotional condition at a given moment.
-    # Example: {Control: Asserted, Security: Compromised, Trust: Maintained, Longing: Lost}
-  manifestation: # in self voice description of the state (e.g., "I feel a cautious hope, trying to stay positive but afraid of being let down again. I want to reach out but hold back just in case. My words are careful, trying to sound upbeat without giving too much away. My body is tense, ready to pull back if things go wrong.")
-  why_here: # Explanation of why this behavioral model is active based on the character's mental states and recent interactions. This connects the current emotional condition to the character's psychology and history, providing context for the LLM to generate appropriate responses.
-  traits: # A list of traits (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These traits should be drawn from the character's base personality but may be amplified or constrained by the current emotional condition.
-    - "Action/Behavior → Motivation/Rationale"
-    - "Action/Behavior → Motivation/Rationale"
-  speech_patterns: # A list of speech patterns (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These patterns should be drawn from the character's base speech patterns but may be amplified or constrained by the current emotional condition.
-    - 
-  physical_tells: # A list of physical behaviors (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These behaviors should be drawn from the character's base physical tells but may be amplified or constrained by the current emotional condition.
-    -
 ```

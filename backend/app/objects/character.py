@@ -167,13 +167,14 @@ class MentalStates:
     def marshal(self) -> list[dict[str, Any]]:
         return deepcopy(self.data)
 
-    def update_state(self, state_name: str, change: str) -> None:
+    def update_state(self, state_name: str, change: str, reasoning: str) -> None:
         for state in self.data:
             if state["type"].lower() == state_name.lower():
                 logger.debug(
                     f"Updating mental state '{state_name}' to level '{change}'"
                 )
                 state["current_level"] = change
+                state["current_level_reasoning"] = reasoning
 
     def get_current_mental_states(self) -> dict[str, str]:
         return {
@@ -205,7 +206,7 @@ class Character:
             self.data.get("mental_states", [])
         )
         self._behavioral_mode: BehavioralMode = BehavioralMode(
-            self.data["behavioral_mode"]
+            self.data.get("behavioral_mode", {})
         )
         self._memory_items: Memory = Memory(
             self.data.get("memory_items", {})
@@ -284,7 +285,7 @@ class Character:
 
         for state, data in impact.items():
             logger.debug(f"Updating mental state: {state} to level '{data}'")
-            self._mental_states.update_state(state, data["level"])
+            self._mental_states.update_state(state, data["level"], data["reasoning"])
     
     def update_behavioral_mode(self, mode_data: dict[str, Any]) -> None:
         mode_data["mental_states_combination"] = {

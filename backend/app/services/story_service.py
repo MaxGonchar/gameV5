@@ -170,9 +170,25 @@ class StoryService:
 
     def _generate_story_messages(self) -> list[BaseMessage]:
         """Generate LangChain messages using the dedicated function."""
+        # Currently character can not start conversation, it means that history will always start with user message.
+        # Last remembered message can match the last message in the history.
+        # In case of first level memory creation, last remembered message will be the last message in the history.
+        # All following dialogue should start from last user message.
+        # So if dialogue was reset to the point of first level memory creation, we should start from the last remembered message,
+        # which should be the last user message triggered the memory summarization.
+        chat_history = self.story_state.get_chat_history(
+            after_message_id=self.story_state.character.get_last_remembered_message_id()
+        )
+        if not chat_history and (last_message_id := self.story_state.character.get_last_remembered_message_id()) is not None:
+            last_message = self.story_state.chat_history.get_message_by_id(
+                last_message_id
+            )
+            if last_message:
+                chat_history = [last_message]
+
         return build_character_messages_chain(
             character=self.story_state.character,
-            chat_history=self.story_state.get_chat_history(after_message_id=self.story_state.character.get_last_remembered_message_id()),
+            chat_history=chat_history,
             current_reality=self.story_state.get_last_scene_description()[
                 "environmental_context"
             ],
@@ -280,6 +296,13 @@ class StoryService:
                     } for state in self.story_state.character.mental_states
                 ],
                 "recent_history": self.story_state.get_chat_history(after_message_id=self.story_state.character.get_last_remembered_message_id()),
+                "current_mental_states": [
+                    {
+                        "type": state["type"],
+                        "current_level": state["current_level"],
+                        "reasoning": state["current_level_reasoning"],
+                    } for state in self.story_state.character.mental_states
+                ],
                 "user_message": user_message,
             }
         )
@@ -353,7 +376,7 @@ class StoryService:
         )
         logger.debug("Creating first-level memory item...")
         # logger.debug(f"System Prompt: {system_prompt}")
-        logger.debug(f"User Prompt: {user_prompt}")
+        # logger.debug(f"User Prompt: {user_prompt}")
 
         # call LLM to generate first-level memory item
         memory_item = await self.llm_communicator.generate_structured_response(
@@ -420,11 +443,6 @@ class StoryService:
                 }
              for item in history]
         
-        # print("*" * 100)
-        # from pprint import pprint
-        
-        # print("*" * 100)
-
         system_prompt, user_prompt = build_behavioral_mode_generation_prompt(
             {
                 "character_name": self.story_state.character.name,
@@ -460,7 +478,7 @@ class StoryService:
 
         logger.debug("Updating behavioral mode...")
         # logger.debug(f"System Prompt: {system_prompt}")
-        logger.debug(f"User Prompt: {user_prompt}")
+        # logger.debug(f"User Prompt: {user_prompt}")
 
         behavioral_mode_response = await self.llm_communicator.generate_structured_response(
             system_prompt=system_prompt,
@@ -470,7 +488,7 @@ class StoryService:
 
         self.story_state.character.update_behavioral_mode(behavioral_mode_response.model_dump())
 
-    async def process_user_message(self, message: str) -> None:
+    async def _process_user_message(self, message: str) -> None:
         """Process user message and generate bot response.
         Main orchestration method that coordinates the story interaction flow.
         """
@@ -541,6 +559,12 @@ class StoryService:
                     "original_error": str(e),
                 },
             )
+    
+    async def _process_user_message_v2(self, message: str) -> None:
+        pass
+    
+    async def process_user_message(self, message: str) -> None:
+        await self._process_user_message(message)
 
     # Façade methods for API routes
     def get_chat_history(self) -> list[ChatItem]:

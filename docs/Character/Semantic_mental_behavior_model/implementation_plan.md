@@ -42,11 +42,26 @@ Priority & Weight System should reflect the relative importance of different men
 
 - [x] implement LLM assistant to generate dynamic behavioral instructions based on character's current mental state, context of interactions, and trajectory of mental states over time.
 
-- [ ] update story initialization and character creation process to generate initial behavioral instructions based on the character's starting mental state and context.
-
 - [x] update character logic to utilize dynamic behavioral instructions for generating speech, body language, and actions
 
-- [ ] TEST: Create test character and verify that dynamic behavioral instructions are generated appropriately based on mental state, context, and trajectory of mental states over time. Ensure that behavior generation reflects the dynamic instructions accurately.
+- [x] TEST: Create test character and verify that dynamic behavioral instructions are generated appropriately based on mental state, context, and trajectory of mental states over time. Ensure that behavior generation reflects the dynamic instructions accurately.
+
+
+## Phase 4: Initial character mental state and behavior model generation
+
+- [x] remove default mental state and behavior model from base character data
+
+- [x] add to character structure current mental state manifestation
+
+- [x] generate initial mental states according to session init context and character background during character creation
+
+- [x] update character "update mental state logic" to add manifestation
+
+- [x] generate initial behavior model according to initial mental states and character background and session init context.
+
+- [x] update in game mental state tracking so current mental state will be detached from messages history and passed after.
+
+- [ ] TEST: Create test character and verify that initial mental states and behavior model are generated appropriately based on session init context and character background. Ensure that behavior generation reflects the initial mental states and behavior model accurately from the start of the session.
 
 
 ## Phase 4: Caching of Behavioral Instructions

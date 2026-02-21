@@ -134,6 +134,7 @@ base_personality: # A core block defining the character's fundamental identity a
 mental_states: # A list of emotional and psychological states the character can experience. Each state uses semantic descriptions rather than numeric values, allowing the LLM to interpret transitions based on context and narrative significance.
   - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)
     current_level: # The current descriptive level (e.g., Maintained, Asserted, Compromised, Lost)
+    current_level_reasoning: # The character's reasoning for being at this level, written from their perspective. This should explain how they perceive their situation and why they believe they are at this level, providing insight into their internal state and worldview.
     
     scale: # A list of levels for this mental state, ordered from most positive to most negative (4 levels)
       - level: # The descriptive name for this level (e.g., Asserted, Maintained, Compromised, Lost)
