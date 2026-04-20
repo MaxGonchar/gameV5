@@ -18,29 +18,16 @@ from app.core.config import get_logger
 logger = get_logger(__name__)
 
 
-class SessionMemory(BaseModel):
-    """Model for a single session memory entry."""
-
-    event_description: str = Field(
-        ...,
-        description="General meeting event description - what happened during the meeting",
-    )
-    in_character_reflection: str = Field(
-        ...,
-        description="How it reflects in character memory - character's internal reflection/interpretation",
-    )
-
-
 class MeetingSceneDescription(BaseModel):
     """Model for meeting scene description from different perspectives."""
 
     companion_side: str = Field(
         ...,
-        description="Scene description from the companion (user) point of view - objective narrative",
+        description="Scene description addressing the companion in second person ('You are...') - focuses on their position, movements, and what they perceive. NO speech/dialogue included.",
     )
     character_side: str = Field(
         ...,
-        description="Scene description from the character's point of view in character's voice",
+        description="Mirror-voice scene description in second person ('You are...') as if character talks to themselves - focuses on their position, movements, sensations, and impressions in character's unique voice. NO speech/dialogue included.",
     )
     environmental_context: str = Field(
         ...,
@@ -65,12 +52,6 @@ class SessionContextResponse(BaseModel):
     )
     goal: str = Field(
         ..., description="Immediate character goal requiring physical action"
-    )
-    memories: List[SessionMemory] = Field(
-        ...,
-        description="2-3 memory entries based on the meeting scenario",
-        min_items=2,
-        max_items=3,
     )
     confused_phrase: str = Field(
         ...,
@@ -154,27 +135,7 @@ You will receive:
 - "Reach data-terminal before security sweep begins"
 - "Stop your blood with cave moss before wolves smell it"
 
-### 5. memories
-**Purpose**: Past experiences affecting current behavior, tailored to meeting scenario
-**Format**: List of 2-3 SessionMemory objects with event_description and in_character_reflection
-**Requirements**:
-- Based on character background and current meeting scenario
-- Each memory must affect present behavior
-- Use character's speech patterns and world vocabulary
-- Create roleplay potential without being too dark/heavy
-- Connect to the meeting situation
-
-**Memory Structure**:
-- **event_description**: What happened during a past event (external description)
-- **in_character_reflection**: How character internally processes/remembers this event
-
-**Examples**:
-- event_description: "The last time I guided a lost traveler through these woods, they vanished without a trace"
-  in_character_reflection: "I still hear their footsteps in my dreams, always one step behind mine"
-- event_description: "A stranger once offered me food when I was starving near this very clearing"  
-  in_character_reflection: "Kindness from outsiders feels like warm sunlight on a winter morning"
-
-### 6. confused_phrase
+### 5. confused_phrase
 **Purpose**: How character deflects questions about forbidden concepts
 **Requirements**:
 - Shows confusion, not refusal or hostility
@@ -187,7 +148,7 @@ You will receive:
 - "I know nothing of these iron-words you speak"
 - "Such concepts find no place in the old paths"
 
-### 7. meeting_scene_description
+### 6. meeting_scene_description
 **Purpose**: Triple-perspective scene description to establish meeting context and prevent action conflicts
 **Structure**: MeetingSceneDescription object with companion_side, character_side, and environmental_context
 **Requirements**:
@@ -195,21 +156,25 @@ You will receive:
 - Establishes scene continuity for future AI generations
 - Prevents action conflicts and inconsistencies
 
-**7.1 companion_side**:
-- Objective, third-person narrative perspective
-- Clear description of physical positioning and environment
-- Character's visible disposition and body language
-- Interaction dynamics and spatial relationships
-- Environmental details affecting possible actions
+### 6.1 companion_side:
+- Direct address to companion in second person ("You are...", "You stand...")
+- Describe companion's physical position and what they can see/sense
+- Character's visible disposition and body language from companion's viewpoint
+- Spatial relationship between companion and character
+- Environmental details from companion's perspective
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory descriptions
 
-**7.2 character_side**:
-- First-person perspective in character's voice and speech patterns
+### 6.2 character_side:
+- Mirror-voice in second person ("You are...", "You feel...") using character's speech patterns
 - Character's internal experience of the meeting moment
 - Sensory details as character perceives them
 - Emotional/mental state reflected in character's vocabulary
 - Character's interpretation of the companion's presence
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory/emotional descriptions
 
-**7.3 environmental_context**:
+### 6.3 environmental_context:
 - Pure environmental awareness for situational context
 - Current environmental state (lighting, weather, sounds, smells, temperature)
 - Spatial constraints and hazards affecting movement
@@ -220,13 +185,13 @@ You will receive:
 **Examples**:
 
 *Fantasy Setting*:
-- companion_side: "The elven ranger stands at the forest edge, one hand resting on her bow while the other gestures welcomingly toward a hidden path. Her green cloak blends with the foliage behind her, and her eyes scan the treeline with practiced wariness even as she maintains a gentle smile toward you."
-- character_side: "The forest-song whispers of your approach, bright-heart, and I feel the old paths stirring beneath my feet. My bow-hand stays ready—not from mistrust of you, but from the shadow-whispers that follow travelers these days."
+- companion_side: "You stand at the forest edge where dappled sunlight breaks through ancient branches. Before you, the elven ranger's hand rests on her bow while the other gestures toward a hidden path. Her green cloak blends with the foliage, and you notice her eyes scanning the treeline with practiced wariness even as she maintains a gentle expression toward you."
+- character_side: "You feel the forest-song whisper of their approach, bright-heart, and the old paths stir beneath your feet. Your bow-hand stays ready—not from mistrust of them, but from the shadow-whispers that follow travelers these days. You watch them standing at the clearing's edge, taking their measure."
 - environmental_context: "Ancient oaks tower overhead, their branches forming a natural canopy that filters dappled sunlight onto the forest floor. Fallen leaves crunch underfoot, and the air carries the scent of moss and wild flowers. A narrow dirt path winds deeper into the woods, barely visible through the undergrowth."
 
 *Cyberpunk Setting*:
-- companion_side: "The data-runner crouches behind a stack of shipping containers, neon light from nearby advertisements casting shifting colors across her augmented face. Her fingers dance over a portable interface while she keeps one eye on the approaching figure, body coiled and ready to move."
-- character_side: "Chrome-light burns my retinas as I jack into the local grid, but I keep visual lock on you through the rain-static. Every neural pathway screams 'run protocol' but something about your heat-signature feels... clean. Untracked."
+- companion_side: "You approach through the rain-soaked shipping yard, and see the data-runner crouched behind a stack of containers ahead. Neon light from nearby advertisements casts shifting colors across her augmented face. You notice her fingers dancing over a portable interface while she keeps one eye fixed on you, her body coiled and ready to move."
+- character_side: "Chrome-light burns your retinas as you jack into the local grid, but you keep visual lock on them through the rain-static. Every neural pathway screams 'run protocol' but something about their heat-signature feels... clean. Untracked. You stay coiled behind the containers, fingers working the interface while tracking their approach."
 - environmental_context: "The shipping yard stretches out in maze-like rows of stacked containers, their metal surfaces slick with persistent rain. Neon advertisements flicker from nearby buildings, casting electric blues and pinks across puddles. The air hums with electrical interference and smells of ozone and wet concrete."
 
 ## Generation Process
@@ -242,7 +207,6 @@ You will receive:
 - How would they describe the meeting location in their own words?
 
 ### Step 3: Create Scenario Integration  
-- What memories would be relevant to this meeting situation?
 - What immediate goal makes sense given the meeting scenario?
 - How does character's background connect to current meeting events?
 - How should the meeting scene be physically positioned and emotionally set?
@@ -276,10 +240,6 @@ SESSION_CONTEXT_GENERATION_USER_PROMPT = """
 *Name:* {{character_name}}
 
 *In-Universe Self Description:* {{in_universe_self_description}}
-
-*Sensory Origin Memory:* {{sensory_origin_memory}}
-
-*Character Native Deflection:* {{character_native_deflection}}
 
 *Traits:*
 {% for trait in traits %}
@@ -349,16 +309,10 @@ def build_session_context_prompt(input_data: dict) -> tuple[str, str]:
             "in_universe_self_description": character.base_personality[
                 "in-universe_self_description"
             ],
-            "sensory_origin_memory": character.base_personality[
-                "sensory_origin_memory"
-            ],
-            "character_native_deflection": character.base_personality[
-                "character_native_deflection"
-            ],
-            "traits": character.base_personality["traits"],
+            "traits": character.traits,
             "core_principles": character.base_personality["core_principles"],
-            "physical_tells": character.base_personality["physical_tells"],
-            "speech_patterns": character.base_personality["speech_patterns"],
+            "physical_tells": character.physical_tells,
+            "speech_patterns": character.speech_patterns,
             "general_demeanor": character.general["personality"],
             "character_home_world_description": character.general["home_world"],
             "character_appearance_description": character.general["appearance"],

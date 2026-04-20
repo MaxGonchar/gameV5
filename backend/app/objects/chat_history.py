@@ -125,7 +125,7 @@ class ChatHistory:
         Raises:
             ValueError: If after_id is not found in chat history
         """
-        after_id = str(max(0, int(after_id) - 1))
+        after_id = str(max(0, int(after_id)))
         result = []
         found = False
 
@@ -141,3 +141,22 @@ class ChatHistory:
             )
 
         return result
+    
+    def get_message_by_id(self, message_id: str) -> ChatItem:
+        """
+        Get a chat message by its ID.
+
+        Args:
+            message_id: Target chat item ID
+
+        Returns:
+            Chat item with the specified ID
+
+        Raises:
+            ValueError: If message_id is not found in chat history
+        """
+        for item in self.data:
+            if item["id"] == message_id:
+                return item
+
+        raise ValueError(f"Chat item with ID '{message_id}' not found in chat history")

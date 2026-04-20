@@ -13,11 +13,11 @@ class MoveSceneDescriptionResponse(BaseModel):
 
     companion_side: str = Field(
         ...,
-        description="Scene description from the companion (user) point of view - objective narrative",
+        description="Scene description addressing the companion in second person ('You are...') - focuses on their position, movements, and what they perceive. NO speech/dialogue included.",
     )
     character_side: str = Field(
         ...,
-        description="Scene description from the character's point of view in character's voice",
+        description="Mirror-voice scene description in second person ('You are...') as if character talks to themselves - focuses on their position, movements, sensations, and impressions in character's unique voice. NO speech/dialogue included.",
     )
     environmental_context: str = Field(
         ...,
@@ -44,23 +44,28 @@ You will receive:
 ## Required Output Variables
 
 ### companion_side
-**Purpose**: Objective, third-person narrative perspective for the user
+**Purpose**: Direct address to companion showing what they experience
 **Requirements**:
-- Clear description of physical positioning and environment after the action
-- Character's visible disposition and body language changes
-- Environmental changes resulting from the action
-- Interaction dynamics and spatial relationships
-- Sensory details affecting possible future actions
+- Direct address in second person ("You see...", "You stand...")
+- Describe companion's physical position and what they can perceive after the action
+- Character's visible disposition and body language changes from companion's viewpoint
+- Environmental changes from companion's perspective
+- Spatial relationship between companion and character
+- Sensory details affecting companion's possible future actions
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory descriptions
 - Maintains continuity with previous companion_side description
 
 ### character_side  
-**Purpose**: First-person perspective in character's voice showing their experience
+**Purpose**: Mirror-voice in second person showing character's internal experience
 **Requirements**:
+- Mirror-voice ("You are...", "You feel...") using character's speech patterns
 - Character's internal experience of the scene changes
 - Sensory details as character perceives them after the action
 - Emotional/mental state reflected in character's vocabulary
-- Character's interpretation of environmental changes
-- Character's reaction to companion's presence/actions
+- Character's reaction to environmental changes and companion's presence/actions
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory/emotional descriptions
 - Uses established character speech patterns and world vocabulary
 - Maintains continuity with previous character_side description
 
@@ -91,16 +96,17 @@ You will receive:
 **Character Authenticity**: Character_side uses established voice and world perspective
 **Narrative Flow**: Smooth transition from previous scene state
 **Action Consequences**: Clear representation of how actions changed the environment
+**No Speech**: Descriptions focus only on positions, movements, sensations - never dialogue
 
 ## Examples Structure:
 
 *Previous Scene*:
-- companion_side: "The warrior stands ready in the moonlit clearing..."
-- character_side: "Moonlight catches the edge of my blade as I watch..."
+- companion_side: "You stand in the moonlit clearing, watching the warrior poised and ready before you..."
+- character_side: "Moonlight catches the edge of your blade as you watch them across the clearing..."
 
 *After Action: "I sheathe my sword and approach the ancient tree"*:
-- companion_side: "The warrior slides her blade into its scabbard and moves toward the massive oak, her footsteps silent on the frost-covered ground. The tree's gnarled branches cast shifting shadows across her determined face."
-- character_side: "Cold steel settles against my hip as I walk toward the ancient one's embrace. Each step brings whispers from root-deep memories, and I feel the tree's patience like a heartbeat in the earth."
+- companion_side: "You watch as the warrior slides her blade into its scabbard and moves toward the massive oak. Her footsteps are silent on the frost-covered ground, and you see the tree's gnarled branches cast shifting shadows across her determined face as she approaches."
+- character_side: "Cold steel settles against your hip as you walk toward the ancient one's embrace. Each step brings whispers from root-deep memories, and you feel the tree's patience like a heartbeat in the earth beneath your feet."
 - environmental_context: "The ancient oak towers overhead, its massive trunk scarred by centuries of storms. Frost covers the ground in crystalline patches that crunch underfoot. Moonlight filters through bare branches, creating a lattice of silver shadows. The air smells of winter earth and old wood, with a hint of approaching snow on the wind."
 
 ## Goal Evaluation (Additional Task)
@@ -126,9 +132,11 @@ After generating the scene descriptions, evaluate the character's current goal s
 ## Remember:
 - Maintain established character voice and world rules
 - Create vivid, immersive descriptions from both perspectives
+- Use second person for both companion_side ("You see...") and character_side ("You feel...")
 - Ensure logical scene progression from previous state
 - Focus on sensory details and environmental changes
-- Keep character_side authentic to established speech patterns"""
+- Keep character_side authentic to established speech patterns
+- NO speech or dialogue in scene descriptions - only positions, movements, sensations, impressions"""
 
 MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 ## Previous Scene Description
@@ -147,10 +155,6 @@ MOVE_SCENE_DESCRIPTION_USER_PROMPT = """
 *Name:* {{character_name}}
 
 *In-Universe Self Description:* {{in_universe_self_description}}
-
-*Sensory Origin Memory:* {{sensory_origin_memory}}
-
-*Character Native Deflection:* {{character_native_deflection}}
 
 *Traits:*
 {% for trait in traits %}
@@ -218,12 +222,6 @@ def build_scene_description_prompt(input_data: dict) -> tuple[str, str]:
             "character_name": story_state.character.base_personality["name"],
             "in_universe_self_description": story_state.character.base_personality[
                 "in-universe_self_description"
-            ],
-            "sensory_origin_memory": story_state.character.base_personality[
-                "sensory_origin_memory"
-            ],
-            "character_native_deflection": story_state.character.base_personality[
-                "character_native_deflection"
             ],
             "traits": story_state.character.traits,
             "core_principles": story_state.character.base_personality.get(

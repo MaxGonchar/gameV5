@@ -1,31 +1,14 @@
-# Features
+# First Iteration Features
+1. mental state/behavior model
+2. Opponent relationship model
+3. Goal-oriented character behavior
+4. Character creation flow
 
 ## Sandbox space for experiments with AI models
 - [ ] create a separate space for experiments with AI models where I can test different prompts, configurations, and models without affecting the main project.
 
-
-## Emotional state changes without limit
-When user performs simple actions moving character mental state in one direction it reaches limit.
-Instead of this character should require special actions to step to another way.
-
-
-## Behavioral models overlay check
-Create a mechanism to check if behavioral models overlay each other and create conflicts in character behavior.
-
-
-## Character vocabulary
-During character generation create a vocabulary so big that allow character to have unique speech patterns for different states and situations.
-
-
 ## UI improvements
 on UI I see user message disappear after submitting it. It would be better to keep it visible until response is received.
-
-
-## Second level memory
-- [ ] create second memory structure
-- [ ] whn create character, add previous story as second level memory
-- [ ] inject second level memory into character prompt
-
 
 ## Goal-oriented character behavior
 - [X] add current_goal to character

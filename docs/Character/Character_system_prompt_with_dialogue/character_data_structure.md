@@ -96,7 +96,7 @@ id: # A universally unique identifier for the character, used for system trackin
 base_personality: # A core block defining the character's fundamental identity and personality.
   name:  # The character's chosen or given name. This is the primary identifier used in dialogue.
 
-  in-universe_self_description: # Character's core identity in their own words, completing "You ARE [name], [this description]." Combine WHO they are (role/nature) + WHAT they want/need (driving force) + HOW they see their place (relationship to world). Use character's perspective and vocabulary - no meta concepts. Example: "a scavenger who knows survival means staying small and taking what others miss" or "the last keeper of a dying garden, holding onto life one seed at a time."
+  in-universe_self_description: # Character's core identity in their own words like if the character is speaking to themselves, completing "You ARE [name], [this description]." Combine WHO they are (role/nature) + WHAT they want/need (driving force) + HOW they see their place (relationship to world). Use character's perspective and vocabulary - no meta concepts. Example: "a scavenger who knows survival means staying small and taking what others miss" or "the last keeper of a dying garden, holding onto life one seed at a time."
   
   appearance: # How the character experiences and moves in their physical form. Write from their embodied perspective - include size/build (affects movement and interaction), distinctive features they're aware of, physical capabilities or limitations, and sensory details (texture, temperature, scent). Focus on aspects relevant to how they navigate space and interact physically. Example: "Compact frame moves low and quiet; calloused hands built for gripping; cold-blooded skin drinks in warmth; sharp scales catch on fabric."
   
@@ -131,64 +131,57 @@ base_personality: # A core block defining the character's fundamental identity a
     - 
     - 
 
-mental_states: # A list of emotional and psychological states the character can experience. Each state defines how the character responds to different triggers and how those responses manifest behaviorally.
-  - type: # The name of the mental state (e.g., stress, trust, fear, excitement, anger, sadness, confusion, hope)
-    scale: # The categorical levels and their numerical ranges for this mental state (up to 4 levels)
-      - level: # The descriptive name for this level (e.g., calm, tense, overwhelmed, breaking)
-        range: # The numerical range for this level [min, max]
-      - level: 
-        range: 
-    impact_rate: # Numerical values defining how different trigger impacts affect this mental state
-      slight: # Value for "slight_increase" or "slight_decrease" impacts
-      moderate: # Value for "moderate_increase" or "moderate_decrease" impacts  
-      major: # Value for "major_increase" or "major_decrease" impacts
-      extreme: # Value for "extreme_increase" or "extreme_decrease" impacts
-    default: # The character's baseline level for this mental state
-    current: # The character's current level for this mental state (updated during gameplay)
-    current_numeric: # The character's current numeric value for this mental state (updated during gameplay)
-     # 0-100 scale representing intensity within the defined levels
-    change_mechanics:
-      min: # Minimum possible numeric value for this state
-      max: # Maximum possible numeric value for this state
-      decay_rate: # Natural change in this state per exchange (negative for decrease, positive for increase)
-      max_change: # Maximum change that can occur from a single trigger
-      momentum_factor: # How previous levels affect sensitivity to new triggers (0.0-1.0)
-    character_interpretation:
-      triggers: # Abstract patterns that affect this character's mental state, with reasoning for LLM context
-        - pattern: # Abstract description of situations that trigger this state change
-          base_impact: # Impact level: slight_increase, moderate_increase, major_increase, extreme_increase, slight_decrease, moderate_decrease, major_decrease, extreme_decrease
-          reasoning: # Why this pattern affects this character in this way, linked to their psychology
-        - pattern: 
-          base_impact: 
-          reasoning: 
-      manifestation: # How this character specifically shows this mental state - their unique physical and behavioral responses
-
-behavioral_modes: # A list of character-specific behavioral modes that represent different emotional shades of the base personality. Each mode emerges from specific mental state combinations and defines how the character pursues goals under those emotional conditions.
-  - mode_name: # A character-specific, evocative name for this behavioral mode (e.g., "survival_edge", "cautious_hope", "overwhelmed_shutdown")
-    description: # Brief description of the emotional state this mode represents and when it activates
+mental_states: # A list of emotional and psychological states the character can experience. Each state uses semantic descriptions rather than numeric values, allowing the LLM to interpret transitions based on context and narrative significance.
+  - type: # The name of the mental state (e.g., Control, Security, Trust, Longing)
+    current_level: # The current descriptive level (e.g., Maintained, Asserted, Compromised, Lost)
+    current_level_reasoning: # The character's reasoning for being at this level, written from their perspective. This should explain how they perceive their situation and why they believe they are at this level, providing insight into their internal state and worldview.
     
-    trigger_conditions: # Mental state combinations that activate this mode. Use mental state type names and their level names.
-      # mental_state_type: [level_name, level_name]  # e.g., stress: [high, overwhelming], trust: [low, fragile]
+    scale: # A list of levels for this mental state, ordered from most positive to most negative (4 levels)
+      - level: # The descriptive name for this level (e.g., Asserted, Maintained, Compromised, Lost)
+        
+        semantic_meaning: |
+          # What this level means in universal terms. Describe the character's internal state, 
+          # beliefs about their situation, and how they relate to their world at this level.
+          # Write from the character's perspective using "I" statements.
+          # This is the core definition that guides all behavior at this level.
+        
+        character_experience: |
+          # How the character subjectively experiences this level. What does it feel like to be 
+          # in this state? What sensations, thoughts, and emotional qualities dominate?
+          # More concrete and immediate than semantic_meaning.
+        
+        requirements_to_reach: # Conditions needed to reach this level from other levels
+          from_[level_name]: |
+            # Specific events, patterns, or conditions required to transition to this level 
+            # from [level_name]. Be explicit about what must happen (not just how much).
+            # Distinguish between single events vs. patterns, immediate triggers vs. cumulative effects.
+            # Example: from_maintained, from_compromised, from_lost
+          
+          from_[level_name]: |
+            # Additional transition paths from other levels
+        
+        requirements_to_leave: # Conditions needed to leave this level
+          normal_transition: |
+            # Standard conditions for transitioning out of this level through gradual change.
+            # What must happen over time for the character to move to an adjacent level?
+          
+          shock_event: |
+            # Emergency conditions that can force immediate transition, bypassing normal requirements.
+            # What dramatic events could instantly change the character's mental state?
+      
+      - level: # Another level (repeat structure)
+        semantic_meaning: |
+        character_experience: |
+        requirements_to_reach:
+          from_[level_name]: |
+        requirements_to_leave:
+          normal_transition: |
+          shock_event: |
     
-    traits: # Complete list of traits for this mode, using standard "Action/Behavior → Motivation/Rationale" syntax. These are shades of base personality, not replacements.
-      - "Action/Behavior → Motivation/Rationale"
-      - "Action/Behavior → Motivation/Rationale"
-    
-    speech_patterns: # How character's speech shifts in this mode - amplifications or constraints on base patterns
-      - 
-      - 
-    
-    physical_tells: # Additional physical behaviors specific to this emotional mode
-      - 
-      - 
-    
-    behavioral_effects: # High-level description of proactive behaviors character exhibits in this mode (metadata for understanding/future goal generation)
-      - 
-      - 
-    
-    strategy_priorities: # Which approaches character prioritizes in this mode (metadata for understanding/future goal generation)
-      - 
-      -
+    transition_notes: |
+      # Meta-commentary on how this mental state system prevents gaming and handles plot twists.
+      # Explain why repetitive actions won't artificially inflate/deflate this state.
+      # Note how shock events and narrative significance factor into transitions.
 
 communication_patterns: # Foundation library of how this character communicates across different emotional/psychological states. These patterns are created BEFORE mental states and behavioral modes are defined, serving as the base understanding of character expression. Each pattern captures a distinct emotional/situational state with concrete examples of speech and body language. Use these to inform mental state triggers and behavioral mode definitions later.
   - context: # Natural language description of the emotional/psychological state when this communication pattern emerges
@@ -231,9 +224,9 @@ memory_items: # A list of significant past events that shape the character's cur
       start_message_id: # The message ID marking the start of this memory item
       end_message_id: # The message ID marking the end of this memory item
       episode_title: # A brief, evocative title for this memory item
-      narrative_summary: # A concise summary of the events that occurred during this memory item
-      emotional_arc_summary: # A summary of the character's emotional journey throughout this memory item
-      character_reflections: # The character's personal reflections on the events of this memory item
+      narrative_summary: # Mirror-voice factual recap in second person (e.g., "You met the stranger at the clearing. You watched them for three days...")
+      emotional_arc_summary: # Mirror-voice narrative of emotional journey in second person (e.g., "Your hackles stood rigid when they first came near. Through many days, their offerings chipped at your walls...")
+      character_reflections: # Deep mirror-voice reflection in second person using character's unique voice (e.g., "You remember how their pattern repeated without trap-snap. You maybe... trust-small?")
       transition_trigger: # The event or realization that led to the end of this memory item and the transition to the next behavioral mode
       key_exchanges: # A list of key dialogue exchanges that were significant during this memory item
         - user: # The user's message in this exchange
@@ -247,17 +240,17 @@ memory_items: # A list of significant past events that shape the character's cur
         episode_range: [1, 3]
         compression_date: "2026-01-15T10:30:00Z"
       
-      # Character's subjective memory
-      memory_period: # From character's time perspective, e.g., "The days after the first storm", "When I learned to trust warmth", "The cold time before pack-bond"
+      # Character's subjective memory in mirror-voice (second person)
+      memory_period: # From character's time perspective, e.g., "The days after the first storm", "When you learned to trust warmth", "The cold time before pack-bond"
       
-      what_happened: # Event from character's perspective (not objective summary)
-        # e.g., "New packmate stayed close even when thunder shook the trees. We sheltered together. They didn't run."
+      what_happened: # Event from character's perspective in mirror-voice
+        # e.g., "New packmate stayed close even when thunder shook the trees. You sheltered together. They didn't run."
       
-      what_it_meant: # Patterns/coincidences character noticed, connections they made
-        # e.g., "When others are scared, staying together makes the fear smaller. Pack-bond grows in shared danger."
+      what_it_meant: # Patterns/coincidences character noticed, connections they made in mirror-voice
+        # e.g., "When others are scared, staying together makes the fear smaller. Your pack-bond grows in shared danger."
       
-      how_i_felt: # Character's emotional reflection in their voice
-        # e.g., "Fear turned to warmth. Realized: this one doesn't leave when things are hard. Maybe pack means staying through the bad times."
+      how_i_felt: # Character's emotional reflection in their voice and mirror-voice
+        # e.g., "Your fear turned to warmth. You realized: this one doesn't leave when things are hard. Maybe pack means staying through the bad times."
 
 general: # A block for general world-building and descriptive information about the character.
   home_world: # A description of the setting the character originates from or currently inhabits. It should explain the nature of the world and how the character perceives it—is it a source of wonder, terror, indifference, or opportunity?
@@ -316,4 +309,22 @@ goal: # A detailed block defining the character's primary goal. This is the cent
     - 
 
   status: ACTIVE # The current status of this character configuration. Use 'ACTIVE' for a character ready to be used in a role-play.
+
+# ----------------------------------------------------------------------------------------
+#Configurations created Dynamically during role-play sessions. These are not part of the initial character setup but are generated and updated as the interaction unfolds.
+# ----------------------------------------------------------------------------------------
+
+behavioral_mode: # A dynamic block that evolves during the role-play, reflecting the character's current mental state and behavioral tendencies. This model is generated based on the character's mental states, communication patterns, and past experiences, and it guides the character's responses in real-time.
+  name: # A descriptive name for the current behavioral model, reflecting the character's emotional state or mode (e.g., "cautious_hope", "overwhelmed_shutdown").
+  mental_states_combination: # A specific combination of mental state types and their current levels that defines the character's emotional condition at a given moment.
+    # Example: {Control: Asserted, Security: Compromised, Trust: Maintained, Longing: Lost}
+  manifestation: # Mirror-voice description of the state in second person, as if character is talking to themselves (e.g., "You feel a cautious hope, trying to stay positive but afraid of being let down again. You want to reach out but hold back just in case. Your words are careful, trying to sound upbeat without giving too much away. Your body is tense, ready to pull back if things go wrong.")
+  why_here: # Explanation in second person of why this behavioral model is active based on the character's mental states and recent interactions (e.g., "You're in this state because the companion proved they could be patient over several turns, meeting your need for agency. But yesterday they pushed past a boundary you'd set, triggering your fear of others assuming intimacy means access to all of you."). This connects the current emotional condition to the character's psychology and history, providing context for behavior.
+  traits: # A list of traits (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These traits should be drawn from the character's base personality but may be amplified or constrained by the current emotional condition.
+    - "Action/Behavior → Motivation/Rationale"
+    - "Action/Behavior → Motivation/Rationale"
+  speech_patterns: # A list of speech patterns (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These patterns should be drawn from the character's base speech patterns but may be amplified or constrained by the current emotional condition.
+    - 
+  physical_tells: # A list of physical behaviors (5 items) that are currently most active or relevant based on the character's mental state and past experiences. These behaviors should be drawn from the character's base physical tells but may be amplified or constrained by the current emotional condition.
+    -
 ```

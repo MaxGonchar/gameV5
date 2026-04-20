@@ -83,3 +83,9 @@ class MetaDAO:
 
         logger.debug(f"Successfully loaded meta data from {file_path}")
         return data
+    
+    async def save_meta(self, meta: MetaData) -> None:
+        """Save meta data to YAML file."""
+        data = meta.to_dict()
+        await self.yaml_handler.write_yaml_file(self.meta_file, data)
+        logger.debug(f"Successfully saved meta data to {self.meta_file}")

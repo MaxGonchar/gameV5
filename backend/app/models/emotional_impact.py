@@ -193,7 +193,7 @@ def build_emotional_impact_prompt(input_data: dict) -> tuple[str, str]:
         state_data = {
             "type": state["type"],
             "current": state["default"],
-            "triggers": state["triggers"],
+            "triggers": state["character_interpretation"]["triggers"],
             "manifestation": state["manifestation"],
         }
         mental_states_data.append(state_data)

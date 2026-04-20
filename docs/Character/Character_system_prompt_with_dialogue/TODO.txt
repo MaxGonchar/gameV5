@@ -1,0 +1,26 @@
+1. ✅ why_here: I'm entering this encounter with compromised security because being in
+    an open garden with a stranger feels vulnerable and unsafe. My bonding state is
+    tentative because I long for connection but fear abandonment and judgment. Being
+    near this man reminds me of the protectors I've had in the past, both good and
+    bad, making me approach with caution. I'm trying to read him, to see if he's someone
+    who will keep me safe or cause me pain.
+
+    Should be You are entering ...
+
+2. ✅ second level memories should be: "You..."
+
+3. ✅ character thoughts in response
+
+4. ✅ repeated parts of previous messages.
+
+5. keep behavior models story (at least last three) OR keep the all history changes to be able to roll back to any point in the story.
+
+6. extract building logic to classes
+
+================================
+AI assistant 
+================================
+
+Define what common patterns are worth to be documented.
+
+Create main flow documentation of business logic so I could use it during brainstorming and development.
