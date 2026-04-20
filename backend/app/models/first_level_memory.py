@@ -29,14 +29,14 @@ class FirstLevelMemoryResponse(BaseModel):
     )
     emotional_arc_summary: str = Field(
         ...,
-        description="First-person narrative of emotional journey in character's voice (2-4 sentences)",
+        description="Mirror-voice narrative of emotional journey in second person, as if character is talking to themselves (2-4 sentences)",
     )
     narrative_summary: str = Field(
-        ..., description="Third-person factual recap of events (3-5 sentences)"
+        ..., description="Mirror-voice factual recap of events in second person (3-5 sentences)"
     )
     character_reflection: str = Field(
         ...,
-        description="Deep first-person reflection in character's unique voice (4-6 sentences)",
+        description="Deep mirror-voice reflection in second person using character's unique voice (4-6 sentences)",
     )
     key_exchanges: list[KeyExchange] = Field(
         ..., description="2-4 most pivotal moments from the episode"
@@ -84,9 +84,9 @@ Generate a JSON object with the following fields:
 ```json
 {
   "episode_title": "Brief, evocative title (3-8 words)",
-  "emotional_arc_summary": "First-person narrative of emotional journey in character's voice (2-4 sentences)",
-  "narrative_summary": "Third-person factual recap of events (3-5 sentences)",
-  "character_reflection": "Deep first-person reflection in character's unique voice (4-6 sentences)",
+  "emotional_arc_summary": "Mirror-voice narrative of emotional journey in second person (2-4 sentences)",
+  "narrative_summary": "Mirror-voice factual recap of events in second person (3-5 sentences)",
+  "character_reflection": "Deep mirror-voice reflection in second person using character's unique voice (4-6 sentences)",
   "key_exchanges": [
     {
       "user": "Exact user message",
@@ -105,21 +105,23 @@ Generate a JSON object with the following fields:
 - From character's perspective: "First Steps Away from Shadows" not "Meeting the Player"
 - 3-8 words maximum
 
-### Emotional Arc Summary (Character Voice)
-- **CRITICAL**: Write in first-person using the character's unique speech patterns
+### Emotional Arc Summary (Mirror Voice)
+- **CRITICAL**: Write in second person as if character is talking to themselves in a mirror, using their unique speech patterns
 - Show the emotional transformation from start to end
 - Reference specific feelings and how they shifted
 - 2-4 sentences, emotionally rich but concise
-- Example for a wolf character: "My hackles stood rigid when the two-legs first came near-near. Through many sun-cycles, their soft-sounds and food-offerings chipped at my stone-walls. By the end, I found my tail... not tucked. Strange-safe feeling."
+- Example for a wolf character: "Your hackles stood rigid when the two-legs first came near-near. Through many sun-cycles, their soft-sounds and food-offerings chipped at your stone-walls. By the end, you found your tail... not tucked. Strange-safe feeling."
 
 ### Narrative Summary
-- Third-person, factual account of what happened
+- Mirror-voice (second person), factual account of what happened
 - Focus on actions and events, not emotions
 - 3-5 sentences maximum
 - Provides objective context for the character to remember
+- Example: "You met the stranger at the clearing. You watched them for three days. You accepted their food offering on the fourth day. You allowed them closer by the end of the week."
 
-### Character Reflection (Deep First-Person)
+### Character Reflection (Deep Mirror-Voice)
 - **MOST IMPORTANT FIELD**: This is how the character internally processes the episode
+- Write in second person as if character is talking to themselves
 - Use the character's unique vocabulary, worldview, and thought patterns
 - Reference specific moments that stuck with them
 - Show their interpretation of events through their psychological lens
@@ -145,9 +147,10 @@ Generate a JSON object with the following fields:
 ## Quality Standards
 
 ### Voice Consistency
-- If the character speaks in broken grammar, your character_reflection and emotional_arc_summary MUST match that style
+- If the character speaks in broken grammar, your character_reflection, emotional_arc_summary, and narrative_summary MUST match that style
 - If the character uses metaphors (e.g., "two-legs" for humans), use them consistently
 - Match their emotional vocabulary and worldview
+- Always use second person ("You are...", "Your hackles...") not first person ("I am...", "My hackles...")
 
 ### Conciseness vs. Completeness
 - Aim for ~200-300 words total across all fields
@@ -168,10 +171,10 @@ Generate a JSON object with the following fields:
 ## Common Pitfalls to Avoid
 
 ❌ **Generic Language**: "The character felt better about the user"
-✅ **Character-Specific**: "The two-legs proved their soft-sounds match their soft-actions. Pack-trust grows tiny-tiny."
+✅ **Character-Specific**: "The two-legs proved their soft-sounds match their soft-actions. Your pack-trust grows tiny-tiny."
 
 ❌ **Forgetting Character Voice**: "I started to trust them more through consistent actions"
-✅ **Maintaining Voice**: "Their pattern repeats-repeats-repeats. No trap-snap yet. Maybe... trust-small?"
+✅ **Maintaining Voice**: "Their pattern repeats-repeats-repeats. No trap-snap yet. You maybe... trust-small?"
 
 ❌ **Too Much Detail**: Including every message exchange
 ✅ **Selective Focus**: Only moments that emotionally mattered
@@ -192,8 +195,8 @@ stress:
   after_level: "wary"
 ```
 
-Translate this into character voice:
-- "My muscles unclenched-small when food came without grab-hands following"
+Translate this into character mirror-voice:
+- "Your muscles unclenched-small when food came without grab-hands following"
 - Show the journey from "tense" → "wary" in their words
 - Connect the numeric drop (65→45) to felt experience
 
@@ -201,13 +204,14 @@ Translate this into character voice:
 
 Before submitting your memory item, verify:
 - [ ] Episode title is evocative and character-perspective
-- [ ] Emotional arc summary is in first-person character voice
-- [ ] Narrative summary provides factual context
-- [ ] Character reflection deeply explores their internal experience in their unique voice
+- [ ] Emotional arc summary is in second person mirror-voice using character's speech patterns
+- [ ] Narrative summary is in second person mirror-voice providing factual context
+- [ ] Character reflection deeply explores their internal experience in second person using their unique voice
 - [ ] 2-4 key exchanges are selected and copied exactly
 - [ ] Transition trigger clearly explains the mode change
 - [ ] Total length is ~200-300 words
 - [ ] Voice is consistent with character profile
+- [ ] All three summaries use "You" not "I" or "They"
 - [ ] No redundancy with previous memory items
 - [ ] Character could naturally reference this memory in future conversations
 
@@ -322,9 +326,9 @@ Based on the character profile, episode data, and emotional trajectory provided 
 ```json
 {
   "episode_title": "Brief, evocative title from character's perspective (3-8 words)",
-  "emotional_arc_summary": "First-person narrative of emotional journey in character's voice (2-4 sentences)",
-  "narrative_summary": "Third-person factual recap of events (3-5 sentences)",
-  "character_reflection": "Deep first-person reflection in character's unique voice (4-6 sentences)",
+  "emotional_arc_summary": "Mirror-voice narrative of emotional journey in second person (2-4 sentences)",
+  "narrative_summary": "Mirror-voice factual recap of events in second person (3-5 sentences)",
+  "character_reflection": "Deep mirror-voice reflection in second person using character's unique voice (4-6 sentences)",
   "key_exchanges": [
     {
       "user": "Exact user message",
@@ -337,12 +341,13 @@ Based on the character profile, episode data, and emotional trajectory provided 
 ```
 
 **Remember:**
-- Use the character's unique speech patterns in `emotional_arc_summary` and `character_reflection`
+- Use second person ("You") in `emotional_arc_summary`, `narrative_summary`, and `character_reflection`
+- Use the character's unique speech patterns in all mirror-voice fields
 - Reference the emotional snapshots to understand how feelings evolved
 - Select only 2-4 most pivotal exchanges for `key_exchanges`
 - The memory should be ~200-300 words total
 - Avoid repeating information from previous memory items
-- Write as if helping the character process and internalize this experience
+- Write as if helping the character process and internalize this experience by talking to themselves
 
 Generate the memory item now.
 """

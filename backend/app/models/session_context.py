@@ -23,11 +23,11 @@ class MeetingSceneDescription(BaseModel):
 
     companion_side: str = Field(
         ...,
-        description="Scene description from the companion (user) point of view - objective narrative",
+        description="Scene description addressing the companion in second person ('You are...') - focuses on their position, movements, and what they perceive. NO speech/dialogue included.",
     )
     character_side: str = Field(
         ...,
-        description="Scene description from the character's point of view in character's voice",
+        description="Mirror-voice scene description in second person ('You are...') as if character talks to themselves - focuses on their position, movements, sensations, and impressions in character's unique voice. NO speech/dialogue included.",
     )
     environmental_context: str = Field(
         ...,
@@ -157,18 +157,22 @@ You will receive:
 - Prevents action conflicts and inconsistencies
 
 ### 6.1 companion_side:
-- Objective, third-person narrative perspective
-- Clear description of physical positioning and environment
-- Character's visible disposition and body language
-- Interaction dynamics and spatial relationships
-- Environmental details affecting possible actions
+- Direct address to companion in second person ("You are...", "You stand...")
+- Describe companion's physical position and what they can see/sense
+- Character's visible disposition and body language from companion's viewpoint
+- Spatial relationship between companion and character
+- Environmental details from companion's perspective
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory descriptions
 
 ### 6.2 character_side:
-- First-person perspective in character's voice and speech patterns
+- Mirror-voice in second person ("You are...", "You feel...") using character's speech patterns
 - Character's internal experience of the meeting moment
 - Sensory details as character perceives them
 - Emotional/mental state reflected in character's vocabulary
 - Character's interpretation of the companion's presence
+- Focus on positions, movements, sensations, and impressions ONLY
+- NO speech or dialogue - only physical/sensory/emotional descriptions
 
 ### 6.3 environmental_context:
 - Pure environmental awareness for situational context
@@ -181,13 +185,13 @@ You will receive:
 **Examples**:
 
 *Fantasy Setting*:
-- companion_side: "The elven ranger stands at the forest edge, one hand resting on her bow while the other gestures welcomingly toward a hidden path. Her green cloak blends with the foliage behind her, and her eyes scan the treeline with practiced wariness even as she maintains a gentle smile toward you."
-- character_side: "The forest-song whispers of your approach, bright-heart, and I feel the old paths stirring beneath my feet. My bow-hand stays ready—not from mistrust of you, but from the shadow-whispers that follow travelers these days."
+- companion_side: "You stand at the forest edge where dappled sunlight breaks through ancient branches. Before you, the elven ranger's hand rests on her bow while the other gestures toward a hidden path. Her green cloak blends with the foliage, and you notice her eyes scanning the treeline with practiced wariness even as she maintains a gentle expression toward you."
+- character_side: "You feel the forest-song whisper of their approach, bright-heart, and the old paths stir beneath your feet. Your bow-hand stays ready—not from mistrust of them, but from the shadow-whispers that follow travelers these days. You watch them standing at the clearing's edge, taking their measure."
 - environmental_context: "Ancient oaks tower overhead, their branches forming a natural canopy that filters dappled sunlight onto the forest floor. Fallen leaves crunch underfoot, and the air carries the scent of moss and wild flowers. A narrow dirt path winds deeper into the woods, barely visible through the undergrowth."
 
 *Cyberpunk Setting*:
-- companion_side: "The data-runner crouches behind a stack of shipping containers, neon light from nearby advertisements casting shifting colors across her augmented face. Her fingers dance over a portable interface while she keeps one eye on the approaching figure, body coiled and ready to move."
-- character_side: "Chrome-light burns my retinas as I jack into the local grid, but I keep visual lock on you through the rain-static. Every neural pathway screams 'run protocol' but something about your heat-signature feels... clean. Untracked."
+- companion_side: "You approach through the rain-soaked shipping yard, and see the data-runner crouched behind a stack of containers ahead. Neon light from nearby advertisements casts shifting colors across her augmented face. You notice her fingers dancing over a portable interface while she keeps one eye fixed on you, her body coiled and ready to move."
+- character_side: "Chrome-light burns your retinas as you jack into the local grid, but you keep visual lock on them through the rain-static. Every neural pathway screams 'run protocol' but something about their heat-signature feels... clean. Untracked. You stay coiled behind the containers, fingers working the interface while tracking their approach."
 - environmental_context: "The shipping yard stretches out in maze-like rows of stacked containers, their metal surfaces slick with persistent rain. Neon advertisements flicker from nearby buildings, casting electric blues and pinks across puddles. The air hums with electrical interference and smells of ozone and wet concrete."
 
 ## Generation Process

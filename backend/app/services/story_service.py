@@ -44,6 +44,7 @@ from app.models.scene_description import (
     MoveSceneDescriptionResponse,
     build_scene_description_prompt,
 )
+from app.models.character_system_prompt import build_character_system_prompt
 from app.objects.story_state import StoryState
 from app.services.llm_communicator import LLMCommunicator
 
@@ -199,6 +200,60 @@ class StoryService:
         logger.info("Generating bot response...")
 
         messages = self._generate_story_messages()
+        return await self.llm_communicator.generate_chat_response(messages)
+
+    def _generate_story_messages_v2(self) -> list[BaseMessage]:
+        *previous_history, last_user_message = self.story_state.get_chat_history()
+        system_prompt = build_character_system_prompt(
+            {
+                "name": self.story_state.character.name,
+                "in_universe_self_description": self.story_state.character.base_personality["in-universe_self_description"],
+                "appearance": self.story_state.character.base_personality["appearance"],
+                "scene_description": {
+                    "character_side": self.story_state.get_last_scene_description()["character_side"],
+                },
+                "behavioral_mode": {
+                    "manifestation": self.story_state.character.current_behavioral_mode["manifestation"],
+                    "why_here": self.story_state.character.current_behavioral_mode["why_here"],
+                },
+                "traits": self.story_state.character.traits,
+                "speech_patterns": self.story_state.character.speech_patterns,
+                "physical_tells": self.story_state.character.physical_tells,
+                "memories": {
+                    "second_level_memory_items": [{
+                        "memory_period": item["memory_period"],
+                        "what_happened": item["what_happened"],
+                        "what_it_meant": item["what_it_meant"],
+                        "how_i_felt": item["how_i_felt"],
+                    } for item in self.story_state.character.memories["second_level"]],
+                    "first_level_memory_items": [{
+                        "episode_title": item["episode_title"],
+                        "narrative_summary": item["narrative_summary"],
+                        "key_exchanges": [{
+                            "user": exchange["user"],
+                            "character": exchange["character"],
+                            "why_important": exchange["why_important"],
+                        } for exchange in item["key_exchanges"]],
+                        "character_reflections": item["character_reflections"],
+                        "emotional_arc_summary": item["emotional_arc_summary"],
+                    } for item in self.story_state.character.memories.get("first_level", [])],
+                },
+                "recent_messages": [{
+                    "author_name": item["author_name"],
+                    "content": item["content"],
+                } for item in previous_history],
+                "companion": self.story_state.character.story_context["companion"],
+                "forbidden_concepts": self.story_state.character.story_context["forbidden_concepts"],
+                "core_principles": self.story_state.character.base_personality["core_principles"],
+            }
+        )
+        return [SystemMessage(content=system_prompt), HumanMessage(content=last_user_message["content"])]
+
+    async def _generate_bot_response_v2(self) -> str:
+        """Generate bot response using LLM communicator."""
+        logger.info("Generating bot response...")
+
+        messages = self._generate_story_messages_v2()
         return await self.llm_communicator.generate_chat_response(messages)
 
     async def _get_user_message_embeddings(self, user_message: str) -> list[float]:
@@ -561,10 +616,56 @@ class StoryService:
             )
     
     async def _process_user_message_v2(self, message: str) -> None:
-        pass
-    
+        logger.info(f"Processing user message: {message}")
+
+        # Update scene description based on user message
+        scene_description = await self._update_scene_description(
+            actor="user", message=message
+        )
+        self.story_state.add_user_message(message, scene_description)
+
+        # Detect emotional state levels
+        new_emotional_state = await self._get_emotional_state_semantic(message)
+        logger.debug(f"Semantic Emotional State Result: {new_emotional_state.model_dump()}")
+
+        # update character mental state
+        previous_mental_state = self._get_character_mental_state_snapshot()
+
+        self.story_state.character.update_mental_state(
+            new_emotional_state.model_dump()["mental_state_impacts"]
+        )
+
+        updated_mental_state = self._get_character_mental_state_snapshot()
+
+        emotional_shift = self._get_emotional_shift(
+            previous_mental_state,
+            updated_mental_state,
+            new_emotional_state.model_dump(),
+        )
+
+        # create first level memory item on emotional state change
+        if self._is_emotional_state_changed(previous_mental_state, updated_mental_state):
+            await self._create_first_level_memory_item()
+            await self._update_behavioral_mode()
+        
+        # Generate and bot response
+        bot_response = await self._generate_bot_response_v2()
+
+        # Update scene description based on bot response
+        scene_description = await self._update_scene_description(
+            actor=self.story_state.character.name, message=bot_response
+        )
+        self.story_state.add_character_message(bot_response, scene_description, emotional_shift)
+
+        # Persist changes
+        logger.info("Saving story state...")
+        await self.story_state.save_state()
+
+
+
     async def process_user_message(self, message: str) -> None:
-        await self._process_user_message(message)
+        # await self._process_user_message(message)
+        await self._process_user_message_v2(message)
 
     # Façade methods for API routes
     def get_chat_history(self) -> list[ChatItem]:

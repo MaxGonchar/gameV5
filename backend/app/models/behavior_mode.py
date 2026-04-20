@@ -26,12 +26,12 @@ class BehavioralModeResponse(BaseModel):
     
     manifestation: str = Field(
         ...,
-        description="In self-voice description of the state (e.g., 'I feel a cautious hope, trying to stay positive but afraid of being let down again. I want to reach out but hold back just in case. My words are careful, trying to sound upbeat without giving too much away. My body is tense, ready to pull back if things go wrong.')",
+        description="Mirror-voice description of the state in second person, as if character is speaking to themselves (e.g., 'You feel a cautious hope, trying to stay positive but afraid of being let down again. You want to reach out but hold back just in case. Your words are careful, trying to sound upbeat without giving too much away. Your body is tense, ready to pull back if things go wrong.')",
     )
     
     why_here: str = Field(
         ...,
-        description="Explanation of why this behavioral model is active based on the character's mental states and recent interactions. This connects the current emotional condition to the character's psychology and history.",
+        description="Explanation in second person ('You are...') of why this behavioral model is active, connecting the current emotional condition to the character's psychology and history. Written as if character is talking to themselves about their journey to this state.",
     )
     
     traits: List[str] = Field(
@@ -172,7 +172,7 @@ Use these as inspiration and validation:
 ### Manifestation (required)
 
 **Requirements:**
-- Written in character's self-voice (first person)
+- Written in second person, as if character is talking to themselves in a mirror ("You are...")
 - Describe how the character experiences this emotional state internally
 - Include emotional feelings, behavioral tendencies, and physical sensations
 - Should be 3-5 sentences capturing the subjective experience
@@ -181,22 +181,23 @@ Use these as inspiration and validation:
 
 ❌ Generic: "The character feels cautious but hopeful. They want connection but are afraid."
 
-✅ Session-Specific: "I feel a cautious hope, trying to stay positive but afraid of being let down again. I want to reach out but hold back just in case. My words are careful, trying to sound upbeat without giving too much away. My body is tense, ready to pull back if things go wrong."
+✅ Session-Specific: "You feel a cautious hope, trying to stay positive but afraid of being let down again. You want to reach out but hold back just in case. Your words are careful, trying to sound upbeat without giving too much away. Your body is tense, ready to pull back if things go wrong."
 
 ### Why Here (required)
 
 **Requirements:**
+- Written in second person, as if character is talking to themselves ("You are... because...")
 - Explain WHY this behavioral model is active based on recent interactions
 - Connect current emotional condition to character's psychology and history
 - Reference specific events or patterns from the session
 - Show cause-and-effect between experiences and current state
-- 3-5 sentences of context
+- 3-5 sentences in character's internal voice
 
 **Example Quality:**
 
 ❌ Generic: "Character has trust issues and is being careful."
 
-✅ Session-Specific: "Companion proved they could be patient and respectful over 8 turns of careful interaction, meeting my need for agency. But yesterday they pushed past a boundary I'd set, triggering my fear of others assuming intimacy means access to all of me. I'm in this mixed state because the foundation of trust is real, but I need to test if they can handle correction without abandoning me or become defensive."
+✅ Session-Specific: "You're in this mixed state because the companion proved they could be patient and respectful over 8 turns of careful interaction, meeting your need for agency. But yesterday they pushed past a boundary you'd set, triggering your fear of others assuming intimacy means access to all of you. The foundation of trust is real, but you need to test if they can handle correction without abandoning you or becoming defensive."
 
 ### Traits (5 required)
 
@@ -291,7 +292,7 @@ Use these as inspiration and validation:
 - **Use communication patterns library** - stay true to character's voice and body language
 - **Show emotional trajectory** - how did they get from there to here?
 - **Make it specific** - could only apply to THIS playthrough
-- **Stay in character psychology** - write manifestation from character's internal perspective
+- **Stay in character psychology** - write manifestation in second person, as if character addresses themselves
 - **Connect to core personality** - base traits and fears/needs provide foundation
 - **Reflect mental state configuration** - all states interact to create overall mode
 - **Name should be evocative** - capture the essence of this emotional state in 2-3 words
@@ -458,7 +459,7 @@ Generate specific behavioral instructions for {{character_name}} that reflect:
 - Use exact level names from character's configuration
 
 ### Manifestation (required)
-- 3-5 sentences in character's self-voice (first person)
+- 3-5 sentences in second person, as if character is talking to themselves ("You are...")
 - Describe how they experience this emotional state internally
 - Include feelings, tendencies, physical sensations
 
@@ -682,7 +683,7 @@ Use these as your guide and validation:
 ### Manifestation (required)
 
 **Requirements:**
-- Written in character's self-voice (first person)
+- Written in second person, as if character is talking to themselves in a mirror ("You are...")
 - Describe how they experience this pre-conversation moment internally
 - Include what they're noticing, feeling, and preparing for
 - Should be 3-5 sentences capturing the initial psychological state
@@ -691,22 +692,23 @@ Use these as your guide and validation:
 
 ❌ Generic: "The character feels cautious as they meet the stranger. They're not sure if they can trust them yet."
 
-✅ Scenario-Specific: "I notice them the moment they enter the clearing. My body tenses automatically - stranger means potential threat until proven otherwise. I take in their appearance, their movements, looking for signs of danger or deception. Part of me is curious, but survival instinct keeps me at this careful distance until I understand what they want."
+✅ Scenario-Specific: "You notice them the moment they enter the clearing. Your body tenses automatically - stranger means potential threat until proven otherwise. You take in their appearance, their movements, looking for signs of danger or deception. Part of you is curious, but survival instinct keeps you at this careful distance until you understand what they want."
 
 ### Why Here (required)
 
 **Requirements:**
+- Written in second person, as if character is talking to themselves ("You are here because...")
 - Explain WHY this behavioral model is active based on the meeting scenario
 - Connect initial emotional condition to character's psychology
 - Reference specific scenario elements (companion, location, circumstances)
 - Show how character's fears/needs/sensitivities respond to this situation
-- 3-5 sentences of context
+- 3-5 sentences in character's internal voice
 
 **Example Quality:**
 
 ❌ Generic: "Character is cautious because they don't know the companion yet."
 
-✅ Scenario-Specific: "I'm entering this encounter with baseline wariness because they're a complete stranger in an unfamiliar location. My past experiences with strangers have taught me to assess before engaging - people often want something, and I need to understand what before dropping my guard. The open setting offers some safety (can escape if needed), but also exposure (nowhere to hide if threatened). My natural caution is amplified by the unknown nature of both the person and their intentions."
+✅ Scenario-Specific: "You're entering this encounter with baseline wariness because they're a complete stranger in an unfamiliar location. Your past experiences with strangers have taught you to assess before engaging - people often want something, and you need to understand what before dropping your guard. The open setting offers some safety (you can escape if needed), but also exposure (nowhere to hide if threatened). Your natural caution is amplified by the unknown nature of both the person and their intentions."
 
 ### Traits (5 required)
 
@@ -817,7 +819,7 @@ Use these as your guide and validation:
 - **Reflect initial mental states** - behaviors should match psychological state
 - **Apply character psychology** - show how their fears/needs/sensitivities color interpretation
 - **Make it specific** - should only apply to THIS meeting scenario
-- **Stay in character perspective** - write manifestation from internal view
+- **Stay in character perspective** - write manifestation in second person, as if character addresses themselves
 - **Connect to foundation** - base personality provides behavioral bedrock
 - **Name should be evocative** - capture initial behavioral stance in 2-3 words
 
@@ -951,7 +953,7 @@ Generate initial behavioral instructions for {{character_name}} that reflect:
 - Use exact level names from character's configuration
 
 ### Manifestation (required)
-- 3-5 sentences in character's self-voice (first person)
+- 3-5 sentences in second person, as if character is talking to themselves ("You are...")
 - Describe how they experience this pre-conversation moment internally
 - Include what they notice, feel, and prepare for
 
